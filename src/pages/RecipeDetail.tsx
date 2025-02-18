@@ -8,6 +8,11 @@ import { Rating } from "@/components/ui/rating";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
+interface Rating {
+  rating: number;
+  timestamp: string;
+}
+
 const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,8 +33,8 @@ const RecipeDetail = () => {
     },
   });
 
-  const calculateAverageRating = (ratings: any[]) => {
-    if (!ratings.length) return 0;
+  const calculateAverageRating = (ratings: Rating[]) => {
+    if (!ratings || !Array.isArray(ratings) || ratings.length === 0) return 0;
     const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0);
     return Math.round(sum / ratings.length);
   };
@@ -44,7 +49,15 @@ const RecipeDetail = () => {
 
       if (fetchError) throw fetchError;
 
-      const newRatings = [...(existingRecipe?.ratings || []), { rating, timestamp: new Date().toISOString() }];
+      // Ensure ratings is an array
+      const currentRatings = Array.isArray(existingRecipe?.ratings) 
+        ? existingRecipe.ratings as Rating[]
+        : [];
+
+      const newRatings = [...currentRatings, { 
+        rating, 
+        timestamp: new Date().toISOString() 
+      }];
       
       const { error: updateError } = await supabase
         .from("recipes")
@@ -93,6 +106,9 @@ const RecipeDetail = () => {
     rateMutation.mutate({ recipeId: recipe.id, rating: value });
   };
 
+  // Ensure ratings is treated as an array
+  const ratingsArray = Array.isArray(recipe.ratings) ? recipe.ratings as Rating[] : [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
@@ -126,7 +142,7 @@ const RecipeDetail = () => {
                   className="mb-1"
                 />
                 <span className="text-sm text-gray-500">
-                  {recipe.ratings?.length || 0} ratings
+                  {ratingsArray.length} ratings
                 </span>
               </div>
             </div>
