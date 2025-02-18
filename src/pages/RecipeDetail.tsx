@@ -49,21 +49,19 @@ const RecipeDetail = () => {
 
       if (fetchError) throw fetchError;
 
-      // Ensure ratings is an array
-      const currentRatings = Array.isArray(existingRecipe?.ratings) 
-        ? existingRecipe.ratings as Rating[]
-        : [];
+      // Ensure ratings is an array and properly typed
+      const currentRatings = (existingRecipe?.ratings as unknown as Rating[]) || [];
 
       const newRatings = [...currentRatings, { 
         rating, 
         timestamp: new Date().toISOString() 
-      }];
+      }] as unknown as Json;
       
       const { error: updateError } = await supabase
         .from("recipes")
         .update({ 
           ratings: newRatings,
-          rating: calculateAverageRating(newRatings)
+          rating: calculateAverageRating(currentRatings)
         })
         .eq("id", recipeId);
 
@@ -106,8 +104,8 @@ const RecipeDetail = () => {
     rateMutation.mutate({ recipeId: recipe.id, rating: value });
   };
 
-  // Ensure ratings is treated as an array
-  const ratingsArray = Array.isArray(recipe.ratings) ? recipe.ratings as Rating[] : [];
+  // Cast ratings to Rating[] type through unknown
+  const ratingsArray = (recipe.ratings as unknown as Rating[]) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
