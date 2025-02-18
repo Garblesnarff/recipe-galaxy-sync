@@ -50,6 +50,7 @@ export type Database = {
           ingredients: Json
           instructions: string
           rating: number | null
+          ratings: Json | null
           recipe_type: string | null
           source_url: string | null
           title: string
@@ -65,6 +66,7 @@ export type Database = {
           ingredients?: Json
           instructions: string
           rating?: number | null
+          ratings?: Json | null
           recipe_type?: string | null
           source_url?: string | null
           title: string
@@ -80,6 +82,7 @@ export type Database = {
           ingredients?: Json
           instructions?: string
           rating?: number | null
+          ratings?: Json | null
           recipe_type?: string | null
           source_url?: string | null
           title?: string
