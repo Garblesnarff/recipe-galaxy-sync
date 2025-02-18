@@ -6,22 +6,45 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import debounce from "lodash/debounce";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: recipes, isLoading } = useQuery({
-    queryKey: ["recipes"],
+    queryKey: ["recipes", searchQuery],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("recipes")
         .select("*")
         .order("created_at", { ascending: false });
+
+      if (searchQuery) {
+        query = query.or(
+          `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
     },
   });
+
+  // Debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      setSearchQuery(value);
+    }, 300),
+    []
+  );
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSearch(e.target.value);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,6 +57,7 @@ const Index = () => {
               <Input
                 placeholder="Search recipes..."
                 className="pl-10"
+                onChange={handleSearch}
               />
             </div>
             <Button 
@@ -52,7 +76,7 @@ const Index = () => {
           <div className="text-center text-gray-500">Loading recipes...</div>
         ) : recipes?.length === 0 ? (
           <div className="text-center text-gray-500">
-            <p className="mb-4">No recipes yet!</p>
+            <p className="mb-4">No recipes found</p>
             <Button onClick={() => navigate("/add-recipe")}>Add Your First Recipe</Button>
           </div>
         ) : (
