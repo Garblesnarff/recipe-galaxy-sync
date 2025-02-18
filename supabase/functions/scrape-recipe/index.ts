@@ -14,12 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
     const { url } = await req.json();
     console.log('Attempting to scrape recipe from URL:', url);
 
