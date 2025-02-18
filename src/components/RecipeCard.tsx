@@ -4,7 +4,7 @@ import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
 
 interface RecipeCardProps {
-  id?: string;
+  id: string; // Changed from optional to required
   title: string;
   description: string;
   image?: string;
