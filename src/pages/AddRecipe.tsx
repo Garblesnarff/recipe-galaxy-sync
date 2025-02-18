@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Upload, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,7 +13,8 @@ export const AddRecipe = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [recipeUrl, setRecipeUrl] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -23,6 +24,8 @@ export const AddRecipe = () => {
     ingredients: [] as string[],
     currentIngredient: "",
     imageUrl: "",
+    source_url: "",
+    recipe_type: "manual" as "manual" | "imported",
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,7 +38,6 @@ export const AddRecipe = () => {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -53,8 +55,47 @@ export const AddRecipe = () => {
     } catch (error) {
       console.error('Error uploading image:', error);
       throw new Error('Failed to upload image');
+    }
+  };
+
+  const importRecipe = async () => {
+    if (!recipeUrl) {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-recipe', {
+        body: { url: recipeUrl }
+      });
+
+      if (error) throw error;
+
+      // Update form with scraped data
+      setFormData(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        cookTime: data.cook_time || prev.cookTime,
+        difficulty: data.difficulty || prev.difficulty,
+        instructions: data.instructions || prev.instructions,
+        ingredients: Array.isArray(data.ingredients) ? data.ingredients : prev.ingredients,
+        imageUrl: data.image_url || prev.imageUrl,
+        source_url: data.source_url,
+        recipe_type: "imported"
+      }));
+
+      if (data.image_url) {
+        setImagePreview(data.image_url);
+      }
+
+      toast.success("Recipe imported successfully!");
+    } catch (error) {
+      console.error('Error importing recipe:', error);
+      toast.error("Failed to import recipe. Please try again.");
     } finally {
-      setIsUploading(false);
+      setIsImporting(false);
     }
   };
 
@@ -75,8 +116,9 @@ export const AddRecipe = () => {
         difficulty: formData.difficulty,
         instructions: formData.instructions,
         ingredients: formData.ingredients,
-        recipe_type: "manual",
+        recipe_type: formData.recipe_type,
         image_url: imageUrl,
+        source_url: formData.source_url,
       });
 
       if (error) throw error;
@@ -124,6 +166,25 @@ export const AddRecipe = () => {
         <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-semibold mb-6">Add New Recipe</h1>
 
+          <div className="mb-6">
+            <Label>Import Recipe from URL</Label>
+            <div className="flex gap-2 mt-2">
+              <Input
+                type="url"
+                placeholder="Enter recipe URL"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+              />
+              <Button 
+                onClick={importRecipe}
+                disabled={isImporting}
+              >
+                <LinkIcon className="mr-2 h-4 w-4" />
+                {isImporting ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="title">Title</Label>
@@ -154,10 +215,10 @@ export const AddRecipe = () => {
                   <Upload className="mr-2 h-4 w-4" />
                   Upload Image
                 </Button>
-                {imagePreview && (
+                {(imagePreview || formData.imageUrl) && (
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
                     <img
-                      src={imagePreview}
+                      src={imagePreview || formData.imageUrl}
                       alt="Recipe preview"
                       className="w-full h-full object-cover"
                     />
@@ -244,7 +305,7 @@ export const AddRecipe = () => {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isSubmitting || isUploading}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Adding Recipe..." : "Add Recipe"}
             </Button>
