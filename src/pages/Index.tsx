@@ -3,32 +3,26 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-const mockRecipes = [
-  {
-    title: "Classic Margherita Pizza",
-    description: "Fresh basil, mozzarella, and tomato sauce on a crispy crust",
-    rating: 4,
-    cookTime: "30 mins",
-    difficulty: "Easy",
-  },
-  {
-    title: "Creamy Mushroom Risotto",
-    description: "Arborio rice slowly cooked with mushrooms and parmesan",
-    rating: 5,
-    cookTime: "45 mins",
-    difficulty: "Medium",
-  },
-  {
-    title: "Thai Green Curry",
-    description: "Aromatic coconut curry with vegetables and your choice of protein",
-    rating: 4,
-    cookTime: "40 mins",
-    difficulty: "Medium",
-  },
-];
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  const { data: recipes, isLoading } = useQuery({
+    queryKey: ["recipes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
@@ -42,7 +36,10 @@ const Index = () => {
                 className="pl-10"
               />
             </div>
-            <Button className="bg-recipe-sage hover:bg-recipe-sage/90">
+            <Button 
+              className="bg-recipe-sage hover:bg-recipe-sage/90"
+              onClick={() => navigate("/add-recipe")}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Recipe
             </Button>
@@ -51,11 +48,28 @@ const Index = () => {
       </header>
 
       <main className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockRecipes.map((recipe, index) => (
-            <RecipeCard key={index} {...recipe} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center text-gray-500">Loading recipes...</div>
+        ) : recipes?.length === 0 ? (
+          <div className="text-center text-gray-500">
+            <p className="mb-4">No recipes yet!</p>
+            <Button onClick={() => navigate("/add-recipe")}>Add Your First Recipe</Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recipes?.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                title={recipe.title}
+                description={recipe.description}
+                image={recipe.image_url}
+                rating={recipe.rating || 0}
+                cookTime={recipe.cook_time}
+                difficulty={recipe.difficulty}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
