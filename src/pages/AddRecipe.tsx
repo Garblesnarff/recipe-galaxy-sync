@@ -4,13 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const AddRecipe = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -19,13 +22,52 @@ export const AddRecipe = () => {
     instructions: "",
     ingredients: [] as string[],
     currentIngredient: "",
+    imageUrl: "",
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('recipe-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('recipe-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
       const { error } = await supabase.from("recipes").insert({
         title: formData.title,
         description: formData.description,
@@ -34,6 +76,7 @@ export const AddRecipe = () => {
         instructions: formData.instructions,
         ingredients: formData.ingredients,
         recipe_type: "manual",
+        image_url: imageUrl,
       });
 
       if (error) throw error;
@@ -90,6 +133,37 @@ export const AddRecipe = () => {
                 value={formData.title}
                 onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="image">Recipe Image</Label>
+              <div className="mt-2 space-y-4">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('image')?.click()}
+                  className="w-full"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Image
+                </Button>
+                {imagePreview && (
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={imagePreview}
+                      alt="Recipe preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -167,7 +241,11 @@ export const AddRecipe = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting || isUploading}
+            >
               {isSubmitting ? "Adding Recipe..." : "Add Recipe"}
             </Button>
           </form>
