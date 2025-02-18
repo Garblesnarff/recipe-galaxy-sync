@@ -67,7 +67,10 @@ export const AddRecipe = () => {
     setIsImporting(true);
     try {
       const { data, error } = await supabase.functions.invoke('scrape-recipe', {
-        body: { url: recipeUrl }
+        body: { url: recipeUrl },
+        headers: {
+          Authorization: `Bearer ${supabase.auth.getSession()?.access_token}`
+        }
       });
 
       if (error) throw error;
