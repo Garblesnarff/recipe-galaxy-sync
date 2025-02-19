@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,11 +65,6 @@ export const AddRecipe = () => {
 
     setIsImporting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       const { data, error } = await supabase.functions.invoke('scrape-recipe', {
         body: { url: recipeUrl }
       });
