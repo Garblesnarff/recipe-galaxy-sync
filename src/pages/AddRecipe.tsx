@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,14 @@ export const AddRecipe = () => {
         body: { url: recipeUrl }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error importing recipe:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('No data received from recipe import');
+      }
 
       // Update form with scraped data
       setFormData(prev => ({
@@ -81,7 +89,7 @@ export const AddRecipe = () => {
         instructions: data.instructions || prev.instructions,
         ingredients: Array.isArray(data.ingredients) ? data.ingredients : prev.ingredients,
         imageUrl: data.image_url || prev.imageUrl,
-        source_url: data.source_url,
+        source_url: recipeUrl,
         recipe_type: "imported"
       }));
 
@@ -92,7 +100,7 @@ export const AddRecipe = () => {
       toast.success("Recipe imported successfully!");
     } catch (error) {
       console.error('Error importing recipe:', error);
-      toast.error("Failed to import recipe. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to import recipe. Please try again.");
     } finally {
       setIsImporting(false);
     }
