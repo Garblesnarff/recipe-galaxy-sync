@@ -4,9 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Upload, Link as LinkIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { RecipeImport } from "@/components/recipe/RecipeImport";
+import { RecipeImage } from "@/components/recipe/RecipeImage";
+import { RecipeIngredients } from "@/components/recipe/RecipeIngredients";
+import { uploadImage, importRecipeFromUrl, saveRecipe } from "@/services/recipeService";
+import { RecipeFormData } from "@/types/recipe";
 
 export const AddRecipe = () => {
   const navigate = useNavigate();
@@ -15,17 +19,17 @@ export const AddRecipe = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [recipeUrl, setRecipeUrl] = useState("");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RecipeFormData>({
     title: "",
     description: "",
     cookTime: "",
     difficulty: "Easy",
     instructions: "",
-    ingredients: [] as string[],
+    ingredients: [],
     currentIngredient: "",
     imageUrl: "",
     source_url: "",
-    recipe_type: "manual" as "manual" | "imported",
+    recipe_type: "manual",
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,27 +41,6 @@ export const AddRecipe = () => {
     }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const { error: uploadError, data } = await supabase.storage
-        .from('recipe-images')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('recipe-images')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw new Error('Failed to upload image');
-    }
-  };
-
   const importRecipe = async () => {
     if (!recipeUrl) {
       toast.error("Please enter a valid URL");
@@ -66,20 +49,8 @@ export const AddRecipe = () => {
 
     setIsImporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('scrape-recipe', {
-        body: { url: recipeUrl }
-      });
-
-      if (error) {
-        console.error('Error importing recipe:', error);
-        throw error;
-      }
-
-      if (!data) {
-        throw new Error('No data received from recipe import');
-      }
-
-      // Update form with scraped data
+      const data = await importRecipeFromUrl(recipeUrl);
+      
       setFormData(prev => ({
         ...prev,
         title: data.title || prev.title,
@@ -116,7 +87,7 @@ export const AddRecipe = () => {
         imageUrl = await uploadImage(imageFile);
       }
 
-      const { error } = await supabase.from("recipes").insert({
+      await saveRecipe({
         title: formData.title,
         description: formData.description,
         cook_time: formData.cookTime,
@@ -127,8 +98,6 @@ export const AddRecipe = () => {
         image_url: imageUrl,
         source_url: formData.source_url,
       });
-
-      if (error) throw error;
 
       toast.success("Recipe added successfully!");
       navigate("/");
@@ -173,24 +142,12 @@ export const AddRecipe = () => {
         <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-semibold mb-6">Add New Recipe</h1>
 
-          <div className="mb-6">
-            <Label>Import Recipe from URL</Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                type="url"
-                placeholder="Enter recipe URL"
-                value={recipeUrl}
-                onChange={(e) => setRecipeUrl(e.target.value)}
-              />
-              <Button 
-                onClick={importRecipe}
-                disabled={isImporting}
-              >
-                <LinkIcon className="mr-2 h-4 w-4" />
-                {isImporting ? "Importing..." : "Import"}
-              </Button>
-            </div>
-          </div>
+          <RecipeImport
+            recipeUrl={recipeUrl}
+            onUrlChange={setRecipeUrl}
+            onImport={importRecipe}
+            isImporting={isImporting}
+          />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -203,36 +160,11 @@ export const AddRecipe = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="image">Recipe Image</Label>
-              <div className="mt-2 space-y-4">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('image')?.click()}
-                  className="w-full"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Image
-                </Button>
-                {(imagePreview || formData.imageUrl) && (
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-                    <img
-                      src={imagePreview || formData.imageUrl}
-                      alt="Recipe preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+            <RecipeImage
+              onImageChange={handleImageChange}
+              imagePreview={imagePreview}
+              imageUrl={formData.imageUrl}
+            />
 
             <div>
               <Label htmlFor="description">Description</Label>
@@ -271,32 +203,13 @@ export const AddRecipe = () => {
               </div>
             </div>
 
-            <div>
-              <Label>Ingredients</Label>
-              <div className="flex gap-2 mb-2">
-                <Input
-                  value={formData.currentIngredient}
-                  onChange={e => setFormData(prev => ({ ...prev, currentIngredient: e.target.value }))}
-                  placeholder="Add an ingredient"
-                />
-                <Button type="button" onClick={addIngredient}>Add</Button>
-              </div>
-              <ul className="space-y-2">
-                {formData.ingredients.map((ingredient, index) => (
-                  <li key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                    {ingredient}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeIngredient(index)}
-                    >
-                      Remove
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <RecipeIngredients
+              ingredients={formData.ingredients}
+              currentIngredient={formData.currentIngredient}
+              onIngredientChange={(value) => setFormData(prev => ({ ...prev, currentIngredient: value }))}
+              onAddIngredient={addIngredient}
+              onRemoveIngredient={removeIngredient}
+            />
 
             <div>
               <Label htmlFor="instructions">Instructions</Label>
