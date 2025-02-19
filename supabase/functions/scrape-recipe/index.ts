@@ -6,17 +6,52 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const htmlEntities: { [key: string]: string } = {
+  '&nbsp;': ' ',
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&#32;': ' ',
+  '&#160;': ' ',
+  '&#8217;': "'",
+  '&#8216;': "'",
+  '&#8220;': '"',
+  '&#8221;': '"',
+  '&#8211;': '-',
+  '&#8212;': '--',
+};
+
 function decodeHtmlEntities(text: string): string {
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = text;
-  return textarea.value;
+  return text.replace(/&[#\w]+;/g, entity => 
+    htmlEntities[entity] || entity.replace(/&#(\d+);/g, (_, dec) => 
+      String.fromCharCode(parseInt(dec, 10))
+    )
+  );
 }
 
 function cleanText(text: string): string {
   return decodeHtmlEntities(text)
-    .replace(/\s+/g, ' ')
-    .replace(/\n\s*/g, '\n')
+    .replace(/<[^>]+>/g, ' ')  // Remove HTML tags
+    .replace(/\s+/g, ' ')      // Normalize whitespace
+    .replace(/\n\s*/g, '\n')   // Clean up newlines
     .trim();
+}
+
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return response;
+      console.error(`Attempt ${i + 1}: Failed to fetch URL with status ${response.status}`);
+    } catch (error) {
+      console.error(`Attempt ${i + 1}: Error fetching URL:`, error);
+      if (i === retries - 1) throw error;
+    }
+    await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+  }
+  throw new Error(`Failed to fetch URL after ${retries} attempts`);
 }
 
 function extractIngredients(html: string): string[] {
@@ -68,7 +103,7 @@ function extractIngredients(html: string): string[] {
           const items = section.match(/<li[^>]*>(.*?)<\/li>/gi);
           if (items) {
             items.forEach(item => {
-              const ingredient = cleanText(item.replace(/<[^>]+>/g, ''));
+              const ingredient = cleanText(item);
               if (ingredient) {
                 ingredients.add(ingredient);
               }
@@ -98,14 +133,19 @@ function extractInstructions(html: string): string {
         console.log('Found instructions in Schema.org data');
         if (Array.isArray(recipeData.recipeInstructions)) {
           return recipeData.recipeInstructions
-            .map((instruction: any) => {
-              if (typeof instruction === 'string') return cleanText(instruction);
-              return cleanText(instruction.text || instruction.description || '');
+            .map((instruction: any, index: number) => {
+              if (typeof instruction === 'string') {
+                return `${index + 1}. ${cleanText(instruction)}`;
+              }
+              return `${index + 1}. ${cleanText(instruction.text || instruction.description || '')}`;
             })
             .filter(Boolean)
             .join('\n\n');
         } else if (typeof recipeData.recipeInstructions === 'string') {
-          return cleanText(recipeData.recipeInstructions);
+          const steps = recipeData.recipeInstructions.split(/\.\s+/).filter(Boolean);
+          return steps.map((step: string, index: number) => 
+            `${index + 1}. ${cleanText(step)}`
+          ).join('\n\n');
         }
       }
     } catch (e) {
@@ -133,7 +173,7 @@ function extractInstructions(html: string): string {
         const steps = orderedList[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
         if (steps) {
           steps.forEach((step, index) => {
-            const cleanStep = cleanText(step.replace(/<[^>]+>/g, ''));
+            const cleanStep = cleanText(step);
             if (cleanStep) {
               instructionBlocks.push(`${index + 1}. ${cleanStep}`);
             }
@@ -144,7 +184,7 @@ function extractInstructions(html: string): string {
         const paragraphs = content.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
         if (paragraphs) {
           paragraphs.forEach((para, index) => {
-            const cleanPara = cleanText(para.replace(/<[^>]+>/g, ''));
+            const cleanPara = cleanText(para);
             if (cleanPara) {
               instructionBlocks.push(`${index + 1}. ${cleanPara}`);
             }
@@ -152,9 +192,7 @@ function extractInstructions(html: string): string {
         }
       }
       
-      if (instructionBlocks.length > 0) {
-        break;
-      }
+      if (instructionBlocks.length > 0) break;
     }
   }
 
@@ -162,7 +200,7 @@ function extractInstructions(html: string): string {
   if (instructionBlocks.length === 0) {
     const instructionSection = html.match(/<div[^>]*>[\s\S]*?instructions?[\s\S]*?<\/div>/i);
     if (instructionSection) {
-      const cleanInstructions = cleanText(instructionSection[0].replace(/<[^>]+>/g, ''));
+      const cleanInstructions = cleanText(instructionSection[0]);
       if (cleanInstructions) {
         // Split by periods and create numbered steps
         const steps = cleanInstructions.split(/\.(?=\s|$)/).filter(Boolean);
@@ -199,12 +237,8 @@ serve(async (req) => {
       );
     }
 
-    // Fetch the webpage content
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.statusText}`);
-    }
-
+    // Fetch the webpage content with retry logic
+    const response = await fetchWithRetry(url);
     const html = await response.text();
     console.log('Successfully fetched webpage content');
 
