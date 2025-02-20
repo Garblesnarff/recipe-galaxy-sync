@@ -23,18 +23,24 @@ export const uploadImage = async (file: File): Promise<string> => {
   }
 };
 
+const isYouTubeUrl = (url: string): boolean => {
+  return url.includes('youtube.com') || url.includes('youtu.be');
+};
+
 export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeData> => {
-  const { data, error } = await supabase.functions.invoke('scrape-recipe', {
+  const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
+  
+  const { data, error } = await supabase.functions.invoke(endpoint, {
     body: { url }
   });
 
   if (error) {
-    console.error('Error importing recipe:', error);
+    console.error(`Error importing recipe from ${endpoint}:`, error);
     throw error;
   }
 
   if (!data) {
-    throw new Error('No data received from recipe import');
+    throw new Error(`No data received from ${endpoint}`);
   }
 
   return data;
