@@ -7,11 +7,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-type TranscriptSegment = {
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+
+interface TranscriptSegment {
   text: string;
   start: number;
   duration: number;
-};
+}
 
 const extractVideoId = (url: string): string | null => {
   const patterns = [
@@ -27,8 +29,9 @@ const extractVideoId = (url: string): string | null => {
   return null;
 };
 
-const getTranscript = async (videoId: string): Promise<TranscriptSegment[]> => {
+const getTranscript = async (videoId: string): Promise<string> => {
   try {
+    // Using innertube API for more reliable transcript access
     const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
     const html = await response.text();
     
@@ -44,6 +47,8 @@ const getTranscript = async (videoId: string): Promise<TranscriptSegment[]> => {
     if (!englishCaptions?.baseUrl) {
       throw new Error("No English captions available");
     }
+
+    console.log('Found English captions URL:', englishCaptions.baseUrl);
 
     // Fetch the actual transcript
     const transcriptResponse = await fetch(englishCaptions.baseUrl);
@@ -67,31 +72,35 @@ const getTranscript = async (videoId: string): Promise<TranscriptSegment[]> => {
       }
     });
 
-    return segments;
+    console.log(`Successfully extracted ${segments.length} transcript segments`);
+    return segments.map(segment => segment.text).join(' ');
   } catch (error) {
     console.error('Error fetching transcript:', error);
-    throw new Error(`Failed to get transcript: ${error.message}`);
+    throw error;
   }
 };
 
 const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
-  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-  if (!GEMINI_API_KEY) throw new Error('Gemini API key not configured');
-
-  const prompt = `You are a recipe parser. Given the following YouTube video transcript, extract and structure a recipe. Focus on identifying:
-  1. Recipe title
-  2. Description (brief overview)
-  3. Ingredients (as a list)
-  4. Instructions (step by step)
-  5. Approximate cooking time
-  6. Difficulty level (Easy/Medium/Hard)
-
-  If you can't identify all components, include what you can find. Format the response as JSON.
-
-  Transcript:
-  ${transcript}`;
-
   try {
+    console.log('Sending transcript to Gemini API, length:', transcript.length);
+    
+    const prompt = `Extract a detailed recipe from the following YouTube video transcript. 
+    Provide the output in this exact structured format:
+    {
+      "title": "Recipe name",
+      "description": "Brief overview of the dish",
+      "ingredients": ["Ingredient 1 with quantity", "Ingredient 2 with quantity", ...],
+      "instructions": ["Step 1", "Step 2", ...],
+      "cook_time": "Estimated cooking time (if mentioned)",
+      "difficulty": "Easy/Medium/Hard based on complexity"
+    }
+
+    If any field cannot be determined from the transcript, use an empty string or empty array as appropriate.
+    Do not include any explanatory text, only output the JSON object.
+
+    Transcript:
+    ${transcript}`;
+
     const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
@@ -108,6 +117,8 @@ const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
     });
 
     if (!response.ok) {
+      const error = await response.text();
+      console.error('Gemini API error:', error);
       throw new Error(`Gemini API error: ${response.statusText}`);
     }
 
@@ -120,14 +131,8 @@ const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
       if (!jsonMatch) throw new Error('No JSON found in response');
       
       const recipe = JSON.parse(jsonMatch[0]);
-      return {
-        title: recipe.title || '',
-        description: recipe.description || '',
-        cook_time: recipe.cooking_time || '',
-        difficulty: recipe.difficulty || 'Medium',
-        instructions: recipe.instructions || '',
-        ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
-      };
+      console.log('Successfully parsed recipe:', recipe);
+      return recipe;
     } catch (parseError) {
       console.error('Error parsing Gemini response:', parseError);
       throw new Error('Failed to parse recipe from Gemini response');
@@ -154,11 +159,13 @@ serve(async (req) => {
     }
 
     const transcript = await getTranscript(videoId);
-    const fullTranscript = transcript.map(segment => segment.text).join(' ');
+    if (!transcript) {
+      throw new Error('Failed to extract transcript from video');
+    }
     
-    console.log('Got transcript, length:', fullTranscript.length);
+    console.log('Successfully extracted transcript, length:', transcript.length);
     
-    const recipe = await parseRecipeWithGemini(fullTranscript);
+    const recipe = await parseRecipeWithGemini(transcript);
     console.log('Successfully parsed recipe');
 
     return new Response(JSON.stringify(recipe), {
