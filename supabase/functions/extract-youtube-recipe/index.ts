@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,13 +8,22 @@ const corsHeaders = {
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-interface TranscriptSegment {
-  text: string;
-  start: number;
-  duration: number;
+// Custom error types for better error handling
+class YouTubeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'YouTubeError';
+  }
 }
 
-const extractVideoId = (url: string): string | null => {
+class TranscriptError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TranscriptError';
+  }
+}
+
+const extractVideoId = (url: string): string => {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu.be\/)([^&\n?#]+)/,
     /youtube.com\/shorts\/([^&\n?#]+)/
@@ -26,18 +34,44 @@ const extractVideoId = (url: string): string | null => {
     if (match) return match[1];
   }
 
-  return null;
+  throw new YouTubeError('Invalid YouTube URL format');
+};
+
+const getVideoMetadata = async (videoId: string) => {
+  try {
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new YouTubeError('Video not found or not accessible');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching video metadata:', error);
+    throw new YouTubeError('Failed to fetch video metadata');
+  }
 };
 
 const getTranscript = async (videoId: string): Promise<string> => {
   try {
-    // Using innertube API for more reliable transcript access
-    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
     const html = await response.text();
-    
-    // Extract captions URL from the page
+    console.log('Fetched YouTube page HTML');
+
+    // Extract captions URL
     const captionsMatch = html.match(/"captionTracks":\[(.*?)\]/);
-    if (!captionsMatch) throw new Error("No captions found for this video");
+    if (!captionsMatch) {
+      throw new TranscriptError('No captions found for this video');
+    }
 
     const captions = JSON.parse(`[${captionsMatch[1]}]`);
     const englishCaptions = captions.find((c: any) => 
@@ -45,46 +79,42 @@ const getTranscript = async (videoId: string): Promise<string> => {
     );
 
     if (!englishCaptions?.baseUrl) {
-      throw new Error("No English captions available");
+      throw new TranscriptError('No English captions available');
     }
 
-    console.log('Found English captions URL:', englishCaptions.baseUrl);
+    console.log('Found English captions URL');
 
-    // Fetch the actual transcript
+    // Fetch transcript XML
     const transcriptResponse = await fetch(englishCaptions.baseUrl);
     const transcriptXml = await transcriptResponse.text();
     
-    // Parse the XML to get transcript segments
-    const segments: TranscriptSegment[] = [];
-    const textElements = transcriptXml.match(/<text[^>]*>(.*?)<\/text>/g) || [];
-    
-    textElements.forEach(element => {
-      const startMatch = element.match(/start="([\d.]+)"/);
-      const durationMatch = element.match(/dur="([\d.]+)"/);
-      const textMatch = element.match(/>([^<]*)</);
-      
-      if (startMatch && durationMatch && textMatch) {
-        segments.push({
-          text: textMatch[1].trim(),
-          start: parseFloat(startMatch[1]),
-          duration: parseFloat(durationMatch[1])
-        });
-      }
-    });
+    // Extract text from XML
+    const textSegments = transcriptXml
+      .match(/<text[^>]*>(.*?)<\/text>/g)
+      ?.map(segment => {
+        const textMatch = segment.match(/>([^<]*)</);
+        return textMatch ? textMatch[1].trim() : '';
+      })
+      .filter(text => text.length > 0) || [];
 
-    console.log(`Successfully extracted ${segments.length} transcript segments`);
-    return segments.map(segment => segment.text).join(' ');
+    if (textSegments.length === 0) {
+      throw new TranscriptError('Failed to parse transcript text');
+    }
+
+    console.log(`Extracted ${textSegments.length} text segments`);
+    return textSegments.join(' ');
   } catch (error) {
-    console.error('Error fetching transcript:', error);
-    throw error;
+    console.error('Error in transcript extraction:', error);
+    if (error instanceof TranscriptError) {
+      throw error;
+    }
+    throw new TranscriptError('Failed to extract video transcript');
   }
 };
 
-const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
+const parseRecipeWithGemini = async (transcript: string, videoMetadata: any): Promise<any> => {
   try {
-    console.log('Sending transcript to Gemini API, length:', transcript.length);
-    
-    const prompt = `Extract a detailed recipe from the following YouTube video transcript. 
+    const prompt = `Extract a detailed recipe from the following YouTube video transcript titled "${videoMetadata.title}". 
     Provide the output in this exact structured format:
     {
       "title": "Recipe name",
@@ -92,7 +122,8 @@ const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
       "ingredients": ["Ingredient 1 with quantity", "Ingredient 2 with quantity", ...],
       "instructions": ["Step 1", "Step 2", ...],
       "cook_time": "Estimated cooking time (if mentioned)",
-      "difficulty": "Easy/Medium/Hard based on complexity"
+      "difficulty": "Easy/Medium/Hard based on complexity",
+      "image_url": "${videoMetadata.thumbnail_url || ''}"
     }
 
     If any field cannot be determined from the transcript, use an empty string or empty array as appropriate.
@@ -101,6 +132,7 @@ const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
     Transcript:
     ${transcript}`;
 
+    console.log('Sending request to Gemini API');
     const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
@@ -119,27 +151,24 @@ const parseRecipeWithGemini = async (transcript: string): Promise<any> => {
     if (!response.ok) {
       const error = await response.text();
       console.error('Gemini API error:', error);
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      throw new Error('Failed to process recipe with Gemini');
     }
 
     const data = await response.json();
     const recipeText = data.candidates[0].content.parts[0].text;
     
-    try {
-      // Extract the JSON object from the response
-      const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in response');
-      
-      const recipe = JSON.parse(jsonMatch[0]);
-      console.log('Successfully parsed recipe:', recipe);
-      return recipe;
-    } catch (parseError) {
-      console.error('Error parsing Gemini response:', parseError);
-      throw new Error('Failed to parse recipe from Gemini response');
+    // Extract and validate JSON
+    const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Invalid response format from Gemini');
     }
+    
+    const recipe = JSON.parse(jsonMatch[0]);
+    console.log('Successfully parsed recipe data');
+    return recipe;
   } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    throw error;
+    console.error('Error in recipe parsing:', error);
+    throw new Error('Failed to parse recipe from video');
   }
 };
 
@@ -153,30 +182,43 @@ serve(async (req) => {
     const { url } = await req.json();
     console.log('Processing YouTube URL:', url);
 
+    // Extract video ID and get metadata
     const videoId = extractVideoId(url);
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL');
-    }
+    const metadata = await getVideoMetadata(videoId);
+    console.log('Got video metadata for:', metadata.title);
 
+    // Get transcript and parse recipe
     const transcript = await getTranscript(videoId);
-    if (!transcript) {
-      throw new Error('Failed to extract transcript from video');
-    }
+    console.log('Got transcript, length:', transcript.length);
     
-    console.log('Successfully extracted transcript, length:', transcript.length);
-    
-    const recipe = await parseRecipeWithGemini(transcript);
-    console.log('Successfully parsed recipe');
+    const recipe = await parseRecipeWithGemini(transcript, metadata);
+    console.log('Successfully extracted recipe');
 
     return new Response(JSON.stringify(recipe), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in extract-youtube-recipe function:', error);
+    console.error('Error processing request:', error);
+    
+    // Determine appropriate status code and message
+    let status = 500;
+    let message = 'Internal server error';
+    
+    if (error instanceof YouTubeError) {
+      status = 400;
+      message = error.message;
+    } else if (error instanceof TranscriptError) {
+      status = 422;
+      message = error.message;
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: message,
+        details: error.message 
+      }),
       { 
-        status: 500,
+        status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
