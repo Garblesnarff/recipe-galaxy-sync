@@ -15,64 +15,88 @@ class YouTubeError extends Error {
   }
 }
 
-interface CaptionTrack {
-  baseUrl: string;
-  name: { simpleText: string };
-  languageCode: string;
-  kind: string;
-  isTranslatable: boolean;
-}
-
 const extractVideoId = (url: string): string => {
+  console.log('Processing URL:', url);
+  
   const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu.be\/)([^&\n?#]+)/,
-    /youtube.com\/shorts\/([^&\n?#]+)/
+    /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
+    /(?:youtu.be\/)([^&\n?#]+)/,
+    /(?:youtube.com\/shorts\/)([^&\n?#]+)/
   ];
 
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match) return match[1];
+    if (match) {
+      console.log('Extracted video ID:', match[1]);
+      return match[1];
+    }
   }
 
   throw new YouTubeError('Invalid YouTube URL format');
 };
 
-const fetchTranscriptData = async (videoId: string): Promise<CaptionTrack[]> => {
-  const innertubeApiKey = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
-  const url = `https://www.youtube.com/youtubei/v1/get_transcript?key=${innertubeApiKey}`;
+const fetchVideoTranscript = async (videoId: string): Promise<string> => {
+  console.log('Fetching transcript for video:', videoId);
+  
+  try {
+    // First attempt: Try fetching the video page
+    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch video page');
+    }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      context: {
-        client: {
-          clientName: 'WEB',
-          clientVersion: '2.20220609.01.00',
-        },
-      },
-      params: btoa(JSON.stringify({ videoId })),
-    }),
-  });
+    const html = await response.text();
+    console.log('Successfully fetched video page');
 
-  if (!response.ok) {
-    throw new YouTubeError('Failed to fetch transcript data');
+    // Extract captions data from ytInitialPlayerResponse
+    const playerResponseMatch = html.match(/"playerCaptionsTracklistRenderer":\s*({[^}]+})/);
+    if (!playerResponseMatch) {
+      throw new Error('No captions data found in video page');
+    }
+
+    // Find caption URL from the data
+    const captionsMatch = html.match(/"captionTracks":\s*\[.*?"baseUrl":\s*"([^"]+)"/);
+    if (!captionsMatch) {
+      throw new Error('No caption URL found');
+    }
+
+    const captionUrl = decodeURIComponent(captionsMatch[1]);
+    console.log('Found caption URL');
+
+    // Fetch the actual transcript
+    const transcriptResponse = await fetch(captionUrl);
+    if (!transcriptResponse.ok) {
+      throw new Error('Failed to fetch transcript');
+    }
+
+    const transcriptText = await transcriptResponse.text();
+    console.log('Successfully fetched transcript');
+
+    // Extract text from XML-like response
+    const textLines = transcriptText
+      .match(/<text[^>]*>(.*?)<\/text>/g)
+      ?.map(line => {
+        const textMatch = line.match(/<text[^>]*>(.*?)<\/text>/);
+        return textMatch ? textMatch[1].trim() : '';
+      })
+      .filter(Boolean)
+      .join(' ') || '';
+
+    if (!textLines) {
+      throw new Error('Failed to extract text from transcript');
+    }
+
+    return textLines;
+
+  } catch (error) {
+    console.error('Error fetching transcript:', error);
+    throw new YouTubeError(`Failed to fetch transcript: ${error.message}`);
   }
-
-  const data = await response.json();
-  const captionTracks = data?.actions?.[0]?.updateEngagementPanelAction?.content
-    ?.transcriptRenderer?.body?.transcriptBodyRenderer?.cueGroups;
-
-  if (!captionTracks) {
-    throw new YouTubeError('No captions available for this video');
-  }
-
-  return captionTracks;
 };
 
 const getVideoMetadata = async (videoId: string) => {
+  console.log('Fetching video metadata for:', videoId);
+  
   try {
     const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
     
@@ -80,40 +104,17 @@ const getVideoMetadata = async (videoId: string) => {
       throw new YouTubeError('Video not found or not accessible');
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Successfully fetched video metadata');
+    return data;
   } catch (error) {
     console.error('Error fetching video metadata:', error);
     throw new YouTubeError('Failed to fetch video metadata');
   }
 };
 
-const fetchTranscript = async (videoId: string): Promise<string> => {
-  try {
-    const captionTracks = await fetchTranscriptData(videoId);
-    
-    // Extract and combine text from all cue groups
-    const transcriptText = captionTracks
-      .map(group => group.transcript.text)
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!transcriptText) {
-      throw new YouTubeError('Failed to extract transcript text');
-    }
-
-    return transcriptText;
-  } catch (error) {
-    console.error('Error fetching transcript:', error);
-    throw new YouTubeError(
-      error instanceof YouTubeError 
-        ? error.message 
-        : 'Failed to fetch video transcript'
-    );
-  }
-};
-
 const parseRecipeWithGemini = async (transcript: string, videoMetadata: any): Promise<any> => {
+  console.log('Starting recipe parsing with Gemini');
   try {
     const prompt = `Extract a detailed recipe from the following YouTube video transcript titled "${videoMetadata.title}". 
     Provide the output in this exact structured format:
@@ -174,6 +175,7 @@ const parseRecipeWithGemini = async (transcript: string, videoMetadata: any): Pr
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -182,12 +184,16 @@ serve(async (req) => {
     const { url } = await req.json();
     console.log('Processing YouTube URL:', url);
 
+    if (!url) {
+      throw new YouTubeError('URL is required');
+    }
+
     const videoId = extractVideoId(url);
-    console.log('Extracted video ID:', videoId);
+    console.log('Successfully extracted video ID:', videoId);
 
     const [metadata, transcript] = await Promise.all([
       getVideoMetadata(videoId),
-      fetchTranscript(videoId)
+      fetchVideoTranscript(videoId)
     ]);
 
     console.log('Successfully fetched metadata and transcript');
@@ -202,16 +208,14 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing request:', error);
     
-    const status = error instanceof YouTubeError ? 400 : 500;
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error instanceof YouTubeError ? error.message : 'Internal server error'
-      }),
-      { 
-        status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    const errorResponse = {
+      error: error instanceof YouTubeError ? error.message : 'Internal server error',
+      details: error.message
+    };
+
+    return new Response(JSON.stringify(errorResponse), { 
+      status: error instanceof YouTubeError ? 400 : 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
