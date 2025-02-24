@@ -156,25 +156,44 @@ serve(async (req) => {
       throw new YouTubeError('URL is required');
     }
 
-    // Create processing record
-    const videoId = extractVideoId(url);
-    const { data: processingRecord, error: dbError } = await supabase
-      .from('video_processing')
-      .insert({
-        video_url: url,
-        status: 'processing',
-        metadata: { video_id: videoId }
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      throw new Error('Failed to create processing record');
-    }
-
     console.log('Processing YouTube URL:', url);
+    const videoId = extractVideoId(url);
     console.log('Video ID:', videoId);
+
+    let processingRecord = null;
+    const authHeader = req.headers.get('Authorization');
+    
+    if (authHeader) {
+      try {
+        // Extract the JWT token
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        
+        if (!authError && user) {
+          // Only create processing record if we have an authenticated user
+          const { data: record, error: dbError } = await supabase
+            .from('video_processing')
+            .insert({
+              video_url: url,
+              status: 'processing',
+              metadata: { video_id: videoId },
+              owner_id: user.id
+            })
+            .select()
+            .single();
+
+          if (!dbError) {
+            processingRecord = record;
+            console.log('Created processing record:', processingRecord.id);
+          } else {
+            console.error('Error creating processing record:', dbError);
+          }
+        }
+      } catch (authError) {
+        console.error('Auth error:', authError);
+        // Continue without creating processing record
+      }
+    }
 
     // Fetch metadata and transcript in parallel
     const [metadata, transcript] = await Promise.all([
@@ -185,17 +204,19 @@ serve(async (req) => {
     // Extract recipe using Gemini
     const recipe = await extractRecipe(transcript, metadata);
 
-    // Update processing record with success
-    const { error: updateError } = await supabase
-      .from('video_processing')
-      .update({
-        status: 'completed',
-        metadata: { ...processingRecord.metadata, recipe }
-      })
-      .eq('id', processingRecord.id);
+    // Update processing record if it exists
+    if (processingRecord) {
+      const { error: updateError } = await supabase
+        .from('video_processing')
+        .update({
+          status: 'completed',
+          metadata: { ...processingRecord.metadata, recipe }
+        })
+        .eq('id', processingRecord.id);
 
-    if (updateError) {
-      console.error('Error updating processing record:', updateError);
+      if (updateError) {
+        console.error('Error updating processing record:', updateError);
+      }
     }
 
     return new Response(JSON.stringify(recipe), {
@@ -209,21 +230,6 @@ serve(async (req) => {
       error: error instanceof YouTubeError ? error.message : 'Internal server error',
       details: error.message
     };
-
-    // Update processing record with error if we have one
-    if (error.processingRecord) {
-      const { error: updateError } = await supabase
-        .from('video_processing')
-        .update({
-          status: 'error',
-          error: error.message
-        })
-        .eq('id', error.processingRecord.id);
-
-      if (updateError) {
-        console.error('Error updating processing record:', updateError);
-      }
-    }
 
     return new Response(JSON.stringify(errorResponse), { 
       status: error instanceof YouTubeError ? 400 : 500,
