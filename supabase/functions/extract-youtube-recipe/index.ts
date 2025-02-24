@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,7 +74,7 @@ const fetchTranscript = async (videoId: string): Promise<string> => {
   const transcript = textMatches
     .map(match => {
       const text = match.replace(/<[^>]+>/g, '');
-      return text.trim();
+      return decodeURIComponent(text.trim());
     })
     .join(' ');
 
@@ -90,7 +91,7 @@ const extractRecipe = async (transcript: string, metadata: any) => {
     "title": "Recipe name",
     "description": "Brief overview of the dish",
     "ingredients": ["Ingredient 1 with quantity", "Ingredient 2 with quantity"],
-    "instructions": ["Step 1", "Step 2"],
+    "instructions": "Step-by-step instructions",
     "cook_time": "Estimated time (if mentioned)",
     "difficulty": "Easy/Medium/Hard",
     "image_url": "${metadata.thumbnail_url}"
@@ -129,10 +130,20 @@ const extractRecipe = async (transcript: string, metadata: any) => {
     throw new Error('Invalid response format from Gemini');
   }
 
-  const recipe = JSON.parse(jsonMatch[0]);
-  console.log('Successfully extracted recipe');
-  return recipe;
+  try {
+    const recipe = JSON.parse(jsonMatch[0]);
+    console.log('Successfully extracted recipe');
+    return recipe;
+  } catch (error) {
+    console.error('Error parsing recipe JSON:', error);
+    throw new Error('Failed to parse recipe data');
+  }
 };
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -145,8 +156,24 @@ serve(async (req) => {
       throw new YouTubeError('URL is required');
     }
 
-    console.log('Processing YouTube URL:', url);
+    // Create processing record
     const videoId = extractVideoId(url);
+    const { data: processingRecord, error: dbError } = await supabase
+      .from('video_processing')
+      .insert({
+        video_url: url,
+        status: 'processing',
+        metadata: { video_id: videoId }
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw new Error('Failed to create processing record');
+    }
+
+    console.log('Processing YouTube URL:', url);
     console.log('Video ID:', videoId);
 
     // Fetch metadata and transcript in parallel
@@ -157,6 +184,19 @@ serve(async (req) => {
 
     // Extract recipe using Gemini
     const recipe = await extractRecipe(transcript, metadata);
+
+    // Update processing record with success
+    const { error: updateError } = await supabase
+      .from('video_processing')
+      .update({
+        status: 'completed',
+        metadata: { ...processingRecord.metadata, recipe }
+      })
+      .eq('id', processingRecord.id);
+
+    if (updateError) {
+      console.error('Error updating processing record:', updateError);
+    }
 
     return new Response(JSON.stringify(recipe), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,6 +209,21 @@ serve(async (req) => {
       error: error instanceof YouTubeError ? error.message : 'Internal server error',
       details: error.message
     };
+
+    // Update processing record with error if we have one
+    if (error.processingRecord) {
+      const { error: updateError } = await supabase
+        .from('video_processing')
+        .update({
+          status: 'error',
+          error: error.message
+        })
+        .eq('id', error.processingRecord.id);
+
+      if (updateError) {
+        console.error('Error updating processing record:', updateError);
+      }
+    }
 
     return new Response(JSON.stringify(errorResponse), { 
       status: error instanceof YouTubeError ? 400 : 500,

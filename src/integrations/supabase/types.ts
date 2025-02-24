@@ -90,6 +90,39 @@ export type Database = {
         }
         Relationships: []
       }
+      video_processing: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          metadata: Json | null
+          owner_id: string | null
+          status: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          owner_id?: string | null
+          status?: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          owner_id?: string | null
+          status?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
