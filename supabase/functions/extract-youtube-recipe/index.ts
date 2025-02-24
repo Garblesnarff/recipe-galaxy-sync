@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,11 +36,34 @@ const extractVideoId = (url: string): string => {
   throw new YouTubeError('Invalid YouTube URL format');
 };
 
+async function downloadVideoFrames(videoId: string): Promise<string[]> {
+  console.log('Downloading video frames for:', videoId);
+  
+  try {
+    // Get video info using oEmbed
+    const infoResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    if (!infoResponse.ok) {
+      throw new Error('Failed to fetch video info');
+    }
+    
+    // For now, we'll use the thumbnail as our frame since we can't download video in edge function
+    const { thumbnail_url } = await infoResponse.json();
+    
+    // Get the highest resolution thumbnail
+    const hdThumbnail = thumbnail_url.replace('hqdefault', 'maxresdefault');
+    
+    console.log('Using HD thumbnail:', hdThumbnail);
+    return [hdThumbnail];
+  } catch (error) {
+    console.error('Error downloading video frames:', error);
+    throw new YouTubeError('Failed to download video frames');
+  }
+}
+
 const fetchVideoTranscript = async (videoId: string): Promise<string> => {
   console.log('Fetching transcript for video:', videoId);
   
   try {
-    // First attempt: Try fetching the video page
     const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
     if (!response.ok) {
       throw new Error('Failed to fetch video page');
@@ -48,13 +72,7 @@ const fetchVideoTranscript = async (videoId: string): Promise<string> => {
     const html = await response.text();
     console.log('Successfully fetched video page');
 
-    // Extract captions data from ytInitialPlayerResponse
-    const playerResponseMatch = html.match(/"playerCaptionsTracklistRenderer":\s*({[^}]+})/);
-    if (!playerResponseMatch) {
-      throw new Error('No captions data found in video page');
-    }
-
-    // Find caption URL from the data
+    // Extract captions data
     const captionsMatch = html.match(/"captionTracks":\s*\[.*?"baseUrl":\s*"([^"]+)"/);
     if (!captionsMatch) {
       throw new Error('No caption URL found');
@@ -63,7 +81,6 @@ const fetchVideoTranscript = async (videoId: string): Promise<string> => {
     const captionUrl = decodeURIComponent(captionsMatch[1]);
     console.log('Found caption URL');
 
-    // Fetch the actual transcript
     const transcriptResponse = await fetch(captionUrl);
     if (!transcriptResponse.ok) {
       throw new Error('Failed to fetch transcript');
@@ -72,7 +89,6 @@ const fetchVideoTranscript = async (videoId: string): Promise<string> => {
     const transcriptText = await transcriptResponse.text();
     console.log('Successfully fetched transcript');
 
-    // Extract text from XML-like response
     const textLines = transcriptText
       .match(/<text[^>]*>(.*?)<\/text>/g)
       ?.map(line => {
@@ -87,7 +103,6 @@ const fetchVideoTranscript = async (videoId: string): Promise<string> => {
     }
 
     return textLines;
-
   } catch (error) {
     console.error('Error fetching transcript:', error);
     throw new YouTubeError(`Failed to fetch transcript: ${error.message}`);
@@ -113,10 +128,25 @@ const getVideoMetadata = async (videoId: string) => {
   }
 };
 
-const parseRecipeWithGemini = async (transcript: string, videoMetadata: any): Promise<any> => {
+async function downloadImage(url: string): Promise<{ mimeType: string; data: string }> {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  const mimeType = response.headers.get('content-type') || 'image/jpeg';
+  return { mimeType, data: base64 };
+}
+
+const parseRecipeWithGemini = async (transcript: string, frames: string[], videoMetadata: any): Promise<any> => {
   console.log('Starting recipe parsing with Gemini');
   try {
-    const prompt = `Extract a detailed recipe from the following YouTube video transcript titled "${videoMetadata.title}". 
+    // Download and process the frames
+    const processedFrames = await Promise.all(frames.map(downloadImage));
+    
+    const prompt = `You are a professional chef and recipe writer. Analyze this cooking video and create a detailed recipe. 
+    The video shows key steps and ingredients for making ${videoMetadata.title}.
+    
+    Consider both the visual information from the frames and the transcript to create an accurate and detailed recipe.
+    
     Provide the output in this exact structured format:
     {
       "title": "Recipe name",
@@ -126,28 +156,30 @@ const parseRecipeWithGemini = async (transcript: string, videoMetadata: any): Pr
       "cook_time": "Estimated cooking time (if mentioned)",
       "difficulty": "Easy/Medium/Hard based on complexity",
       "image_url": "${videoMetadata.thumbnail_url || ''}"
-    }
+    }`;
 
-    If any field cannot be determined from the transcript, use an empty string or empty array as appropriate.
-    Do not include any explanatory text, only output the JSON object.
-
-    Transcript:
-    ${transcript}`;
+    const contents = [{
+      role: 'user',
+      parts: [
+        { text: prompt },
+        ...processedFrames.map(frame => ({
+          inlineData: {
+            mimeType: frame.mimeType,
+            data: frame.data
+          }
+        })),
+        { text: `Transcript:\n${transcript}` }
+      ]
+    }];
 
     console.log('Sending request to Gemini API');
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${GEMINI_API_KEY}`
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }]
-      })
+      body: JSON.stringify({ contents })
     });
 
     if (!response.ok) {
@@ -191,15 +223,18 @@ serve(async (req) => {
     const videoId = extractVideoId(url);
     console.log('Successfully extracted video ID:', videoId);
 
-    const [metadata, transcript] = await Promise.all([
+    // Parallel fetch of metadata, transcript, and frames
+    const [metadata, transcript, frames] = await Promise.all([
       getVideoMetadata(videoId),
-      fetchVideoTranscript(videoId)
+      fetchVideoTranscript(videoId),
+      downloadVideoFrames(videoId)
     ]);
 
-    console.log('Successfully fetched metadata and transcript');
+    console.log('Successfully fetched metadata, transcript, and frames');
     console.log('Transcript length:', transcript.length);
+    console.log('Number of frames:', frames.length);
 
-    const recipe = await parseRecipeWithGemini(transcript, metadata);
+    const recipe = await parseRecipeWithGemini(transcript, frames, metadata);
     console.log('Successfully extracted recipe');
 
     return new Response(JSON.stringify(recipe), {
