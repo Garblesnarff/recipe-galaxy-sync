@@ -29,21 +29,32 @@ const isYouTubeUrl = (url: string): boolean => {
 
 export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeData> => {
   const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
+  console.log(`Calling ${endpoint} function with URL:`, url);
   
-  const { data, error } = await supabase.functions.invoke(endpoint, {
-    body: { url }
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke(endpoint, {
+      body: { url },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-  if (error) {
-    console.error(`Error importing recipe from ${endpoint}:`, error);
+    if (error) {
+      console.error(`Error response from ${endpoint}:`, error);
+      throw error;
+    }
+
+    if (!data) {
+      console.error(`No data received from ${endpoint}`);
+      throw new Error(`No data received from ${endpoint}`);
+    }
+
+    console.log(`Successfully received data from ${endpoint}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error in importRecipeFromUrl (${endpoint}):`, error);
     throw error;
   }
-
-  if (!data) {
-    throw new Error(`No data received from ${endpoint}`);
-  }
-
-  return data;
 };
 
 export const saveRecipe = async (recipeData: any) => {
