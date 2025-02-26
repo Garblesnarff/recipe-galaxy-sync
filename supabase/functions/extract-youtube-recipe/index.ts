@@ -1,33 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
-// CORS headers for browser access
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Custom error class for better error handling
-class YouTubeError extends Error {
-  constructor(message: string, public status = 400) {
-    super(message);
-    this.name = 'YouTubeError';
-  }
-}
-
-function validateEnvironment() {
-  const required = ['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-  const missing = required.filter(key => !Deno.env.get(key));
-  
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
-}
-
 const extractVideoId = (url: string): string => {
-  if (!url) throw new YouTubeError('URL is required');
-
   const patterns = [
     /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
     /(?:youtu.be\/)([^&\n?#]+)/,
@@ -38,88 +17,61 @@ const extractVideoId = (url: string): string => {
     const match = url.match(pattern);
     if (match) return match[1];
   }
-
-  throw new YouTubeError('Invalid YouTube URL format');
+  return '';
 };
 
-const getVideoMetadata = async (videoId: string) => {
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
-    const response = await fetch(
+    console.log('Starting YouTube recipe extraction');
+
+    if (!Deno.env.get('GEMINI_API_KEY')) {
+      throw new Error('GEMINI_API_KEY is required');
+    }
+
+    const { url } = await req.json();
+    if (!url) {
+      throw new Error('URL is required');
+    }
+
+    console.log('Processing URL:', url);
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      throw new Error('Invalid YouTube URL');
+    }
+
+    // Fetch video metadata
+    const oembedResponse = await fetch(
       `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
     );
 
-    if (!response.ok) {
-      throw new YouTubeError(`Failed to fetch video metadata: ${response.statusText}`, response.status);
+    if (!oembedResponse.ok) {
+      throw new Error('Failed to fetch video metadata');
     }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching video metadata:', error);
-    throw error;
-  }
-};
+    const metadata = await oembedResponse.json();
+    console.log('Fetched metadata:', metadata);
 
-const fetchTranscript = async (videoId: string): Promise<string> => {
-  try {
-    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-    if (!response.ok) {
-      throw new YouTubeError(`Failed to fetch video page: ${response.statusText}`, response.status);
-    }
-
-    const html = await response.text();
-    const captionsMatch = html.match(/"captionTracks":\s*\[.*?"baseUrl":\s*"([^"]+)"/);
+    // Generate recipe using Gemini
+    const prompt = `You are a professional chef. Create a detailed recipe based on this YouTube cooking video titled: "${metadata.title}".
     
-    if (!captionsMatch) {
-      throw new YouTubeError('No captions found for this video', 404);
-    }
-
-    const captionUrl = decodeURIComponent(captionsMatch[1]);
-    const transcriptResponse = await fetch(captionUrl);
-    
-    if (!transcriptResponse.ok) {
-      throw new YouTubeError(`Failed to fetch transcript: ${transcriptResponse.statusText}`, transcriptResponse.status);
-    }
-
-    const transcriptXml = await transcriptResponse.text();
-    const textMatches = transcriptXml.match(/<text[^>]*>(.*?)<\/text>/g) || [];
-    const transcript = textMatches
-      .map(match => {
-        const text = match.replace(/<[^>]+>/g, '');
-        return decodeURIComponent(text.trim());
-      })
-      .join(' ');
-
-    if (!transcript) {
-      throw new YouTubeError('Empty transcript');
-    }
-
-    return transcript;
-  } catch (error) {
-    console.error('Error fetching transcript:', error);
-    throw error;
-  }
-};
-
-const extractRecipe = async (transcript: string, metadata: any) => {
-  try {
-    console.log('Extracting recipe with Gemini API');
-    const prompt = `You are a professional chef and recipe writer. Convert this YouTube cooking video transcript into a detailed recipe. The video's title is: "${metadata.title}"
-
-    Format the recipe in this exact JSON structure:
+    Format your response as a JSON object with these exact fields:
     {
       "title": "Recipe name",
-      "description": "Brief overview of the dish",
-      "ingredients": ["Ingredient 1 with quantity", "Ingredient 2 with quantity"],
-      "instructions": "Step-by-step instructions",
-      "cook_time": "Estimated time (if mentioned)",
+      "description": "Brief overview",
+      "ingredients": ["ingredient 1", "ingredient 2"],
+      "instructions": "Step by step instructions",
+      "cook_time": "Estimated time",
       "difficulty": "Easy/Medium/Hard",
       "image_url": "${metadata.thumbnail_url}"
-    }
+    }`;
 
-    Analyze this transcript and create a detailed recipe:
-    ${transcript}`;
-
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    console.log('Sending prompt to Gemini');
+    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,94 +86,37 @@ const extractRecipe = async (transcript: string, metadata: any) => {
       })
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Gemini API error:', error);
-      throw new Error(`Gemini API error: ${error}`);
+    if (!geminiResponse.ok) {
+      throw new Error('Failed to generate recipe with Gemini');
     }
 
-    const data = await response.json();
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('Invalid response format from Gemini API');
-    }
+    const geminiData = await geminiResponse.json();
+    const recipeText = geminiData.candidates[0].content.parts[0].text;
+    console.log('Generated recipe text:', recipeText);
 
-    const recipeText = data.candidates[0].content.parts[0].text;
+    // Extract JSON from Gemini's response
     const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
-    
     if (!jsonMatch) {
-      throw new Error('Invalid response format from Gemini');
+      throw new Error('Failed to parse recipe data');
     }
 
-    return JSON.parse(jsonMatch[0]);
-  } catch (error) {
-    console.error('Error extracting recipe:', error);
-    throw error;
-  }
-};
+    const recipeData = JSON.parse(jsonMatch[0]);
+    console.log('Successfully extracted recipe data');
 
-serve(async (req) => {
-  console.log('Received request:', req.method, req.url);
-  const requestId = crypto.randomUUID();
-
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    // Validate environment variables first
-    validateEnvironment();
-
-    // Validate request method
-    if (req.method !== 'POST') {
-      throw new YouTubeError('Method not allowed', 405);
-    }
-
-    // Validate content type
-    const contentType = req.headers.get('content-type');
-    if (!contentType?.includes('application/json')) {
-      throw new YouTubeError('Content-Type must be application/json');
-    }
-
-    // Parse request body
-    const { url } = await req.json();
-    if (!url) {
-      throw new YouTubeError('URL is required');
-    }
-
-    console.log(`[${requestId}] Processing YouTube URL:`, url);
-    
-    // Extract video ID and fetch data
-    const videoId = extractVideoId(url);
-    console.log(`[${requestId}] Extracted video ID:`, videoId);
-
-    const [metadata, transcript] = await Promise.all([
-      getVideoMetadata(videoId),
-      fetchTranscript(videoId)
-    ]);
-
-    console.log(`[${requestId}] Successfully fetched metadata and transcript`);
-
-    // Extract recipe from transcript
-    const recipe = await extractRecipe(transcript, metadata);
-    console.log(`[${requestId}] Successfully extracted recipe`);
-
-    return new Response(JSON.stringify(recipe), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error(`[${requestId}] Error:`, error);
-    
-    const status = error instanceof YouTubeError ? error.status : 500;
-    const errorResponse = {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      request_id: requestId
-    };
-
-    return new Response(JSON.stringify(errorResponse), { 
-      status,
+    return new Response(JSON.stringify(recipeData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
+  } catch (error) {
+    console.error('Error in extract-youtube-recipe:', error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
