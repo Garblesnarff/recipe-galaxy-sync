@@ -87,10 +87,16 @@ serve(async (req) => {
     });
 
     if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.text();
+      console.error('Gemini API error:', errorData);
       throw new Error('Failed to generate recipe with Gemini');
     }
 
     const geminiData = await geminiResponse.json();
+    if (!geminiData.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from Gemini');
+    }
+
     const recipeText = geminiData.candidates[0].content.parts[0].text;
     console.log('Generated recipe text:', recipeText);
 
@@ -100,18 +106,23 @@ serve(async (req) => {
       throw new Error('Failed to parse recipe data');
     }
 
-    const recipeData = JSON.parse(jsonMatch[0]);
-    console.log('Successfully extracted recipe data');
-
-    return new Response(JSON.stringify(recipeData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    try {
+      const recipeData = JSON.parse(jsonMatch[0]);
+      console.log('Successfully extracted recipe data');
+      return new Response(JSON.stringify(recipeData), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error('Failed to parse recipe JSON data');
+    }
 
   } catch (error) {
     console.error('Error in extract-youtube-recipe:', error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'An unknown error occurred',
+        status: 'error'
       }),
       {
         status: 400,
