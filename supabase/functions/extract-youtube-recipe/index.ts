@@ -114,8 +114,8 @@ serve(async (req) => {
     }`;
 
     console.log('Sending prompt to Gemini');
-    // Use API key in URL parameter instead of Authorization header
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    // Updated to use gemini-2.0-flash model
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
     console.log(`Making request to Gemini API at: ${geminiUrl.substring(0, geminiUrl.indexOf('?'))}...`);
     
     const geminiResponse = await fetch(geminiUrl, {
