@@ -119,11 +119,11 @@ const Index = () => {
 
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
         <div className="flex justify-around max-w-lg mx-auto">
-          <div className="action-button active">
+          <div className="action-button active" onClick={() => navigate("/")}>
             <Utensils className="h-6 w-6 mb-1" />
             <span>Recipes</span>
           </div>
-          <div className="action-button">
+          <div className="action-button" onClick={() => navigate("/grocery-list")}>
             <ShoppingCart className="h-6 w-6 mb-1" />
             <span>Groceries</span>
           </div>
