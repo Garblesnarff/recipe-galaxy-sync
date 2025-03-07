@@ -51,15 +51,27 @@ export const useRecipeForm = () => {
       const data = await importRecipeFromUrl(recipeUrl);
       
       // Parse ingredients if they came as a string
-      let ingredientsArray = data.ingredients;
-      if (typeof data.ingredients === 'string') {
-        try {
-          ingredientsArray = JSON.parse(data.ingredients);
-        } catch (e) {
-          // If it can't be parsed as JSON, split by newlines or commas
-          ingredientsArray = data.ingredients.split(/[,\n]+/).map(item => item.trim()).filter(Boolean);
+      let ingredientsArray: string[] = [];
+      
+      if (data.ingredients) {
+        if (Array.isArray(data.ingredients)) {
+          ingredientsArray = data.ingredients;
+        } else if (typeof data.ingredients === 'string') {
+          try {
+            // Try to parse as JSON
+            const parsed = JSON.parse(data.ingredients);
+            ingredientsArray = Array.isArray(parsed) ? parsed : [data.ingredients];
+          } catch (e) {
+            // If it can't be parsed as JSON, split by newlines or commas
+            ingredientsArray = data.ingredients.split(/[,\n]+/).map(item => item.trim()).filter(Boolean);
+          }
         }
       }
+      
+      // Determine recipe type based on URL
+      const recipeType = recipeUrl.includes('youtube.com') || recipeUrl.includes('youtu.be') 
+        ? 'youtube' 
+        : 'imported';
       
       setFormData(prev => ({
         ...prev,
@@ -68,10 +80,10 @@ export const useRecipeForm = () => {
         cookTime: data.cook_time || prev.cookTime,
         difficulty: data.difficulty || prev.difficulty,
         instructions: data.instructions || prev.instructions,
-        ingredients: Array.isArray(ingredientsArray) ? ingredientsArray : prev.ingredients,
+        ingredients: ingredientsArray,
         imageUrl: data.image_url || prev.imageUrl,
         source_url: recipeUrl,
-        recipe_type: recipeUrl.includes('youtube') ? 'youtube' : 'imported'
+        recipe_type: recipeType
       }));
 
       if (data.image_url) {
