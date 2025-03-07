@@ -48,7 +48,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">RecipeKeeper</h1>
@@ -78,20 +78,6 @@ const Index = () => {
       </header>
 
       <main className="container py-6 animate-fade-in">
-        <div className="bg-recipe-green-light rounded-2xl p-4 mb-6 flex items-center overflow-hidden relative">
-          <div className="z-10">
-            <h2 className="text-lg font-semibold mb-1">Get access to Exclusive Recipes</h2>
-            <p className="text-sm text-recipe-green-dark mb-2">Upgrade to RecipeKeeper Pro</p>
-          </div>
-          <div className="absolute right-0 top-0 bottom-0 w-32">
-            <img 
-              src="/lovable-uploads/3b5475f7-590f-49a1-aa63-0e2b2b981a51.png" 
-              alt="Food" 
-              className="h-full object-cover"
-            />
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="text-center text-gray-500 py-10">Loading recipes...</div>
         ) : recipes?.length === 0 ? (
