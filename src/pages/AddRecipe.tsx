@@ -23,20 +23,23 @@ export const AddRecipe = () => {
   } = useRecipeForm();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container py-8">
-        <Button
-          variant="ghost"
-          className="mb-6"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Recipes
-        </Button>
+    <div className="min-h-screen bg-background">
+      <header className="bg-white border-b sticky top-0 z-10">
+        <div className="container py-4 flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-semibold">Add New Recipe</h1>
+        </div>
+      </header>
 
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-semibold mb-6">Add New Recipe</h1>
-
+      <div className="container py-6">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-6 animate-fade-in">
           <AddRecipeForm
             formData={formData}
             setFormData={setFormData}

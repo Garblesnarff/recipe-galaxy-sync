@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Rating } from "@/components/ui/rating";
-import { ArrowLeft } from "lucide-react";
+import { Clock, ArrowLeft, ChefHat, ShoppingCart, Check, Star } from "lucide-react";
 import { toast } from "sonner";
 
 interface Rating {
@@ -79,9 +79,9 @@ const RecipeDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container py-8">
-          <div className="text-center">Loading recipe...</div>
+          <div className="text-center py-20">Loading recipe...</div>
         </div>
       </div>
     );
@@ -89,10 +89,14 @@ const RecipeDetail = () => {
 
   if (!recipe) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container py-8">
-          <div className="text-center">Recipe not found</div>
-          <Button onClick={() => navigate("/")} className="mt-4">
+          <div className="text-center py-20">Recipe not found</div>
+          <Button 
+            variant="app" 
+            onClick={() => navigate("/")} 
+            className="mx-auto mt-4"
+          >
             Back to Recipes
           </Button>
         </div>
@@ -109,74 +113,101 @@ const RecipeDetail = () => {
   const ratingsArray = (recipe.ratings as unknown as Rating[]) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container py-8">
+    <div className="min-h-screen bg-background">
+      <div className="relative">
+        {recipe.image_url ? (
+          <div className="h-64 md:h-80 relative">
+            <img
+              src={recipe.image_url}
+              alt={recipe.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </div>
+        ) : (
+          <div className="h-32 bg-gray-200" />
+        )}
+
         <Button
           variant="ghost"
-          className="mb-6"
+          size="icon"
+          className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm rounded-full z-10"
           onClick={() => navigate("/")}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Recipes
+          <ArrowLeft className="h-5 w-5 text-black" />
         </Button>
 
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow overflow-hidden">
-          {recipe.image_url && (
-            <div className="aspect-video relative">
-              <img
-                src={recipe.image_url}
-                alt={recipe.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-          <div className="p-6">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-3xl font-semibold">{recipe.title}</h1>
-              <div className="flex flex-col items-end">
-                <Rating
-                  value={userRating || recipe.rating || 0}
-                  onChange={handleRating}
-                  className="mb-1"
-                />
-                <span className="text-sm text-gray-500">
-                  {ratingsArray.length} ratings
-                </span>
+        <div className="container -mt-16 relative z-10">
+          <div className="bg-white rounded-t-3xl p-6 shadow-sm">
+            <h1 className="text-2xl font-bold mb-2">{recipe.title}</h1>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center">
+                <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                <span className="text-sm font-medium">{recipe.rating || '0'}</span>
               </div>
+              <span className="text-sm text-gray-500">
+                ({ratingsArray.length} ratings)
+              </span>
             </div>
 
-            <div className="flex gap-4 text-sm text-gray-600 mb-6">
+            <div className="flex flex-wrap gap-3 mb-4">
               {recipe.cook_time && (
-                <div>Cook time: {recipe.cook_time}</div>
+                <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
+                  <Clock className="mr-1 h-4 w-4 text-gray-500" />
+                  <span>{recipe.cook_time}</span>
+                </div>
               )}
               {recipe.difficulty && (
-                <div>Difficulty: {recipe.difficulty}</div>
+                <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
+                  <ChefHat className="mr-1 h-4 w-4 text-gray-500" />
+                  <span>{recipe.difficulty}</span>
+                </div>
               )}
             </div>
 
-            <p className="text-gray-600 mb-8">{recipe.description}</p>
+            <p className="text-gray-700 mb-6">{recipe.description}</p>
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
-              <ul className="list-disc pl-5 space-y-2">
+              <h2 className="text-xl font-semibold mb-3">Ingredients</h2>
+              <ul className="space-y-2">
                 {(recipe.ingredients as string[]).map((ingredient, index) => (
-                  <li key={index} className="text-gray-600">{ingredient}</li>
+                  <li key={index} className="flex items-center">
+                    <div className="checkbox-circle mr-3">
+                      <Check className="h-3 w-3 opacity-0 transition-opacity" />
+                    </div>
+                    <span className="text-gray-800">{ingredient}</span>
+                  </li>
                 ))}
               </ul>
             </div>
 
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-3">Instructions</h2>
               <div className="prose max-w-none">
                 {recipe.instructions.split("\n").map((instruction, index) => (
                   instruction.trim() && (
-                    <p key={index} className="mb-4 text-gray-600">
-                      {instruction}
-                    </p>
+                    <div key={index} className="flex mb-4">
+                      <div className="flex-shrink-0 mr-4">
+                        <div className="w-7 h-7 rounded-full bg-recipe-green-light flex items-center justify-center text-sm font-medium text-recipe-green-dark">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <p className="text-gray-700">{instruction}</p>
+                    </div>
                   )
                 ))}
               </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" className="flex-1">
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Add to grocery list
+              </Button>
+              <Button variant="app" className="flex-1">
+                Rate Recipe
+              </Button>
             </div>
           </div>
         </div>

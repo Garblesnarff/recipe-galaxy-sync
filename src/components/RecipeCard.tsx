@@ -2,9 +2,10 @@
 import { Card } from "@/components/ui/card";
 import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
+import { Check } from "lucide-react";
 
 interface RecipeCardProps {
-  id: string; // Changed from optional to required
+  id: string;
   title: string;
   description: string;
   image?: string;
@@ -23,14 +24,19 @@ export const RecipeCard = ({
   difficulty,
 }: RecipeCardProps) => {
   return (
-    <Link to={`/recipe/${id}`}>
-      <Card className="overflow-hidden group transition-all duration-300 hover:shadow-lg animate-fade-in">
-        <div className="aspect-video relative overflow-hidden bg-gray-100">
+    <Link to={`/recipe/${id}`} className="block">
+      <Card className="recipe-card relative">
+        <div className="absolute top-3 right-3 z-10">
+          <div className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
+            <Check className="h-5 w-5 text-recipe-green" />
+          </div>
+        </div>
+        <div className="recipe-image">
           {image ? (
             <img
               src={image}
               alt={title}
-              className="object-cover w-full h-full transform transition-transform duration-300 group-hover:scale-105"
+              className="object-cover w-full h-full"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -39,11 +45,8 @@ export const RecipeCard = ({
           )}
         </div>
         <div className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            <h3 className="font-semibold text-lg leading-tight">{title}</h3>
-            <Rating value={rating} readonly className="flex-shrink-0" />
-          </div>
-          <p className="text-sm text-gray-600 mt-2 line-clamp-2">{description}</p>
+          <h3 className="font-semibold text-lg leading-tight mb-1">{title}</h3>
+          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
           {(cookTime || difficulty) && (
             <div className="flex gap-3 mt-3 text-xs text-gray-500">
               {cookTime && <span>{cookTime}</span>}

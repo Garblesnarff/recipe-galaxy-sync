@@ -56,6 +56,9 @@ export default {
         recipe: {
           sage: "hsl(150, 15%, 50%)",
           "sage-light": "hsl(150, 15%, 95%)",
+          green: "hsl(120, 61%, 50%)",        // Bright green like in screenshots
+          "green-light": "hsl(120, 61%, 90%)", // Light green for backgrounds
+          "green-dark": "hsl(120, 61%, 35%)",  // Darker green for hover states
         },
       },
       keyframes: {
@@ -67,10 +70,19 @@ export default {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "float-in": {
+          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.5s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
+        "float-in": "float-in 0.4s ease-out",
+      },
+      borderRadius: {
+        "xl": "1rem",
+        "2xl": "1.5rem",
       },
     },
   },

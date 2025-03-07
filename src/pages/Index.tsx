@@ -1,7 +1,7 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Search } from "lucide-react";
+import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,40 +47,60 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="container py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">Kitchen Sync</h1>
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background">
+      <header className="bg-white border-b sticky top-0 z-10">
+        <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">RecipeKeeper</h1>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 md:w-auto w-full">
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search recipes..."
-                className="pl-10"
+                className="pl-10 rounded-full"
                 onChange={handleSearch}
               />
             </div>
             <Button 
-              className="bg-recipe-sage hover:bg-recipe-sage/90"
+              variant="app"
+              className="rounded-full"
               onClick={() => navigate("/add-recipe")}
             >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Recipe
+              <Plus className="mr-1 h-4 w-4" />
+              Add
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container py-6 animate-fade-in">
+        <div className="bg-recipe-green-light rounded-2xl p-4 mb-6 flex items-center overflow-hidden relative">
+          <div className="z-10">
+            <h2 className="text-lg font-semibold mb-1">Get access to Exclusive Recipes</h2>
+            <p className="text-sm text-recipe-green-dark mb-2">Upgrade to RecipeKeeper Pro</p>
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-32">
+            <img 
+              src="/lovable-uploads/3b5475f7-590f-49a1-aa63-0e2b2b981a51.png" 
+              alt="Food" 
+              className="h-full object-cover"
+            />
+          </div>
+        </div>
+
         {isLoading ? (
-          <div className="text-center text-gray-500">Loading recipes...</div>
+          <div className="text-center text-gray-500 py-10">Loading recipes...</div>
         ) : recipes?.length === 0 ? (
-          <div className="text-center text-gray-500">
+          <div className="text-center text-gray-500 py-10">
             <p className="mb-4">No recipes found</p>
-            <Button onClick={() => navigate("/add-recipe")}>Add Your First Recipe</Button>
+            <Button variant="app" onClick={() => navigate("/add-recipe")}>Add Your First Recipe</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recipes?.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -96,6 +116,36 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
+        <div className="flex justify-around max-w-lg mx-auto">
+          <div className="action-button active">
+            <Utensils className="h-6 w-6 mb-1" />
+            <span>Recipes</span>
+          </div>
+          <div className="action-button">
+            <ShoppingCart className="h-6 w-6 mb-1" />
+            <span>Groceries</span>
+          </div>
+          <div className="action-button">
+            <BookHeart className="h-6 w-6 mb-1" />
+            <span>Favorites</span>
+          </div>
+          <div className="action-button">
+            <Settings className="h-6 w-6 mb-1" />
+            <span>Settings</span>
+          </div>
+        </div>
+      </footer>
+
+      <Button 
+        variant="app" 
+        size="fab"
+        className="fixed bottom-20 right-4 z-10"
+        onClick={() => navigate("/add-recipe")}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
     </div>
   );
 };
