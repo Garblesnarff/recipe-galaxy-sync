@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export interface GroceryItem {
   id: string;
-  user_id: string;
+  user_id?: string;
   recipe_id?: string;
   item_name: string;
   quantity?: string;
@@ -19,17 +19,10 @@ export const addToGroceryList = async (
   item: Omit<GroceryItem, "id" | "user_id" | "created_at" | "is_purchased">
 ): Promise<GroceryItem | null> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      toast.error("You must be logged in to add items to your grocery list");
-      return null;
-    }
-
     const { data, error } = await supabase
       .from("grocery_items")
       .insert({
         ...item,
-        user_id: userData.user.id,
         is_purchased: false
       })
       .select()
@@ -56,12 +49,6 @@ export const addIngredientsToGroceryList = async (
   recipeId: string
 ): Promise<boolean> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      toast.error("You must be logged in to add items to your grocery list");
-      return false;
-    }
-
     // Parse ingredients
     const groceryItems = ingredients.map(ingredient => {
       // Simple parsing logic - can be enhanced later
@@ -78,7 +65,6 @@ export const addIngredientsToGroceryList = async (
       }
 
       return {
-        user_id: userData.user!.id,
         recipe_id: recipeId,
         item_name: itemName,
         quantity,
@@ -106,7 +92,7 @@ export const addIngredientsToGroceryList = async (
   }
 };
 
-// Get all grocery items for the current user
+// Get all grocery items
 export const getGroceryList = async (): Promise<GroceryItem[]> => {
   try {
     const { data, error } = await supabase

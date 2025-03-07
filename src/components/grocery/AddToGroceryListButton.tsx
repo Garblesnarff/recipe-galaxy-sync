@@ -1,6 +1,6 @@
 
 import { Button, ButtonProps } from "@/components/ui/button";
-import { ShoppingCart, Plus } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { addIngredientsToGroceryList } from "@/services/groceryService";
 import { useState } from "react";
 

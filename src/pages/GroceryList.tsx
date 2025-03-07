@@ -1,19 +1,16 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getGroceryList, clearPurchasedItems, clearAllItems, addToGroceryList } from "@/services/groceryService";
 import { GroceryItem } from "@/components/grocery/GroceryItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShoppingCart, ArrowLeft, Trash, Plus, CheckCircle } from "lucide-react";
+import { ShoppingCart, ArrowLeft, Trash, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const GroceryList = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [newItem, setNewItem] = useState("");
-  const [showCompleted, setShowCompleted] = useState(true);
 
   const {
     data: groceryItems = [],
@@ -23,19 +20,6 @@ const GroceryList = () => {
     queryKey: ["groceryList"],
     queryFn: getGroceryList,
   });
-
-  // Check if the user is logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        toast.error("Please log in to view your grocery list");
-        navigate("/");
-      }
-    };
-    
-    checkAuth();
-  }, [navigate]);
 
   const handleToggleStatus = () => {
     refetch();
