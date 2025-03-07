@@ -32,30 +32,21 @@ serve(async (req) => {
   }
 
   try {
-    // Check content type
-    const contentType = req.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('Invalid content type:', contentType);
-      throw new Error(`Expected application/json content-type but got: ${contentType}`);
-    }
-    
-    // Get request body as text
-    const requestText = await req.text();
-    console.log('Raw request body length:', requestText.length);
-    if (requestText.length > 0) {
-      console.log('Raw request body preview:', requestText.substring(0, 100) + (requestText.length > 100 ? '...' : ''));
-    }
+    // Get request body as text first for debugging
+    const bodyText = await req.text();
+    console.log('Raw request body length:', bodyText.length);
+    console.log('Raw request body:', bodyText);
     
     // Check for empty request body
-    if (!requestText || requestText.trim() === '') {
-      console.error('Empty request body');
+    if (!bodyText || bodyText.trim() === '') {
+      console.error('Empty request body received');
       throw new Error('Empty request body');
     }
     
     // Try to parse JSON
     let requestBody;
     try {
-      requestBody = JSON.parse(requestText);
+      requestBody = JSON.parse(bodyText);
       console.log('Parsed request body:', JSON.stringify(requestBody));
     } catch (parseError) {
       console.error('Failed to parse request JSON:', parseError);
@@ -71,7 +62,8 @@ serve(async (req) => {
     console.log('Processing URL:', url);
 
     // Check for Gemini API key
-    if (!Deno.env.get('GEMINI_API_KEY')) {
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
       console.error('GEMINI_API_KEY is missing');
       throw new Error('GEMINI_API_KEY is required');
     }
@@ -117,7 +109,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('GEMINI_API_KEY')}`
+        'Authorization': `Bearer ${geminiApiKey}`
       },
       body: JSON.stringify({
         contents: [{
