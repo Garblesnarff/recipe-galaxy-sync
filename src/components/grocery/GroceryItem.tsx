@@ -1,7 +1,7 @@
 
 import { Check, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GroceryItem as GroceryItemType } from "@/services/groceryService";
+import { GroceryItem as GroceryItemType } from "@/services/groceryTypes";
 import { toggleItemPurchasedStatus, deleteGroceryItem } from "@/services/groceryService";
 
 interface GroceryItemProps {
