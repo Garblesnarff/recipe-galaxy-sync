@@ -45,17 +45,16 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
   const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
   console.log(`Calling ${endpoint} function with URL:`, url);
   
+  // Create request body object (don't stringify it)
   const requestBody = { url };
   console.log('Request payload:', JSON.stringify(requestBody));
   
   try {
     console.log(`Invoking ${endpoint} function with payload:`, JSON.stringify(requestBody));
     
+    // Pass the object directly, not stringified
     const response = await supabase.functions.invoke(endpoint, {
-      body: requestBody,
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      body: requestBody
     });
     
     console.log(`Response from ${endpoint}:`, response);

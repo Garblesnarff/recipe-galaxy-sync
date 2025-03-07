@@ -32,25 +32,33 @@ serve(async (req) => {
   }
 
   try {
-    // Get request body as text first for debugging
-    const bodyText = await req.text();
-    console.log('Raw request body length:', bodyText.length);
-    console.log('Raw request body:', bodyText);
-    
-    // Check for empty request body
-    if (!bodyText || bodyText.trim() === '') {
-      console.error('Empty request body received');
-      throw new Error('Empty request body');
-    }
-    
-    // Try to parse JSON
+    // Get request body as raw data
     let requestBody;
+    
     try {
-      requestBody = JSON.parse(bodyText);
-      console.log('Parsed request body:', JSON.stringify(requestBody));
-    } catch (parseError) {
-      console.error('Failed to parse request JSON:', parseError);
-      throw new Error(`Invalid JSON in request: ${parseError.message}`);
+      // Try to get body as JSON directly
+      requestBody = await req.json();
+      console.log('Successfully parsed request body directly:', JSON.stringify(requestBody));
+    } catch (jsonError) {
+      console.log('Could not parse request as JSON directly, trying text method');
+      // If direct JSON parsing fails, try the text method
+      try {
+        const bodyText = await req.text();
+        console.log('Raw request body length:', bodyText.length);
+        console.log('Raw request body:', bodyText);
+        
+        // Check for empty request body
+        if (!bodyText || bodyText.trim() === '') {
+          console.error('Empty request body received');
+          throw new Error('Empty request body');
+        }
+        
+        requestBody = JSON.parse(bodyText);
+        console.log('Parsed request body from text:', JSON.stringify(requestBody));
+      } catch (textError) {
+        console.error('Failed to get request body as text:', textError);
+        throw new Error(`Failed to parse request body: ${textError.message}`);
+      }
     }
     
     // Validate URL

@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link as LinkIcon } from "lucide-react";
+import { Link as LinkIcon, Loader2 } from "lucide-react";
 import { validateUrl } from "@/services/recipeService";
 import { useState, useEffect } from "react";
 
@@ -52,13 +52,23 @@ export const RecipeImport = ({
             value={recipeUrl}
             onChange={(e) => handleUrlChange(e.target.value)}
             className={urlError ? "border-red-500" : ""}
+            disabled={isImporting}
           />
           <Button 
             onClick={onImport} 
             disabled={isImporting || !!urlError || !recipeUrl}
           >
-            <LinkIcon className="mr-2 h-4 w-4" />
-            {isImporting ? "Importing..." : "Import"}
+            {isImporting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Import
+              </>
+            )}
           </Button>
         </div>
         {urlError && (
