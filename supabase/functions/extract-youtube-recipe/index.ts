@@ -75,6 +75,7 @@ serve(async (req) => {
       console.error('GEMINI_API_KEY is missing');
       throw new Error('GEMINI_API_KEY is required');
     }
+    console.log('GEMINI_API_KEY is configured');
 
     // Extract video ID
     const videoId = extractVideoId(url);
@@ -98,7 +99,7 @@ serve(async (req) => {
     const metadata = await oembedResponse.json();
     console.log('Fetched metadata:', JSON.stringify(metadata));
 
-    // Generate recipe using Gemini
+    // Generate recipe using Gemini - Use the key as a query parameter
     const prompt = `You are a professional chef. Create a detailed recipe based on this YouTube cooking video titled: "${metadata.title}".
     
     Format your response as a JSON object with these exact fields:
@@ -113,11 +114,14 @@ serve(async (req) => {
     }`;
 
     console.log('Sending prompt to Gemini');
-    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    // Use API key in URL parameter instead of Authorization header
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    console.log(`Making request to Gemini API at: ${geminiUrl.substring(0, geminiUrl.indexOf('?'))}...`);
+    
+    const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${geminiApiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{
@@ -129,9 +133,9 @@ serve(async (req) => {
     });
 
     if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text();
-      console.error('Gemini API error:', errorData);
-      throw new Error('Failed to generate recipe with Gemini');
+      const errorText = await geminiResponse.text();
+      console.error(`Gemini API error (${geminiResponse.status}):`, errorText);
+      throw new Error(`Failed to generate recipe with Gemini: ${geminiResponse.status} - ${errorText}`);
     }
 
     const geminiData = await geminiResponse.json();

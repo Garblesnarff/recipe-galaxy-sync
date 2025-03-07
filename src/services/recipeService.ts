@@ -45,7 +45,7 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
   const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
   console.log(`Calling ${endpoint} function with URL:`, url);
   
-  // Create request body object (don't stringify it)
+  // Create request body object
   const requestBody = { url };
   console.log('Request payload:', JSON.stringify(requestBody));
   
