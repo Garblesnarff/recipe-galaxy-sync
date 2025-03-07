@@ -27,13 +27,30 @@ const isYouTubeUrl = (url: string): boolean => {
   return url.includes('youtube.com') || url.includes('youtu.be');
 };
 
+export const validateUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeData> => {
+  if (!url || !validateUrl(url)) {
+    console.error('Invalid URL provided:', url);
+    throw new Error('Please enter a valid URL');
+  }
+
   const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
   console.log(`Calling ${endpoint} function with URL:`, url);
   
+  const requestBody = { url };
+  console.log('Request payload:', JSON.stringify(requestBody));
+  
   try {
     const { data, error } = await supabase.functions.invoke(endpoint, {
-      body: { url },
+      body: requestBody,
       headers: {
         'Content-Type': 'application/json'
       }
@@ -53,7 +70,11 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
     return data;
   } catch (error) {
     console.error(`Error in importRecipeFromUrl (${endpoint}):`, error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Failed to import recipe from ${url}`);
+    }
   }
 };
 

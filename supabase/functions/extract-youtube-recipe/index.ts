@@ -28,17 +28,36 @@ serve(async (req) => {
 
   try {
     console.log('Starting YouTube recipe extraction');
+    
+    // Log raw request details
+    const requestText = await req.text();
+    console.log('Raw Request Body:', requestText);
+    
+    // Check if request body is empty
+    if (!requestText || requestText.trim() === '') {
+      throw new Error('Empty request body');
+    }
+    
+    // Try to parse JSON
+    let requestBody;
+    try {
+      requestBody = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error('Failed to parse request JSON:', parseError);
+      throw new Error(`Invalid JSON in request: ${parseError.message}`);
+    }
+    
+    // Validate URL
+    const { url } = requestBody;
+    if (!url) {
+      throw new Error('URL is required');
+    }
+    console.log('Processing URL:', url);
 
     if (!Deno.env.get('GEMINI_API_KEY')) {
       throw new Error('GEMINI_API_KEY is required');
     }
 
-    const { url } = await req.json();
-    if (!url) {
-      throw new Error('URL is required');
-    }
-
-    console.log('Processing URL:', url);
     const videoId = extractVideoId(url);
     if (!videoId) {
       throw new Error('Invalid YouTube URL');

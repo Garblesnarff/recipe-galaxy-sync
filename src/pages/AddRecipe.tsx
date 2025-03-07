@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { RecipeImport } from "@/components/recipe/RecipeImport";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { RecipeIngredients } from "@/components/recipe/RecipeIngredients";
-import { uploadImage, importRecipeFromUrl, saveRecipe } from "@/services/recipeService";
+import { uploadImage, importRecipeFromUrl, saveRecipe, validateUrl } from "@/services/recipeService";
 import { RecipeFormData } from "@/types/recipe";
 
 export const AddRecipe = () => {
@@ -43,12 +43,18 @@ export const AddRecipe = () => {
 
   const importRecipe = async () => {
     if (!recipeUrl) {
+      toast.error("Please enter a URL");
+      return;
+    }
+
+    if (!validateUrl(recipeUrl)) {
       toast.error("Please enter a valid URL");
       return;
     }
 
     setIsImporting(true);
     try {
+      console.log("Importing recipe from URL:", recipeUrl);
       const data = await importRecipeFromUrl(recipeUrl);
       
       setFormData(prev => ({
