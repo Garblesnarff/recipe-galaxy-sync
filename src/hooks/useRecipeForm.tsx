@@ -50,6 +50,17 @@ export const useRecipeForm = () => {
       console.log("Importing recipe from URL:", recipeUrl);
       const data = await importRecipeFromUrl(recipeUrl);
       
+      // Parse ingredients if they came as a string
+      let ingredientsArray = data.ingredients;
+      if (typeof data.ingredients === 'string') {
+        try {
+          ingredientsArray = JSON.parse(data.ingredients);
+        } catch (e) {
+          // If it can't be parsed as JSON, split by newlines or commas
+          ingredientsArray = data.ingredients.split(/[,\n]+/).map(item => item.trim()).filter(Boolean);
+        }
+      }
+      
       setFormData(prev => ({
         ...prev,
         title: data.title || prev.title,
@@ -57,10 +68,10 @@ export const useRecipeForm = () => {
         cookTime: data.cook_time || prev.cookTime,
         difficulty: data.difficulty || prev.difficulty,
         instructions: data.instructions || prev.instructions,
-        ingredients: Array.isArray(data.ingredients) ? data.ingredients : prev.ingredients,
+        ingredients: Array.isArray(ingredientsArray) ? ingredientsArray : prev.ingredients,
         imageUrl: data.image_url || prev.imageUrl,
         source_url: recipeUrl,
-        recipe_type: "imported"
+        recipe_type: recipeUrl.includes('youtube') ? 'youtube' : 'imported'
       }));
 
       if (data.image_url) {
@@ -86,7 +97,8 @@ export const useRecipeForm = () => {
         imageUrl = await uploadImage(imageFile);
       }
 
-      await saveRecipe({
+      // Prepare the recipe data for saving
+      const recipeToSave = {
         title: formData.title,
         description: formData.description,
         cook_time: formData.cookTime,
@@ -96,13 +108,16 @@ export const useRecipeForm = () => {
         recipe_type: formData.recipe_type,
         image_url: imageUrl,
         source_url: formData.source_url,
-      });
-
+      };
+      
+      console.log("Saving recipe:", recipeToSave);
+      
+      await saveRecipe(recipeToSave);
       toast.success("Recipe added successfully!");
       navigate("/");
     } catch (error) {
       console.error("Error adding recipe:", error);
-      toast.error("Failed to add recipe");
+      toast.error(error instanceof Error ? error.message : "Failed to add recipe");
     } finally {
       setIsSubmitting(false);
     }

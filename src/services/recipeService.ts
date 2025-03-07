@@ -82,7 +82,33 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
 };
 
 export const saveRecipe = async (recipeData: any) => {
-  const { error } = await supabase.from("recipes").insert(recipeData);
-  if (error) throw error;
-  return true;
+  // Ensure ingredients is an array and not null
+  const ingredientsArray = Array.isArray(recipeData.ingredients) 
+    ? recipeData.ingredients 
+    : [];
+  
+  console.log('Saving recipe data:', recipeData);
+  
+  // Prepare data for insertion
+  const dataToInsert = {
+    ...recipeData,
+    ingredients: ingredientsArray
+  };
+  
+  console.log('Formatted data for insertion:', dataToInsert);
+  
+  try {
+    const { data, error } = await supabase.from("recipes").insert(dataToInsert).select();
+    
+    if (error) {
+      console.error('Error saving recipe:', error);
+      throw error;
+    }
+    
+    console.log('Recipe saved successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Exception saving recipe:', error);
+    throw error;
+  }
 };
