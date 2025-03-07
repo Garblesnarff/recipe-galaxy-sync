@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Rating } from "@/components/ui/rating";
 import { Clock, ArrowLeft, ChefHat, ShoppingCart, Check, Star } from "lucide-react";
 import { toast } from "sonner";
+import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
 
 interface Rating {
   rating: number;
@@ -201,10 +202,12 @@ const RecipeDetail = () => {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <Button variant="outline" className="flex-1">
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to grocery list
-              </Button>
+              <AddToGroceryListButton 
+                variant="outline" 
+                className="flex-1"
+                ingredients={recipe.ingredients as string[]}
+                recipeId={recipe.id}
+              />
               <Button variant="app" className="flex-1">
                 Rate Recipe
               </Button>
