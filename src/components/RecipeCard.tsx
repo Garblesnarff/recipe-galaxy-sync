@@ -25,7 +25,7 @@ export const RecipeCard = ({
 }: RecipeCardProps) => {
   return (
     <Link to={`/recipe/${id}`} className="block">
-      <Card className="recipe-card relative">
+      <Card className="recipe-card group">
         <div className="absolute top-3 right-3 z-10">
           <div className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
             <Check className="h-5 w-5 text-recipe-green" />

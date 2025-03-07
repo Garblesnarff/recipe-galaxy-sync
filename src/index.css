@@ -84,7 +84,7 @@
 
 @layer components {
   .recipe-card {
-    @apply overflow-hidden group transition-all duration-300 hover:shadow-lg animate-fade-in bg-white rounded-xl border border-border;
+    @apply overflow-hidden transition-all duration-300 hover:shadow-lg animate-fade-in bg-white rounded-xl border border-border;
   }
   
   .recipe-image {
