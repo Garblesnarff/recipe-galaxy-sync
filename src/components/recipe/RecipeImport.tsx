@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link as LinkIcon } from "lucide-react";
 import { validateUrl } from "@/services/recipeService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface RecipeImportProps {
   recipeUrl: string;
@@ -20,6 +20,16 @@ export const RecipeImport = ({
   isImporting
 }: RecipeImportProps) => {
   const [urlError, setUrlError] = useState("");
+  const [isYouTube, setIsYouTube] = useState(false);
+
+  useEffect(() => {
+    // Determine if URL is a YouTube URL
+    if (recipeUrl) {
+      setIsYouTube(recipeUrl.includes('youtube.com') || recipeUrl.includes('youtu.be'));
+    } else {
+      setIsYouTube(false);
+    }
+  }, [recipeUrl]);
 
   const handleUrlChange = (value: string) => {
     onUrlChange(value);
@@ -53,6 +63,11 @@ export const RecipeImport = ({
         </div>
         {urlError && (
           <span className="text-sm text-red-500">{urlError}</span>
+        )}
+        {isYouTube && !urlError && (
+          <span className="text-sm text-blue-500">
+            YouTube video detected! We'll extract recipe details from this video.
+          </span>
         )}
       </div>
     </div>

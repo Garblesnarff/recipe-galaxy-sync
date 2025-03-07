@@ -49,25 +49,29 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
   console.log('Request payload:', JSON.stringify(requestBody));
   
   try {
-    const { data, error } = await supabase.functions.invoke(endpoint, {
+    console.log(`Invoking ${endpoint} function with payload:`, JSON.stringify(requestBody));
+    
+    const response = await supabase.functions.invoke(endpoint, {
       body: requestBody,
       headers: {
         'Content-Type': 'application/json'
       }
     });
-
-    if (error) {
-      console.error(`Error response from ${endpoint}:`, error);
-      throw error;
+    
+    console.log(`Response from ${endpoint}:`, response);
+    
+    if (response.error) {
+      console.error(`Error response from ${endpoint}:`, response.error);
+      throw new Error(response.error.message || `Error from ${endpoint}`);
     }
 
-    if (!data) {
+    if (!response.data) {
       console.error(`No data received from ${endpoint}`);
       throw new Error(`No data received from ${endpoint}`);
     }
 
-    console.log(`Successfully received data from ${endpoint}:`, data);
-    return data;
+    console.log(`Successfully received data from ${endpoint}:`, response.data);
+    return response.data;
   } catch (error) {
     console.error(`Error in importRecipeFromUrl (${endpoint}):`, error);
     if (error instanceof Error) {
