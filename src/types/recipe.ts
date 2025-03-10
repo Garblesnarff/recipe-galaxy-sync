@@ -9,7 +9,7 @@ export interface RecipeFormData {
   currentIngredient: string;
   imageUrl: string;
   source_url: string;
-  recipe_type: "manual" | "imported" | "youtube";
+  recipe_type: "manual" | "webpage" | "youtube";
 }
 
 export interface ImportedRecipeData {

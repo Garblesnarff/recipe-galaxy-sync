@@ -68,10 +68,10 @@ export const useRecipeForm = () => {
         }
       }
       
-      // Determine recipe type based on URL
+      // Determine recipe type based on URL - ensuring we use valid values for the database
       const recipeType = recipeUrl.includes('youtube.com') || recipeUrl.includes('youtu.be') 
         ? 'youtube' 
-        : 'imported';
+        : 'webpage';
       
       setFormData(prev => ({
         ...prev,

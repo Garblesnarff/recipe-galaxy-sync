@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -22,17 +23,24 @@ const htmlEntities: { [key: string]: string } = {
   '&#8221;': '"',
   '&#8211;': '-',
   '&#8212;': '--',
+  '&#x25a2;': '□', // Adding checkbox character
+  '□': '□', // Ensuring checkbox is preserved if already decoded
 };
 
 function decodeHtmlEntities(text: string): string {
-  return text.replace(/&[#\w]+;/g, entity => 
-    htmlEntities[entity] || entity.replace(/&#(\d+);/g, (_, dec) => 
-      String.fromCharCode(parseInt(dec, 10))
-    )
-  );
+  // First handle numeric entities
+  let decoded = text.replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+  
+  // Then handle hex entities
+  decoded = decoded.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  // Finally handle named entities
+  return decoded.replace(/&[#\w]+;/g, entity => htmlEntities[entity] || entity);
 }
 
 function cleanText(text: string): string {
+  if (!text) return '';
+  
   return decodeHtmlEntities(text)
     .replace(/<[^>]+>/g, ' ')  // Remove HTML tags
     .replace(/\s+/g, ' ')      // Normalize whitespace
