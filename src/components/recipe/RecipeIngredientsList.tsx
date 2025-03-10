@@ -6,12 +6,12 @@ interface RecipeIngredientsListProps {
 }
 
 export const RecipeIngredientsList = ({ ingredients }: RecipeIngredientsListProps) => {
-  // This helper function cleans the ingredient text by removing the "▢" symbol
+  // This helper function cleans the ingredient text by removing various box symbols
   // and other common prefixes that might appear in scraped recipes
   const cleanIngredientText = (text: string): string => {
     return text
-      .replace(/^▢\s*/, '') // Remove the box symbol at the start
-      .replace(/^□\s*/, '') // Remove another possible box symbol
+      .replace(/^[▢□■◆○◯✓✅⬜⬛☐☑︎☑️]/u, '') // Remove various box/bullet symbols at start
+      .replace(/^\s*[-•*]\s*/, '') // Remove bullet points
       .replace(/^Ingredients\s+\d+x\s+\d+x\s+\d+x$/, 'Ingredients') // Clean up "Ingredients 1x 2x 3x" text
       .trim();
   };
@@ -27,6 +27,11 @@ export const RecipeIngredientsList = ({ ingredients }: RecipeIngredientsListProp
           }
           
           const cleanedIngredient = cleanIngredientText(ingredient);
+          
+          // Skip empty ingredients after cleaning
+          if (!cleanedIngredient) {
+            return null;
+          }
           
           return (
             <li key={index} className="flex items-center">

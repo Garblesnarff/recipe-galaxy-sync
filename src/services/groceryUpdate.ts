@@ -68,12 +68,12 @@ export const clearPurchasedItems = async (): Promise<boolean> => {
 // Clear all grocery items
 export const clearAllItems = async (): Promise<boolean> => {
   try {
-    // Fixed the query to not use neq condition with an empty string
-    // This was causing "invalid input syntax for type uuid" error
+    // Using a different approach to delete all items
+    // Instead of using a condition that tries to match all items
     const { error } = await supabase
       .from("grocery_items")
       .delete()
-      .gte("id", "00000000-0000-0000-0000-000000000000");  // This condition will match all valid UUIDs
+      .not("id", "is", null); // Delete all items where id is not null (all items)
 
     if (error) {
       console.error("Error clearing all items:", error);

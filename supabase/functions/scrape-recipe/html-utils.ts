@@ -1,3 +1,4 @@
+
 // HTML entity decoding and text cleaning utilities
 
 // Map of HTML entities to their decoded representations
@@ -50,8 +51,8 @@ export function cleanText(text: string): string {
     .replace(/<[^>]+>/g, ' ')  // Remove HTML tags
     .replace(/\s+/g, ' ')      // Normalize whitespace
     .replace(/\n\s*/g, '\n')   // Clean up newlines
-    .replace(/^▢\s*/, '')      // Remove recipe box symbol at the start
-    .replace(/^□\s*/, '')      // Remove another possible box symbol
+    .replace(/^[▢□■◆○◯✓✅⬜⬛☐☑︎☑️]/u, '') // Remove various box/bullet symbols
+    .replace(/^\s*[-•*]\s*/, '') // Remove bullet points
     .trim();
 }
 
