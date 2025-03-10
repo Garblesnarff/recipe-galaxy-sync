@@ -83,7 +83,7 @@ body {
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -109,21 +109,21 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%) scaleX(0);
-  width: 20px;
+  width: 24px;
   height: 3px;
   background-color: #4ade80;
   border-radius: 1.5px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-button:hover {
   color: #4ade80;
-  transform: translateY(-4px);
+  transform: translateY(-6px);
 }
 
 .action-button:hover::before {
-  transform: scale(2);
-  opacity: 0.1;
+  transform: scale(2.5);
+  opacity: 0.15;
 }
 
 .action-button.active {
@@ -137,16 +137,18 @@ body {
 
 .action-button svg {
   margin-bottom: 0.25rem;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-button:hover svg {
-  transform: scale(1.2) rotate(5deg);
+  transform: scale(1.25) rotate(8deg);
+  color: #4ade80;
 }
 
 .action-button.active svg {
-  transform: scale(1.1);
+  transform: scale(1.15);
   color: #4ade80;
+  filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.3));
 }
 
 /* For the recipe image overlay */
