@@ -1,10 +1,11 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
 const htmlEntities: { [key: string]: string } = {
   '&nbsp;': ' ',
@@ -52,6 +53,42 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
     await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
   }
   throw new Error(`Failed to fetch URL after ${retries} attempts`);
+}
+
+async function cleanInstructions(instructions: string) {
+  try {
+    console.log('Cleaning instructions with Groq LLM...');
+    
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: "You are a specialized recipe instruction parser. Extract and clean up cooking instructions from the given text. Remove any navigation elements, advertisements, metadata, social sharing buttons, and website headers/footers. Return only the actual cooking steps in a clear, numbered format."
+          },
+          {
+            role: "user",
+            content: `Clean and format these recipe instructions, keeping only the actual cooking steps:\n\n${instructions}`
+          }
+        ],
+        temperature: 0.1 // Low temperature for more deterministic output
+      })
+    });
+
+    const data = await response.json();
+    console.log('Successfully cleaned instructions with Groq');
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error cleaning instructions with Groq:', error);
+    // Return original instructions if cleaning fails
+    return instructions;
+  }
 }
 
 function extractIngredients(html: string): string[] {
@@ -249,7 +286,13 @@ serve(async (req) => {
       return match ? cleanText(match[1]) : '';
     };
 
-    // Extract recipe data
+    // Extract initial recipe data
+    const rawInstructions = extractInstructions(html);
+    console.log('Initial instructions extracted, sending to Groq for cleaning...');
+    
+    // Clean instructions using Groq
+    const cleanedInstructions = await cleanInstructions(rawInstructions);
+
     const recipe = {
       title: getMetaContent('og:title') || 
              cleanText(html.match(/<h1[^>]*>([^<]+)<\/h1>/i)?.[1] || ''),
@@ -258,7 +301,7 @@ serve(async (req) => {
       image_url: getMetaContent('og:image'),
       source_url: url,
       ingredients: extractIngredients(html),
-      instructions: extractInstructions(html)
+      instructions: cleanedInstructions
     };
 
     // Extract cook time (if available)
@@ -267,7 +310,7 @@ serve(async (req) => {
       recipe.cook_time = `${timeMatch[1]} minutes`;
     }
 
-    console.log('Successfully extracted recipe data:', recipe);
+    console.log('Successfully extracted and cleaned recipe data');
 
     return new Response(
       JSON.stringify(recipe),
