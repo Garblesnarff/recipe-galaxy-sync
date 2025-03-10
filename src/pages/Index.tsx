@@ -1,15 +1,19 @@
+
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import debounce from "lodash/debounce";
+
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  
   const {
     data: recipes,
     isLoading
@@ -35,9 +39,18 @@ const Index = () => {
   const debouncedSearch = useCallback(debounce((value: string) => {
     setSearchQuery(value);
   }, 300), []);
+  
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSearch(e.target.value);
   };
+  
+  // Helper function to determine if a route is active
+  const isActive = (path: string) => {
+    if (path === "/" && location.pathname === "/") return true;
+    if (path !== "/" && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+  
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -71,19 +84,31 @@ const Index = () => {
 
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
         <div className="flex justify-around max-w-lg mx-auto">
-          <div className="action-button active" onClick={() => navigate("/")}>
+          <div 
+            className={`action-button ${isActive("/") ? "active" : ""}`} 
+            onClick={() => navigate("/")}
+          >
             <Utensils className="h-6 w-6 mb-1" />
             <span>Recipes</span>
           </div>
-          <div className="action-button" onClick={() => navigate("/grocery-list")}>
+          <div 
+            className={`action-button ${isActive("/grocery-list") ? "active" : ""}`} 
+            onClick={() => navigate("/grocery-list")}
+          >
             <ShoppingCart className="h-6 w-6 mb-1" />
             <span>Groceries</span>
           </div>
-          <div className="action-button">
+          <div 
+            className={`action-button ${isActive("/favorites") ? "active" : ""}`}
+            onClick={() => navigate("/favorites")}
+          >
             <BookHeart className="h-6 w-6 mb-1" />
             <span>Favorites</span>
           </div>
-          <div className="action-button">
+          <div 
+            className={`action-button ${isActive("/settings") ? "active" : ""}`}
+            onClick={() => navigate("/settings")}
+          >
             <Settings className="h-6 w-6 mb-1" />
             <span>Settings</span>
           </div>
