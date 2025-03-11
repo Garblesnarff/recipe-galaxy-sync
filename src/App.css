@@ -81,74 +81,75 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
 }
 
-.action-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #4ade80;
-  border-radius: 50%;
-  transform: scale(0);
-  opacity: 0;
-  z-index: -1;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+.action-button svg {
+  margin-bottom: 0.25rem;
+  transition: all 0.3s ease;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
-.action-button:after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 24px;
-  height: 3px;
-  background-color: #4ade80;
-  border-radius: 1.5px;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* Hover animations */
 .action-button:hover {
   color: #4ade80;
-  transform: translateY(-6px);
+  transform: translateY(-5px);
 }
 
-.action-button:hover::before {
-  transform: scale(2.5);
-  opacity: 0.15;
+.action-button:hover svg {
+  transform: scale(1.2) rotate(5deg);
+  color: #4ade80;
 }
 
+/* Active state animations */
 .action-button.active {
   color: #4ade80;
   font-weight: 600;
 }
 
-.action-button.active:after {
-  transform: translateX(-50%) scaleX(1);
-}
-
-.action-button svg {
-  margin-bottom: 0.25rem;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.action-button:hover svg {
-  transform: scale(1.25) rotate(8deg);
-  color: #4ade80;
+.action-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.5rem;
+  height: 0.2rem;
+  background-color: #4ade80;
+  border-radius: 1rem;
+  animation: scaleIn 0.3s ease forwards;
 }
 
 .action-button.active svg {
-  transform: scale(1.15);
   color: #4ade80;
-  filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.3));
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.4));
+  animation: pulse 2s infinite;
+}
+
+/* Animation keyframes */
+@keyframes scaleIn {
+  0% {
+    transform: translateX(-50%) scaleX(0);
+  }
+  100% {
+    transform: translateX(-50%) scaleX(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* For the recipe image overlay */

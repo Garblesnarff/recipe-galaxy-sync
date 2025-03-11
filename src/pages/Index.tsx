@@ -1,4 +1,3 @@
-
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
@@ -35,7 +34,6 @@ const Index = () => {
     }
   });
 
-  // Debounced search handler
   const debouncedSearch = useCallback(debounce((value: string) => {
     setSearchQuery(value);
   }, 300), []);
@@ -44,7 +42,6 @@ const Index = () => {
     debouncedSearch(e.target.value);
   };
   
-  // Helper function to determine if a route is active
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path !== "/" && location.pathname.startsWith(path)) return true;
@@ -88,28 +85,28 @@ const Index = () => {
             className={`action-button ${isActive("/") ? "active" : ""}`} 
             onClick={() => navigate("/")}
           >
-            <Utensils className="h-6 w-6 mb-1" />
+            <Utensils className="h-6 w-6" />
             <span>Recipes</span>
           </div>
           <div 
             className={`action-button ${isActive("/grocery-list") ? "active" : ""}`} 
             onClick={() => navigate("/grocery-list")}
           >
-            <ShoppingCart className="h-6 w-6 mb-1" />
+            <ShoppingCart className="h-6 w-6" />
             <span>Groceries</span>
           </div>
           <div 
             className={`action-button ${isActive("/favorites") ? "active" : ""}`}
             onClick={() => navigate("/favorites")}
           >
-            <BookHeart className="h-6 w-6 mb-1" />
+            <BookHeart className="h-6 w-6" />
             <span>Favorites</span>
           </div>
           <div 
             className={`action-button ${isActive("/settings") ? "active" : ""}`}
             onClick={() => navigate("/settings")}
           >
-            <Settings className="h-6 w-6 mb-1" />
+            <Settings className="h-6 w-6" />
             <span>Settings</span>
           </div>
         </div>
