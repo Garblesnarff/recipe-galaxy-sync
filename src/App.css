@@ -81,12 +81,14 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.75rem 0.5rem;
   border-radius: 0.5rem;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
+  width: 4rem;
+  margin: 0 0.25rem;
 }
 
 .action-button::before {
@@ -94,13 +96,14 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(74, 222, 128, 0.1);
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(74, 222, 128, 0.15);
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(0);
   transition: transform 0.3s ease-out;
   z-index: -1;
+  pointer-events: none;
 }
 
 .action-button svg {
@@ -108,6 +111,7 @@ body {
   transition: all 0.3s ease;
   width: 1.5rem;
   height: 1.5rem;
+  z-index: 1;
 }
 
 /* Hover animations */
@@ -128,6 +132,12 @@ body {
 /* Active/pressed state animations */
 .action-button:active {
   transform: translateY(0) scale(0.95);
+  transition: all 0.1s ease;
+}
+
+.action-button:active::before {
+  background-color: rgba(74, 222, 128, 0.3);
+  transform: translate(-50%, -50%) scale(1.5);
   transition: all 0.1s ease;
 }
 

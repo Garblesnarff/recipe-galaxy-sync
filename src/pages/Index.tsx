@@ -80,7 +80,7 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 z-50">
         <div className="flex justify-around max-w-lg mx-auto">
           <div 
             className={`action-button ${isActive("/") ? "active" : ""}`} 
