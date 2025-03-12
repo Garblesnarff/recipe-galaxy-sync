@@ -1,3 +1,4 @@
+
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
@@ -44,6 +45,7 @@ const Index = () => {
   const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
     const button = event.currentTarget;
     
+    // Clear any existing ripples
     const ripples = button.querySelectorAll('.ripple');
     ripples.forEach(r => r.remove());
     
@@ -95,48 +97,44 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg z-[999]">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg z-50">
         <div className="flex justify-around max-w-lg mx-auto">
           <button 
-            className="action-button active" 
+            className="nav-button active" 
             onClick={(e) => {
               createRipple(e);
               navigate("/");
             }}
-            style={{zIndex: 1000}}
           >
-            <Utensils className="h-6 w-6 mb-1" />
+            <Utensils className="h-6 w-6" />
             <span>Recipes</span>
           </button>
           <button 
-            className="action-button" 
+            className="nav-button" 
             onClick={(e) => {
               createRipple(e);
               navigate("/grocery-list");
             }}
-            style={{zIndex: 1000}}
           >
-            <ShoppingCart className="h-6 w-6 mb-1" />
+            <ShoppingCart className="h-6 w-6" />
             <span>Groceries</span>
           </button>
           <button 
-            className="action-button"
+            className="nav-button"
             onClick={(e) => {
               createRipple(e);
             }}
-            style={{zIndex: 1000}}
           >
-            <BookHeart className="h-6 w-6 mb-1" />
+            <BookHeart className="h-6 w-6" />
             <span>Favorites</span>
           </button>
           <button 
-            className="action-button"
+            className="nav-button"
             onClick={(e) => {
               createRipple(e);
             }}
-            style={{zIndex: 1000}}
           >
-            <Settings className="h-6 w-6 mb-1" />
+            <Settings className="h-6 w-6" />
             <span>Settings</span>
           </button>
         </div>
