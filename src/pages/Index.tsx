@@ -82,34 +82,34 @@ const Index = () => {
 
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 z-50">
         <div className="flex justify-around max-w-lg mx-auto">
-          <div 
+          <button 
             className={`action-button ${isActive("/") ? "active" : ""}`} 
             onClick={() => navigate("/")}
           >
             <Utensils className="h-6 w-6" />
             <span>Recipes</span>
-          </div>
-          <div 
+          </button>
+          <button 
             className={`action-button ${isActive("/grocery-list") ? "active" : ""}`} 
             onClick={() => navigate("/grocery-list")}
           >
             <ShoppingCart className="h-6 w-6" />
             <span>Groceries</span>
-          </div>
-          <div 
+          </button>
+          <button 
             className={`action-button ${isActive("/favorites") ? "active" : ""}`}
             onClick={() => navigate("/favorites")}
           >
             <BookHeart className="h-6 w-6" />
             <span>Favorites</span>
-          </div>
-          <div 
+          </button>
+          <button 
             className={`action-button ${isActive("/settings") ? "active" : ""}`}
             onClick={() => navigate("/settings")}
           >
             <Settings className="h-6 w-6" />
             <span>Settings</span>
-          </div>
+          </button>
         </div>
       </footer>
 
