@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import debounce from "lodash/debounce";
 
 const Index = () => {
@@ -44,10 +44,8 @@ const Index = () => {
   const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
     const button = event.currentTarget;
     
-    const ripple = button.querySelector('.ripple');
-    if (ripple) {
-      ripple.remove();
-    }
+    const ripples = button.querySelectorAll('.ripple');
+    ripples.forEach(r => r.remove());
     
     const circle = document.createElement('span');
     const diameter = Math.max(button.clientWidth, button.clientHeight);
@@ -62,9 +60,7 @@ const Index = () => {
     button.appendChild(circle);
     
     setTimeout(() => {
-      if (circle && circle.parentElement) {
-        circle.remove();
-      }
+      circle.remove();
     }, 600);
   };
 
@@ -99,7 +95,7 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg z-50">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg z-[999]">
         <div className="flex justify-around max-w-lg mx-auto">
           <button 
             className="action-button active" 
@@ -107,6 +103,7 @@ const Index = () => {
               createRipple(e);
               navigate("/");
             }}
+            style={{zIndex: 1000}}
           >
             <Utensils className="h-6 w-6 mb-1" />
             <span>Recipes</span>
@@ -117,6 +114,7 @@ const Index = () => {
               createRipple(e);
               navigate("/grocery-list");
             }}
+            style={{zIndex: 1000}}
           >
             <ShoppingCart className="h-6 w-6 mb-1" />
             <span>Groceries</span>
@@ -126,6 +124,7 @@ const Index = () => {
             onClick={(e) => {
               createRipple(e);
             }}
+            style={{zIndex: 1000}}
           >
             <BookHeart className="h-6 w-6 mb-1" />
             <span>Favorites</span>
@@ -135,6 +134,7 @@ const Index = () => {
             onClick={(e) => {
               createRipple(e);
             }}
+            style={{zIndex: 1000}}
           >
             <Settings className="h-6 w-6 mb-1" />
             <span>Settings</span>
