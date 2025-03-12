@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { fetchSalesForIngredients, IngredientSale } from "@/services/salesService";
 import { SaleIndicator } from "@/components/SaleIndicator";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 interface RecipeCardProps {
   id: string;
@@ -46,13 +47,18 @@ export const RecipeCard = ({
           return;
         }
 
-        // Ensure ingredients are in the right format
+        // Convert ingredients to string array
         let ingredientList: string[] = [];
         if (Array.isArray(data.ingredients)) {
-          ingredientList = data.ingredients;
+          // Map each ingredient to a string (handles when Json can be a number, boolean, etc.)
+          ingredientList = data.ingredients.map(ingredient => 
+            typeof ingredient === 'string' ? ingredient : String(ingredient)
+          );
         } else if (typeof data.ingredients === 'object') {
           // Handle case where ingredients might be stored as an object with keys
-          ingredientList = Object.values(data.ingredients);
+          ingredientList = Object.values(data.ingredients).map(ingredient => 
+            typeof ingredient === 'string' ? ingredient : String(ingredient)
+          );
         }
 
         if (ingredientList.length > 0) {
