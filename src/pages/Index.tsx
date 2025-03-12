@@ -1,3 +1,4 @@
+
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
@@ -5,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import debounce from "lodash/debounce";
+
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  
   const {
     data: recipes,
     isLoading
@@ -35,9 +38,44 @@ const Index = () => {
   const debouncedSearch = useCallback(debounce((value: string) => {
     setSearchQuery(value);
   }, 300), []);
+  
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSearch(e.target.value);
   };
+
+  // Function to create ripple effect
+  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    
+    // Remove any existing ripple
+    const ripple = button.querySelector('.ripple');
+    if (ripple) {
+      ripple.remove();
+    }
+    
+    // Create new ripple element
+    const circle = document.createElement('span');
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    
+    // Position the ripple based on click location
+    const rect = button.getBoundingClientRect();
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${event.clientX - rect.left - radius}px`;
+    circle.style.top = `${event.clientY - rect.top - radius}px`;
+    circle.classList.add('ripple');
+    
+    // Add the ripple to the button
+    button.appendChild(circle);
+    
+    // Clean up the ripple element after animation completes
+    setTimeout(() => {
+      if (circle && circle.parentElement) {
+        circle.remove();
+      }
+    }, 600);
+  };
+  
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -69,24 +107,46 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg">
         <div className="flex justify-around max-w-lg mx-auto">
-          <div className="action-button active" onClick={() => navigate("/")}>
+          <button 
+            className="action-button active" 
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/");
+            }}
+          >
             <Utensils className="h-6 w-6 mb-1" />
             <span>Recipes</span>
-          </div>
-          <div className="action-button" onClick={() => navigate("/grocery-list")}>
+          </button>
+          <button 
+            className="action-button" 
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/grocery-list");
+            }}
+          >
             <ShoppingCart className="h-6 w-6 mb-1" />
             <span>Groceries</span>
-          </div>
-          <div className="action-button">
+          </button>
+          <button 
+            className="action-button"
+            onClick={(e) => {
+              createRipple(e);
+            }}
+          >
             <BookHeart className="h-6 w-6 mb-1" />
             <span>Favorites</span>
-          </div>
-          <div className="action-button">
+          </button>
+          <button 
+            className="action-button"
+            onClick={(e) => {
+              createRipple(e);
+            }}
+          >
             <Settings className="h-6 w-6 mb-1" />
             <span>Settings</span>
-          </div>
+          </button>
         </div>
       </footer>
 
