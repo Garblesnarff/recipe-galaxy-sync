@@ -1,19 +1,15 @@
-
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import debounce from "lodash/debounce";
-
 const Index = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  
   const {
     data: recipes,
     isLoading
@@ -35,52 +31,13 @@ const Index = () => {
     }
   });
 
+  // Debounced search handler
   const debouncedSearch = useCallback(debounce((value: string) => {
     setSearchQuery(value);
   }, 300), []);
-  
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSearch(e.target.value);
   };
-  
-  const isActive = (path: string) => {
-    if (path === "/" && location.pathname === "/") return true;
-    if (path !== "/" && location.pathname.startsWith(path)) return true;
-    return false;
-  };
-  
-  // Improved ripple effect function
-  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const button = event.currentTarget;
-    
-    // Remove any existing ripples
-    const existingRipple = button.querySelector('.ripple');
-    if (existingRipple) {
-      existingRipple.remove();
-    }
-    
-    const circle = document.createElement('span');
-    const diameter = Math.max(button.clientWidth, button.clientHeight);
-    const radius = diameter / 2;
-    
-    // Get click position relative to button
-    const rect = button.getBoundingClientRect();
-    const left = event.clientX - rect.left - radius;
-    const top = event.clientY - rect.top - radius;
-    
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${left}px`;
-    circle.style.top = `${top}px`;
-    circle.classList.add('ripple');
-    
-    button.appendChild(circle);
-    
-    // Remove ripple after animation completes
-    setTimeout(() => {
-      circle.remove();
-    }, 600);
-  };
-  
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -112,47 +69,25 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="bottom-nav">
-        <button 
-          className={`nav-button ${isActive("/") ? "active" : ""}`} 
-          onClick={(e) => {
-            createRipple(e);
-            navigate("/");
-          }}
-        >
-          <Utensils />
-          <span>Recipes</span>
-        </button>
-        <button 
-          className={`nav-button ${isActive("/grocery-list") ? "active" : ""}`}
-          onClick={(e) => {
-            createRipple(e);
-            navigate("/grocery-list");
-          }}
-        >
-          <ShoppingCart />
-          <span>Groceries</span>
-        </button>
-        <button 
-          className={`nav-button ${isActive("/favorites") ? "active" : ""}`}
-          onClick={(e) => {
-            createRipple(e);
-            navigate("/favorites");
-          }}
-        >
-          <BookHeart />
-          <span>Favorites</span>
-        </button>
-        <button 
-          className={`nav-button ${isActive("/settings") ? "active" : ""}`}
-          onClick={(e) => {
-            createRipple(e);
-            navigate("/settings");
-          }}
-        >
-          <Settings />
-          <span>Settings</span>
-        </button>
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4">
+        <div className="flex justify-around max-w-lg mx-auto">
+          <div className="action-button active" onClick={() => navigate("/")}>
+            <Utensils className="h-6 w-6 mb-1" />
+            <span>Recipes</span>
+          </div>
+          <div className="action-button" onClick={() => navigate("/grocery-list")}>
+            <ShoppingCart className="h-6 w-6 mb-1" />
+            <span>Groceries</span>
+          </div>
+          <div className="action-button">
+            <BookHeart className="h-6 w-6 mb-1" />
+            <span>Favorites</span>
+          </div>
+          <div className="action-button">
+            <Settings className="h-6 w-6 mb-1" />
+            <span>Settings</span>
+          </div>
+        </div>
       </footer>
 
       <Button variant="app" size="fab" className="fixed bottom-20 right-4 z-10" onClick={() => navigate("/add-recipe")}>
