@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import debounce from "lodash/debounce";
 
 const Index = () => {
@@ -49,6 +49,28 @@ const Index = () => {
     return false;
   };
   
+  // Function to create ripple effect
+  const createRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget;
+    const ripple = document.createElement("span");
+    const rect = button.getBoundingClientRect();
+    
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.className = "ripple";
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    
+    button.appendChild(ripple);
+    
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
+  };
+  
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -84,30 +106,42 @@ const Index = () => {
         <div className="flex justify-around max-w-lg mx-auto">
           <button 
             className={`action-button ${isActive("/") ? "active" : ""}`} 
-            onClick={() => navigate("/")}
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/");
+            }}
           >
-            <Utensils className="h-6 w-6" />
+            <Utensils />
             <span>Recipes</span>
           </button>
           <button 
             className={`action-button ${isActive("/grocery-list") ? "active" : ""}`} 
-            onClick={() => navigate("/grocery-list")}
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/grocery-list");
+            }}
           >
-            <ShoppingCart className="h-6 w-6" />
+            <ShoppingCart />
             <span>Groceries</span>
           </button>
           <button 
             className={`action-button ${isActive("/favorites") ? "active" : ""}`}
-            onClick={() => navigate("/favorites")}
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/favorites");
+            }}
           >
-            <BookHeart className="h-6 w-6" />
+            <BookHeart />
             <span>Favorites</span>
           </button>
           <button 
             className={`action-button ${isActive("/settings") ? "active" : ""}`}
-            onClick={() => navigate("/settings")}
+            onClick={(e) => {
+              createRipple(e);
+              navigate("/settings");
+            }}
           >
-            <Settings className="h-6 w-6" />
+            <Settings />
             <span>Settings</span>
           </button>
         </div>
