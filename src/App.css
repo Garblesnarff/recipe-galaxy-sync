@@ -57,59 +57,42 @@ body {
   padding-bottom: 4rem;
 }
 
-/* For the bottom navigation */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid #eee;
-  padding: 0.5rem 0;
-  z-index: 999;
-}
-
-/* Completely rewritten button styles for the footer */
-.nav-button {
+/* Brand new bottom navigation styling */
+.bottom-nav-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #777;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   background-color: transparent;
   border: none;
   outline: none;
-  width: 64px;
-  margin: 0 4px;
-  transition: all 0.2s ease-out;
+  color: #777;
+  font-size: 0.75rem;
+  font-weight: 500;
+  width: 70px;
   position: relative;
-  user-select: none;
+  overflow: hidden;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
-.nav-button:hover {
-  color: #4ade80 !important;
-  background-color: rgba(74, 222, 128, 0.1) !important;
-  transform: translateY(-3px) !important;
+.bottom-nav-btn:hover {
+  color: #4ade80;
+  background-color: rgba(74, 222, 128, 0.1);
+  transform: translateY(-3px);
 }
 
-.nav-button:active {
-  transform: scale(0.92) !important;
-  background-color: rgba(74, 222, 128, 0.2) !important;
+.bottom-nav-btn:active {
+  transform: scale(0.92);
+  background-color: rgba(74, 222, 128, 0.2);
 }
 
-.nav-button.active {
+.bottom-nav-btn.active {
   color: #4ade80;
 }
 
-.nav-button.active:after {
+.bottom-nav-btn.active:after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -121,21 +104,21 @@ body {
   border-radius: 1.5px;
 }
 
-.nav-button svg {
-  margin-bottom: 0.25rem;
-  transition: transform 0.2s ease-out;
+.bottom-nav-btn svg {
+  margin-bottom: 4px;
+  transition: transform 0.2s ease;
 }
 
-.nav-button:hover svg {
-  transform: scale(1.2) !important;
+.bottom-nav-btn:hover svg {
+  transform: scale(1.2);
 }
 
-/* Ripple effect */
+/* Ripple animation */
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background-color: rgba(74, 222, 128, 0.3);
   transform: scale(0);
+  background-color: rgba(74, 222, 128, 0.3);
   animation: ripple 0.6s linear;
   pointer-events: none;
 }

@@ -1,13 +1,14 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
-import { Menu, Plus, Search, ShoppingCart, BookHeart, Settings, Utensils } from "lucide-react";
+import { Menu, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import debounce from "lodash/debounce";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -42,30 +43,6 @@ const Index = () => {
     debouncedSearch(e.target.value);
   };
 
-  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const button = event.currentTarget;
-    
-    // Clear any existing ripples
-    const ripples = button.querySelectorAll('.ripple');
-    ripples.forEach(r => r.remove());
-    
-    const circle = document.createElement('span');
-    const diameter = Math.max(button.clientWidth, button.clientHeight);
-    const radius = diameter / 2;
-    
-    const rect = button.getBoundingClientRect();
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${event.clientX - rect.left - radius}px`;
-    circle.style.top = `${event.clientY - rect.top - radius}px`;
-    circle.classList.add('ripple');
-    
-    button.appendChild(circle);
-    
-    setTimeout(() => {
-      circle.remove();
-    }, 600);
-  };
-
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -97,48 +74,7 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 shadow-lg z-50">
-        <div className="flex justify-around max-w-lg mx-auto">
-          <button 
-            className="nav-button active" 
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/");
-            }}
-          >
-            <Utensils className="h-6 w-6" />
-            <span>Recipes</span>
-          </button>
-          <button 
-            className="nav-button" 
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/grocery-list");
-            }}
-          >
-            <ShoppingCart className="h-6 w-6" />
-            <span>Groceries</span>
-          </button>
-          <button 
-            className="nav-button"
-            onClick={(e) => {
-              createRipple(e);
-            }}
-          >
-            <BookHeart className="h-6 w-6" />
-            <span>Favorites</span>
-          </button>
-          <button 
-            className="nav-button"
-            onClick={(e) => {
-              createRipple(e);
-            }}
-          >
-            <Settings className="h-6 w-6" />
-            <span>Settings</span>
-          </button>
-        </div>
-      </footer>
+      <BottomNavigation />
 
       <Button variant="app" size="fab" className="fixed bottom-20 right-4 z-10" onClick={() => navigate("/add-recipe")}>
         <Plus className="h-6 w-6" />
