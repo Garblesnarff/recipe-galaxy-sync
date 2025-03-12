@@ -86,6 +86,8 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
+  background-color: transparent;
+  border: none;
 }
 
 /* Hover animation */
@@ -125,7 +127,7 @@ body {
 
 /* Button press effect */
 .action-button:active {
-  transform: translateY(0px);
+  transform: scale(0.95);
   background-color: rgba(74, 222, 128, 0.2);
 }
 
