@@ -57,76 +57,78 @@ body {
   padding-bottom: 4rem;
 }
 
-/* Brand new bottom navigation styling */
+/* Bottom navigation styling with strong specificity */
 .bottom-nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: transparent;
-  border: none;
-  outline: none;
-  color: #777;
-  font-size: 0.75rem;
-  font-weight: 500;
-  width: 70px;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #777 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  width: 70px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
 }
 
 .bottom-nav-btn:hover {
-  color: #4ade80;
-  background-color: rgba(74, 222, 128, 0.1);
-  transform: translateY(-3px);
+  color: #4ade80 !important;
+  background-color: rgba(74, 222, 128, 0.1) !important;
+  transform: translateY(-3px) !important;
 }
 
 .bottom-nav-btn:active {
-  transform: scale(0.92);
-  background-color: rgba(74, 222, 128, 0.2);
+  transform: scale(0.92) !important;
+  background-color: rgba(74, 222, 128, 0.2) !important;
 }
 
 .bottom-nav-btn.active {
-  color: #4ade80;
+  color: #4ade80 !important;
 }
 
 .bottom-nav-btn.active:after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
-  background-color: #4ade80;
-  border-radius: 1.5px;
+  content: '' !important;
+  position: absolute !important;
+  bottom: -2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 20px !important;
+  height: 3px !important;
+  background-color: #4ade80 !important;
+  border-radius: 1.5px !important;
 }
 
 .bottom-nav-btn svg {
-  margin-bottom: 4px;
-  transition: transform 0.2s ease;
+  margin-bottom: 4px !important;
+  transition: transform 0.2s ease !important;
 }
 
 .bottom-nav-btn:hover svg {
-  transform: scale(1.2);
+  transform: scale(1.2) !important;
+  color: #4ade80 !important;
 }
 
 /* Ripple animation */
 .ripple {
-  position: absolute;
-  border-radius: 50%;
-  transform: scale(0);
-  background-color: rgba(74, 222, 128, 0.3);
-  animation: ripple 0.6s linear;
-  pointer-events: none;
+  position: absolute !important;
+  border-radius: 50% !important;
+  transform: scale(0) !important;
+  background-color: rgba(74, 222, 128, 0.5) !important;
+  animation: ripple 0.6s linear !important;
+  pointer-events: none !important;
 }
 
 @keyframes ripple {
   to {
-    transform: scale(2.5);
-    opacity: 0;
+    transform: scale(2.5) !important;
+    opacity: 0 !important;
   }
 }
 
