@@ -49,25 +49,35 @@ const Index = () => {
     return false;
   };
   
-  // Function to create ripple effect
-  const createRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const button = e.currentTarget;
-    const ripple = document.createElement("span");
+  // Improved ripple effect function
+  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    
+    // Remove any existing ripples
+    const existingRipple = button.querySelector('.ripple');
+    if (existingRipple) {
+      existingRipple.remove();
+    }
+    
+    const circle = document.createElement('span');
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    
+    // Get click position relative to button
     const rect = button.getBoundingClientRect();
+    const left = event.clientX - rect.left - radius;
+    const top = event.clientY - rect.top - radius;
     
-    const size = Math.max(rect.width, rect.height);
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top - size / 2;
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${left}px`;
+    circle.style.top = `${top}px`;
+    circle.classList.add('ripple');
     
-    ripple.className = "ripple";
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
+    button.appendChild(circle);
     
-    button.appendChild(ripple);
-    
+    // Remove ripple after animation completes
     setTimeout(() => {
-      ripple.remove();
+      circle.remove();
     }, 600);
   };
   
@@ -102,49 +112,47 @@ const Index = () => {
           </div>}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 z-50">
-        <div className="flex justify-around max-w-lg mx-auto">
-          <button 
-            className={`action-button ${isActive("/") ? "active" : ""}`} 
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/");
-            }}
-          >
-            <Utensils />
-            <span>Recipes</span>
-          </button>
-          <button 
-            className={`action-button ${isActive("/grocery-list") ? "active" : ""}`} 
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/grocery-list");
-            }}
-          >
-            <ShoppingCart />
-            <span>Groceries</span>
-          </button>
-          <button 
-            className={`action-button ${isActive("/favorites") ? "active" : ""}`}
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/favorites");
-            }}
-          >
-            <BookHeart />
-            <span>Favorites</span>
-          </button>
-          <button 
-            className={`action-button ${isActive("/settings") ? "active" : ""}`}
-            onClick={(e) => {
-              createRipple(e);
-              navigate("/settings");
-            }}
-          >
-            <Settings />
-            <span>Settings</span>
-          </button>
-        </div>
+      <footer className="bottom-nav">
+        <button 
+          className={`nav-button ${isActive("/") ? "active" : ""}`} 
+          onClick={(e) => {
+            createRipple(e);
+            navigate("/");
+          }}
+        >
+          <Utensils />
+          <span>Recipes</span>
+        </button>
+        <button 
+          className={`nav-button ${isActive("/grocery-list") ? "active" : ""}`}
+          onClick={(e) => {
+            createRipple(e);
+            navigate("/grocery-list");
+          }}
+        >
+          <ShoppingCart />
+          <span>Groceries</span>
+        </button>
+        <button 
+          className={`nav-button ${isActive("/favorites") ? "active" : ""}`}
+          onClick={(e) => {
+            createRipple(e);
+            navigate("/favorites");
+          }}
+        >
+          <BookHeart />
+          <span>Favorites</span>
+        </button>
+        <button 
+          className={`nav-button ${isActive("/settings") ? "active" : ""}`}
+          onClick={(e) => {
+            createRipple(e);
+            navigate("/settings");
+          }}
+        >
+          <Settings />
+          <span>Settings</span>
+        </button>
       </footer>
 
       <Button variant="app" size="fab" className="fixed bottom-20 right-4 z-10" onClick={() => navigate("/add-recipe")}>
