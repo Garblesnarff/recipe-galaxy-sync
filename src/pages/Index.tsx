@@ -1,7 +1,7 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
-import { Menu, Plus, Search } from "lucide-react";
+import { Menu, Plus, Search, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,14 +9,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import debounce from "lodash/debounce";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { triggerSalesScrape } from "@/services/salesService";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isScrapingSales, setIsScrapingSales] = useState(false);
   
   const {
     data: recipes,
-    isLoading
+    isLoading,
+    refetch
   } = useQuery({
     queryKey: ["recipes", searchQuery],
     queryFn: async () => {
@@ -43,6 +47,22 @@ const Index = () => {
     debouncedSearch(e.target.value);
   };
 
+  const handleRefreshSales = async () => {
+    setIsScrapingSales(true);
+    try {
+      const success = await triggerSalesScrape();
+      if (success) {
+        // Refresh the recipe cards to show updated sale indicators
+        refetch();
+      }
+    } catch (error) {
+      console.error("Error refreshing sales data:", error);
+      toast.error("Failed to refresh sales data");
+    } finally {
+      setIsScrapingSales(false);
+    }
+  };
+
   return <div className="min-h-screen bg-background">
       <header className="bg-recipe-green-light border-b sticky top-0 z-10">
         <div className="container py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -57,6 +77,15 @@ const Index = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input placeholder="Search recipes..." className="pl-10 rounded-full" onChange={handleSearch} />
             </div>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="md:flex hidden"
+              onClick={handleRefreshSales} 
+              disabled={isScrapingSales}
+            >
+              <RefreshCw className={`h-4 w-4 ${isScrapingSales ? 'animate-spin' : ''}`} />
+            </Button>
             <Button variant="app" className="rounded-full" onClick={() => navigate("/add-recipe")}>
               <Plus className="mr-1 h-4 w-4" />
               Add
@@ -66,6 +95,20 @@ const Index = () => {
       </header>
 
       <main className="container py-6 animate-fade-in">
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Your Recipes</h2>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex md:hidden items-center gap-2"
+            onClick={handleRefreshSales}
+            disabled={isScrapingSales}
+          >
+            <RefreshCw className={`h-4 w-4 ${isScrapingSales ? 'animate-spin' : ''}`} />
+            {isScrapingSales ? 'Updating Sales...' : 'Update Sales'}
+          </Button>
+        </div>
+        
         {isLoading ? <div className="text-center text-gray-500 py-10">Loading recipes...</div> : recipes?.length === 0 ? <div className="text-center text-gray-500 py-10">
             <p className="mb-4">No recipes found</p>
             <Button variant="app" onClick={() => navigate("/add-recipe")}>Add Your First Recipe</Button>

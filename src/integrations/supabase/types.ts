@@ -56,6 +56,33 @@ export type Database = {
           },
         ]
       }
+      ingredient_mappings: {
+        Row: {
+          canonical_name: string
+          category: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          variant_names: string[]
+        }
+        Insert: {
+          canonical_name: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          variant_names?: string[]
+        }
+        Update: {
+          canonical_name?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          variant_names?: string[]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -134,6 +161,77 @@ export type Database = {
           source_url?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          created_at: string
+          discount_percentage: number | null
+          id: string
+          item_name: string
+          regular_price: string | null
+          sale_ends_at: string | null
+          sale_price: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: string
+          item_name: string
+          regular_price?: string | null
+          sale_ends_at?: string | null
+          sale_price?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: string
+          item_name?: string
+          regular_price?: string | null
+          sale_ends_at?: string | null
+          sale_price?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          scraper_config: Json | null
+          updated_at: string
+          website_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          scraper_config?: Json | null
+          updated_at?: string
+          website_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          scraper_config?: Json | null
+          updated_at?: string
+          website_url?: string
         }
         Relationships: []
       }

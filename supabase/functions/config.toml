@@ -1,8 +1,8 @@
 
 project_id = "hzvkzrkziuijksnxjcbw"
-[[functions]]
-name = "extract-youtube-recipe"
+[functions.scrape-recipe]
 verify_jwt = false
-[[functions]]
-name = "scrape-recipe"
+[functions.extract-youtube-recipe]
+verify_jwt = false
+[functions.scrape-sales]
 verify_jwt = false
