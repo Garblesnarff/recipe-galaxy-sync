@@ -204,7 +204,7 @@ const AdminIngredients = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/settings")}
+            onClick={() => navigate("/")}
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
