@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchSalesForIngredients, IngredientSale } from "@/services/salesService";
 import { SaleIndicator } from "@/components/SaleIndicator";
@@ -17,6 +17,9 @@ interface RecipeCardProps {
   rating: number;
   cookTime?: string;
   difficulty?: string;
+  isFavorite?: boolean;
+  onFavoriteToggle?: () => void;
+  tags?: string[];
 }
 
 export const RecipeCard = ({
@@ -27,6 +30,9 @@ export const RecipeCard = ({
   rating,
   cookTime,
   difficulty,
+  isFavorite = false,
+  onFavoriteToggle,
+  tags = [],
 }: RecipeCardProps) => {
   const [salesData, setSalesData] = useState<IngredientSale[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,7 +87,21 @@ export const RecipeCard = ({
   return (
     <Link to={`/recipe/${id}`} className="block">
       <Card className="recipe-card group relative overflow-hidden">
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-10 flex space-x-2">
+          {onFavoriteToggle && (
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                onFavoriteToggle();
+              }}
+              className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
+            >
+              <Heart 
+                className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} 
+              />
+            </button>
+          )}
+          
           <div className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
             <Check className="h-5 w-5 text-recipe-green" />
           </div>
@@ -118,6 +138,20 @@ export const RecipeCard = ({
             )}
           </div>
           <p className="text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
+          
+          {tags && tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {tags.map((tag, index) => (
+                <span 
+                  key={index} 
+                  className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+          
           {(cookTime || difficulty) && (
             <div className="flex gap-3 mt-3 text-xs text-gray-500">
               {cookTime && <span>{cookTime}</span>}
