@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ImportedRecipeData } from "@/types/recipe";
 
@@ -109,6 +108,42 @@ export const saveRecipe = async (recipeData: any) => {
     return data;
   } catch (error) {
     console.error('Exception saving recipe:', error);
+    throw error;
+  }
+};
+
+export const updateRecipe = async (recipeData: any) => {
+  // Ensure ingredients is an array and not null
+  const ingredientsArray = Array.isArray(recipeData.ingredients) 
+    ? recipeData.ingredients 
+    : [];
+  
+  console.log('Updating recipe data:', recipeData);
+  
+  // Prepare data for update
+  const dataToUpdate = {
+    ...recipeData,
+    ingredients: ingredientsArray
+  };
+  
+  console.log('Formatted data for update:', dataToUpdate);
+  
+  try {
+    const { data, error } = await supabase
+      .from("recipes")
+      .update(dataToUpdate)
+      .eq("id", recipeData.id)
+      .select();
+    
+    if (error) {
+      console.error('Error updating recipe:', error);
+      throw error;
+    }
+    
+    console.log('Recipe updated successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Exception updating recipe:', error);
     throw error;
   }
 };
