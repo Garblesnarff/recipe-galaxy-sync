@@ -57,6 +57,11 @@ export const useEditRecipeForm = (recipeId: string) => {
             );
           }
 
+          // Ensure recipe_type is one of the allowed values
+          const recipeType = data.recipe_type === "manual" || data.recipe_type === "webpage" || data.recipe_type === "youtube" 
+            ? data.recipe_type 
+            : "manual";
+
           setFormData({
             title: data.title || "",
             description: data.description || "",
@@ -67,7 +72,7 @@ export const useEditRecipeForm = (recipeId: string) => {
             currentIngredient: "",
             imageUrl: data.image_url || "",
             source_url: data.source_url || "",
-            recipe_type: data.recipe_type || "manual",
+            recipe_type: recipeType,
             // Organization fields
             categories: data.categories || [],
             cuisine_type: data.cuisine_type || "Uncategorized",

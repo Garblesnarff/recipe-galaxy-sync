@@ -1,11 +1,11 @@
 
 import { Route, Routes } from "react-router-dom";
-import { Index } from "@/pages/Index";
-import { NotFound } from "@/pages/NotFound";
+import Index from "@/pages/Index";
+import NotFound from "@/pages/NotFound";
 import RecipeDetail from "@/pages/RecipeDetail";
 import AddRecipe from "@/pages/AddRecipe";
 import GroceryList from "@/pages/GroceryList";
-import BottomNavigation from "@/components/BottomNavigation";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { Toaster } from "@/components/ui/sonner";
 import EditRecipe from "@/pages/EditRecipe";
 
