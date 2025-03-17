@@ -5,6 +5,7 @@ import { RecipeIngredients } from "@/components/recipe/RecipeIngredients";
 import { RecipeImport } from "@/components/recipe/RecipeImport";
 import { RecipeDetails } from "@/components/recipe/RecipeDetails";
 import { RecipeInstructions } from "@/components/recipe/RecipeInstructions";
+import { RecipeCategories } from "@/components/recipe/RecipeCategories";
 import { RecipeFormData } from "@/types/recipe";
 
 interface AddRecipeFormProps {
@@ -36,7 +37,7 @@ export const AddRecipeForm = ({
   onAddIngredient,
   onRemoveIngredient
 }: AddRecipeFormProps) => {
-  const handleFieldChange = (field: keyof RecipeFormData, value: string) => {
+  const handleFieldChange = (field: keyof RecipeFormData, value: string | string[] | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -71,6 +72,11 @@ export const AddRecipeForm = ({
       <RecipeInstructions
         instructions={formData.instructions}
         onChange={(value) => handleFieldChange('instructions', value)}
+      />
+
+      <RecipeCategories 
+        formData={formData}
+        onChange={handleFieldChange}
       />
 
       <Button 

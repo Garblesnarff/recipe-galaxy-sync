@@ -23,6 +23,14 @@ export const useRecipeForm = () => {
     imageUrl: "",
     source_url: "",
     recipe_type: "manual",
+    // New organization fields
+    categories: [],
+    cuisine_type: "Uncategorized",
+    diet_tags: [],
+    cooking_method: "Various",
+    season_occasion: [],
+    prep_time: "15 minutes",
+    servings: 4
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,6 +128,15 @@ export const useRecipeForm = () => {
         recipe_type: formData.recipe_type,
         image_url: imageUrl,
         source_url: formData.source_url,
+        // New organization fields
+        categories: formData.categories,
+        cuisine_type: formData.cuisine_type,
+        diet_tags: formData.diet_tags,
+        cooking_method: formData.cooking_method,
+        season_occasion: formData.season_occasion,
+        prep_time: formData.prep_time,
+        servings: formData.servings,
+        is_favorite: false
       };
       
       console.log("Saving recipe:", recipeToSave);

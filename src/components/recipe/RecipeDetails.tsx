@@ -5,7 +5,7 @@ import { RecipeFormData } from "@/types/recipe";
 
 interface RecipeDetailsProps {
   formData: RecipeFormData;
-  onChange: (field: keyof RecipeFormData, value: string) => void;
+  onChange: (field: keyof RecipeFormData, value: string | string[] | number) => void;
 }
 
 export const RecipeDetails = ({ formData, onChange }: RecipeDetailsProps) => {

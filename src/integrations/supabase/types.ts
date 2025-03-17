@@ -115,49 +115,73 @@ export type Database = {
       }
       recipes: {
         Row: {
+          categories: string[] | null
           cook_time: string | null
+          cooking_method: string | null
           created_at: string
+          cuisine_type: string | null
           description: string
+          diet_tags: string[] | null
           difficulty: string | null
           id: string
           image_url: string | null
           ingredients: Json
           instructions: string
+          is_favorite: boolean | null
+          prep_time: string | null
           rating: number | null
           ratings: Json | null
           recipe_type: string | null
+          season_occasion: string[] | null
+          servings: number | null
           source_url: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          categories?: string[] | null
           cook_time?: string | null
+          cooking_method?: string | null
           created_at?: string
+          cuisine_type?: string | null
           description: string
+          diet_tags?: string[] | null
           difficulty?: string | null
           id?: string
           image_url?: string | null
           ingredients?: Json
           instructions: string
+          is_favorite?: boolean | null
+          prep_time?: string | null
           rating?: number | null
           ratings?: Json | null
           recipe_type?: string | null
+          season_occasion?: string[] | null
+          servings?: number | null
           source_url?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          categories?: string[] | null
           cook_time?: string | null
+          cooking_method?: string | null
           created_at?: string
+          cuisine_type?: string | null
           description?: string
+          diet_tags?: string[] | null
           difficulty?: string | null
           id?: string
           image_url?: string | null
           ingredients?: Json
           instructions?: string
+          is_favorite?: boolean | null
+          prep_time?: string | null
           rating?: number | null
           ratings?: Json | null
           recipe_type?: string | null
+          season_occasion?: string[] | null
+          servings?: number | null
           source_url?: string | null
           title?: string
           updated_at?: string
@@ -273,7 +297,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      initialize_recipe_organization_fields: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
