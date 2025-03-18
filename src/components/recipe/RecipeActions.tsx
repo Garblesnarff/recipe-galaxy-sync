@@ -38,23 +38,12 @@ export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: Reci
 
   const cookTimeInMinutes = recipe.cook_time ? parseInt(recipe.cook_time, 10) : 0;
 
-  // Convert ingredients to the format expected by AddToGroceryListButton
-  const ingredientStrings = ingredients.map(ingredient => {
-    const { quantity, unit, name } = ingredient;
-    // Format as "quantity unit name" where quantity and unit are optional
-    return [
-      quantity || '',
-      unit || '',
-      name || ''
-    ].filter(Boolean).join(' ').trim();
-  }).filter(str => str.length > 0); // Filter out any empty strings
-
   return (
     <div className="flex flex-col gap-4 mt-6">
       <div className="flex gap-2">
         <AddToGroceryListButton 
           recipeId={recipe.id}
-          ingredients={ingredientStrings}
+          ingredients={ingredients}
         />
         
         {!hideOptions && (

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { addIngredientsToGroceryList } from "@/services/groceryService";
 import { toast } from "sonner";
+import { RecipeIngredient } from "@/types/recipeIngredient";
 
 export interface AddToGroceryListButtonProps {
   recipeId: string;
-  ingredients: string[];
+  ingredients: RecipeIngredient[] | string[];
 }
 
 export const AddToGroceryListButton = ({ 
@@ -17,23 +18,34 @@ export const AddToGroceryListButton = ({
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToGroceryList = async () => {
-    if (ingredients.length === 0) {
+    if (!ingredients || ingredients.length === 0) {
       toast.error("No ingredients to add");
       return;
     }
 
     setIsAdding(true);
     try {
-      // Filter out empty ingredient strings before adding
-      const validIngredients = ingredients.filter(ing => ing.trim() !== '');
+      // Convert ingredients to strings if they're RecipeIngredient objects
+      const ingredientStrings = ingredients.map(ing => {
+        if (typeof ing === 'string') {
+          return ing.trim();
+        } else {
+          // Format structured ingredient
+          const { quantity, unit, name } = ing;
+          return [quantity || '', unit || '', name || ''].filter(Boolean).join(' ').trim();
+        }
+      }).filter(ing => ing.trim() !== ''); // Filter out empty strings
       
-      if (validIngredients.length === 0) {
+      if (ingredientStrings.length === 0) {
         toast.error("No valid ingredients to add");
+        setIsAdding(false);
         return;
       }
       
-      await addIngredientsToGroceryList(validIngredients, recipeId);
-      toast.success("Added to grocery list");
+      const success = await addIngredientsToGroceryList(ingredientStrings, recipeId);
+      if (success) {
+        toast.success("Added to grocery list");
+      }
     } catch (error) {
       console.error("Failed to add to grocery list", error);
       toast.error("Failed to add to grocery list");

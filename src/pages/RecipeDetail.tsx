@@ -9,6 +9,7 @@ import { RecipeIngredientsList } from "@/components/recipe/RecipeIngredientsList
 import { RecipeInstructionsList } from "@/components/recipe/RecipeInstructionsList";
 import { RecipeActions } from "@/components/recipe/RecipeActions";
 import { RecipeLoadingState } from "@/components/recipe/RecipeLoadingState";
+import { RecipeIngredient } from "@/types/recipeIngredient";
 
 const RecipeDetail = () => {
   const {
@@ -28,6 +29,36 @@ const RecipeDetail = () => {
   }
 
   const ratingsArray = (recipe.ratings as unknown as { rating: number; timestamp: string }[]) || [];
+  
+  // Convert ingredients to the proper format if they aren't already
+  // This handles both string[] and RecipeIngredient[] formats
+  const formattedIngredients: RecipeIngredient[] = Array.isArray(recipe.ingredients) 
+    ? recipe.ingredients.map(ing => {
+        if (typeof ing === 'string') {
+          // Parse string ingredients into structured format
+          const parts = ing.trim().split(/\s+/);
+          let quantity = '';
+          let unit = '';
+          let name = ing;
+          
+          // Try to extract quantity (first part if it's a number)
+          if (parts.length > 0 && /^[\d\/\.\-]+$/.test(parts[0])) {
+            quantity = parts[0];
+            
+            // Try to extract unit (second part if present)
+            if (parts.length > 1) {
+              unit = parts[1];
+              // Name is everything else
+              name = parts.slice(2).join(' ');
+            }
+          }
+          
+          return { name, quantity, unit };
+        }
+        // If it's already a RecipeIngredient object
+        return ing as RecipeIngredient;
+      })
+    : [];
   
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -80,7 +111,7 @@ const RecipeDetail = () => {
               prep_time: recipe.prep_time,
               is_favorite: recipe.is_favorite
             }}
-            ingredients={recipe.ingredients as any}
+            ingredients={formattedIngredients}
             hideOptions={false}
           />
         </div>
