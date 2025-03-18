@@ -79,6 +79,7 @@ const RecipeDetail = () => {
             onRateClick={handleRating}
             servings={currentServings}
             onServingsChange={setCurrentServings}
+            cookTime={recipe.cook_time}
           />
         </div>
       </div>
