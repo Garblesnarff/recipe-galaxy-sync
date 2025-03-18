@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
+const groqApiKey = Deno.env.get('GROQ_API_KEY')
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
@@ -36,7 +36,7 @@ serve(async (req) => {
       throw new Error('No ingredients found in recipe')
     }
 
-    // Build prompt for OpenAI
+    // Build prompt for Groq LLM
     const prompt = `
 You are a specialized chef AI that adapts recipes to meet specific dietary restrictions.
 
@@ -66,15 +66,17 @@ Provide your response in the following JSON format:
 }
 `
 
-    // Call OpenAI API
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Calling Groq API with model: deepseek-r1-distill-qwen-32b');
+    
+    // Call Groq API using OpenAI compatibility
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'deepseek-r1-distill-qwen-32b',
         messages: [
           { role: 'system', content: 'You are a helpful assistant specialized in adapting recipes for dietary restrictions.' },
           { role: 'user', content: prompt }
@@ -83,18 +85,20 @@ Provide your response in the following JSON format:
       }),
     })
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.json()
-      throw new Error(`OpenAI API error: ${JSON.stringify(error)}`)
+    if (!groqResponse.ok) {
+      const error = await groqResponse.json()
+      console.error('Groq API error details:', JSON.stringify(error));
+      throw new Error(`Groq API error: ${JSON.stringify(error)}`)
     }
 
-    const responseData = await openAIResponse.json()
+    const responseData = await groqResponse.json()
+    console.log('Groq API response received');
     const responseContent = responseData.choices[0].message.content
 
-    // Parse the JSON response from GPT
+    // Parse the JSON response from Groq
     let adaptedRecipe
     try {
-      // Find the JSON part in the response (in case GPT adds extra text)
+      // Find the JSON part in the response (in case LLM adds extra text)
       const jsonMatch = responseContent.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         adaptedRecipe = JSON.parse(jsonMatch[0])
@@ -102,7 +106,7 @@ Provide your response in the following JSON format:
         throw new Error('Could not find valid JSON in the response')
       }
     } catch (e) {
-      console.error('Error parsing GPT response:', e)
+      console.error('Error parsing Groq response:', e)
       console.log('Raw response:', responseContent)
       throw new Error('Failed to parse the adapted recipe')
     }

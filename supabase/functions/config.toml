@@ -6,3 +6,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.scrape-sales]
 verify_jwt = false
+[functions.adapt-recipe-for-restrictions]
+verify_jwt = false
