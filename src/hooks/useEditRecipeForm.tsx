@@ -52,22 +52,27 @@ export const useEditRecipeForm = (recipeId: string) => {
       }
 
       if (data) {
+        // Handle the ingredients array properly, ensuring it's always a string array
+        const ingredientsArray = Array.isArray(data.ingredients) 
+          ? data.ingredients.map(item => typeof item === 'string' ? item : String(item))
+          : [];
+
         setFormData({
           title: data.title || '',
           description: data.description || '',
           cookTime: data.cook_time || '',
           difficulty: data.difficulty || 'Easy',
           instructions: data.instructions || '',
-          ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+          ingredients: ingredientsArray,
           currentIngredient: '',
           imageUrl: data.image_url || '',
           source_url: data.source_url || '',
-          recipe_type: data.source_type || 'manual',
-          categories: data.categories || [],
+          recipe_type: data.recipe_type || 'manual',
+          categories: Array.isArray(data.categories) ? data.categories : [],
           cuisine_type: data.cuisine_type || '',
-          diet_tags: data.diet_tags || [],
+          diet_tags: Array.isArray(data.diet_tags) ? data.diet_tags : [],
           cooking_method: data.cooking_method || '',
-          season_occasion: data.season_occasion || [],
+          season_occasion: Array.isArray(data.season_occasion) ? data.season_occasion : [],
           prep_time: data.prep_time || '',
           servings: data.servings || 2
         });
