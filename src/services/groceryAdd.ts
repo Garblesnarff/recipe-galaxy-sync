@@ -7,9 +7,17 @@ import { GroceryItem } from "./groceryTypes";
 // Add a single item to the grocery list
 export const addToGroceryList = async (item: Omit<GroceryItem, "id" | "created_at">): Promise<boolean> => {
   try {
+    // Ensure is_purchased is set to false if not provided
+    const groceryItem = { 
+      ...item, 
+      is_purchased: item.is_purchased !== undefined ? item.is_purchased : false 
+    };
+    
+    console.log("Adding single item to grocery list:", groceryItem);
+    
     const { data, error } = await supabase
       .from("grocery_items")
-      .insert([item])
+      .insert([groceryItem])
       .select();
 
     if (error) {
@@ -18,6 +26,7 @@ export const addToGroceryList = async (item: Omit<GroceryItem, "id" | "created_a
       return false;
     }
 
+    toast.success("Item added to grocery list");
     return true;
   } catch (error) {
     console.error("Error adding to grocery list:", error);

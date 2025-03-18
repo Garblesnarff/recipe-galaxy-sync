@@ -59,6 +59,7 @@ const GroceryList = () => {
 
     const success = await addToGroceryList({
       item_name: newItem.trim(),
+      is_purchased: false, // Add the missing required property
     });
 
     if (success) {
