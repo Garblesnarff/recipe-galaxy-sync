@@ -1,8 +1,11 @@
 
 import { useState } from "react";
-import { Check, CheckSquare, Square, Copy } from "lucide-react";
+import { Check, CheckSquare, Square, Copy, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useDietaryWarnings } from "@/hooks/useDietaryWarnings";
+import { DietaryWarnings } from "@/components/recipe/DietaryWarnings";
+import { IngredientSubstitutionDialog } from "@/components/recipe/IngredientSubstitutionDialog";
 
 interface RecipeIngredientsListProps {
   ingredients: string[];
@@ -16,6 +19,9 @@ export const RecipeIngredientsList = ({
   originalServings = 0
 }: RecipeIngredientsListProps) => {
   const [checkedIngredients, setCheckedIngredients] = useState<{[key: number]: boolean}>({});
+  
+  // Get dietary warnings for ingredients
+  const { ingredientsWithWarnings, hasWarnings, userRestrictions, loading } = useDietaryWarnings(ingredients);
   
   // This helper function cleans the ingredient text by removing various box symbols
   // and other common prefixes that might appear in scraped recipes
@@ -115,8 +121,18 @@ export const RecipeIngredientsList = ({
         </div>
       )}
       
+      {/* Display dietary warnings if present */}
+      {hasWarnings && !loading && (
+        <DietaryWarnings 
+          ingredientsWithWarnings={ingredientsWithWarnings} 
+          userRestrictions={userRestrictions}
+        />
+      )}
+      
       <ul className="space-y-2">
-        {ingredients.map((ingredient, index) => {
+        {ingredientsWithWarnings.map((ingredientWithWarnings, index) => {
+          const { text: ingredient, warnings, substitutions } = ingredientWithWarnings;
+          
           // Skip rendering the "Ingredients 1x 2x 3x" text entirely
           if (/^Ingredients\s+\d+x\s+\d+x\s+\d+x$/.test(ingredient)) {
             return null;
@@ -135,9 +151,10 @@ export const RecipeIngredientsList = ({
           }
           
           const isChecked = !!checkedIngredients[index];
+          const hasWarning = warnings && warnings.length > 0;
           
           return (
-            <li key={index} className="flex items-start">
+            <li key={index} className={`flex items-start ${hasWarning ? 'bg-amber-50 p-2 rounded border border-amber-200' : ''}`}>
               <button 
                 onClick={() => toggleIngredient(index)} 
                 className="flex-shrink-0 mt-0.5 mr-3"
@@ -148,9 +165,32 @@ export const RecipeIngredientsList = ({
                   <Square className="h-5 w-5 text-gray-400" />
                 )}
               </button>
-              <span className={`text-gray-800 ${isChecked ? 'line-through text-gray-500' : ''}`}>
-                {displayIngredient}
-              </span>
+              <div className="flex-1">
+                <div className="flex items-start">
+                  <span className={`text-gray-800 ${isChecked ? 'line-through text-gray-500' : ''}`}>
+                    {displayIngredient}
+                  </span>
+                  
+                  {hasWarning && (
+                    <IngredientSubstitutionDialog 
+                      ingredient={displayIngredient}
+                      substitutions={substitutions}
+                      restrictions={warnings}
+                    />
+                  )}
+                </div>
+                
+                {hasWarning && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {warnings.map((warning, widx) => (
+                      <span key={widx} className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full flex items-center">
+                        <AlertTriangle className="h-3 w-3 mr-0.5" />
+                        {warning.restriction}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </li>
           );
         }).filter(Boolean)}

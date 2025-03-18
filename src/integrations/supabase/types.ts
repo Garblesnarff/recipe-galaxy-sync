@@ -119,6 +119,48 @@ export type Database = {
           },
         ]
       }
+      ingredient_classifications: {
+        Row: {
+          contains_dairy: boolean | null
+          contains_eggs: boolean | null
+          contains_gluten: boolean | null
+          contains_meat: boolean | null
+          contains_nuts: boolean | null
+          contains_soy: boolean | null
+          created_at: string
+          id: string
+          ingredient_name: string
+          is_animal_product: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          contains_dairy?: boolean | null
+          contains_eggs?: boolean | null
+          contains_gluten?: boolean | null
+          contains_meat?: boolean | null
+          contains_nuts?: boolean | null
+          contains_soy?: boolean | null
+          created_at?: string
+          id?: string
+          ingredient_name: string
+          is_animal_product?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          contains_dairy?: boolean | null
+          contains_eggs?: boolean | null
+          contains_gluten?: boolean | null
+          contains_meat?: boolean | null
+          contains_nuts?: boolean | null
+          contains_soy?: boolean | null
+          created_at?: string
+          id?: string
+          ingredient_name?: string
+          is_animal_product?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingredient_mappings: {
         Row: {
           canonical_name: string
@@ -146,11 +188,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient_substitutions: {
+        Row: {
+          created_at: string
+          dietary_restriction: string
+          id: string
+          notes: string | null
+          original_ingredient: string
+          substitute_ingredient: string
+          substitution_context: string | null
+          substitution_ratio: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dietary_restriction: string
+          id?: string
+          notes?: string | null
+          original_ingredient: string
+          substitute_ingredient: string
+          substitution_context?: string | null
+          substitution_ratio?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dietary_restriction?: string
+          id?: string
+          notes?: string | null
+          original_ingredient?: string
+          substitute_ingredient?: string
+          substitution_context?: string | null
+          substitution_ratio?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           dietary_preferences: string[] | null
+          dietary_restrictions: string[] | null
           display_name: string | null
           favorite_cuisines: string[] | null
           id: string
@@ -160,6 +239,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           dietary_preferences?: string[] | null
+          dietary_restrictions?: string[] | null
           display_name?: string | null
           favorite_cuisines?: string[] | null
           id: string
@@ -169,6 +249,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           dietary_preferences?: string[] | null
+          dietary_restrictions?: string[] | null
           display_name?: string | null
           favorite_cuisines?: string[] | null
           id?: string
