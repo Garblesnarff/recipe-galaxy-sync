@@ -1,48 +1,76 @@
+
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { fetchRecipeById, updateRecipe } from '@/services/recipeService';
-import { Recipe } from '@/types/recipe';
+import { useNavigate } from 'react-router-dom';
+import { updateRecipe } from '@/services/recipeService';
+import { RecipeFormData } from '@/types/recipe';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { uploadImage } from '@/services/recipeService';
 
-interface FormData {
-  title: string;
-  description: string;
-  sourceUrl: string;
-  prepTime: string;
-  cookTime: string;
-  servings: number;
-  ingredients: string[];
-  instructions: string[];
-  imageUrl: string;
-  difficulty: string;
-  notes: string;
-  cuisineType: string | null;
-  cookingMethod: string | null;
-  categories: string[];
-  dietTags: string[];
-  seasonOccasion: string[];
-}
-
-export const useEditRecipeForm = () => {
-  const { id } = useParams<{ id: string }>();
+export const useEditRecipeForm = (recipeId: string) => {
   const navigate = useNavigate();
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sourceType, setSourceType] = useState<'url' | 'manual'>('url');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formData, setFormData] = useState<RecipeFormData>({
+    title: '',
+    description: '',
+    cookTime: '',
+    difficulty: 'Easy',
+    instructions: '',
+    ingredients: [],
+    currentIngredient: '',
+    imageUrl: '',
+    source_url: '',
+    recipe_type: 'manual',
+    categories: [],
+    cuisine_type: '',
+    diet_tags: [],
+    cooking_method: '',
+    season_occasion: [],
+    prep_time: '',
+    servings: 2
+  });
 
   useEffect(() => {
-    if (id) {
-      loadRecipe(id);
+    if (recipeId) {
+      loadRecipe(recipeId);
     }
-  }, [id]);
+  }, [recipeId]);
 
-  const loadRecipe = async (recipeId: string) => {
+  const loadRecipe = async (id: string) => {
     setIsLoading(true);
     try {
-      const data = await fetchRecipeById(recipeId);
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
       if (data) {
-        setRecipe(data);
+        setFormData({
+          title: data.title || '',
+          description: data.description || '',
+          cookTime: data.cook_time || '',
+          difficulty: data.difficulty || 'Easy',
+          instructions: data.instructions || '',
+          ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+          currentIngredient: '',
+          imageUrl: data.image_url || '',
+          source_url: data.source_url || '',
+          recipe_type: data.source_type || 'manual',
+          categories: data.categories || [],
+          cuisine_type: data.cuisine_type || '',
+          diet_tags: data.diet_tags || [],
+          cooking_method: data.cooking_method || '',
+          season_occasion: data.season_occasion || [],
+          prep_time: data.prep_time || '',
+          servings: data.servings || 2
+        });
       } else {
         toast.error("Recipe not found");
         navigate('/');
@@ -56,40 +84,80 @@ export const useEditRecipeForm = () => {
     }
   };
 
-  const handleSubmit = async (data: FormData) => {
-    if (!id) return;
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Create a URL to preview the image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      
+      // Upload the image and get the URL
+      const imageUrl = await uploadImage(file);
+      
+      // Update form data with the new image URL
+      setFormData(prev => ({
+        ...prev,
+        imageUrl
+      }));
+    } catch (error) {
+      console.error('Error handling image:', error);
+      toast.error('Failed to upload image');
+    }
+  };
+
+  const addIngredient = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.currentIngredient.trim()) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      ingredients: [...prev.ingredients, prev.currentIngredient.trim()],
+      currentIngredient: ''
+    }));
+  };
+
+  const removeIngredient = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     setIsSubmitting(true);
     
     try {
       // Format data for Supabase
       const recipeData = {
-        title: data.title,
-        description: data.description,
-        source_url: data.sourceUrl,
-        source_type: sourceType,
-        prep_time: data.prepTime,
-        cook_time: data.cookTime,
-        servings: data.servings,
-        ingredients: data.ingredients,
-        instructions: data.instructions,
-        image_url: data.imageUrl,
-        difficulty: data.difficulty,
-        notes: data.notes,
-        cuisine_type: data.cuisineType || null,
-        cooking_method: data.cookingMethod || null,
-        categories: data.categories || [],
-        diet_tags: data.dietTags || [],
-        season_occasion: data.seasonOccasion || []
+        title: formData.title,
+        description: formData.description,
+        source_url: formData.source_url,
+        source_type: formData.recipe_type,
+        prep_time: formData.prep_time,
+        cook_time: formData.cookTime,
+        servings: formData.servings,
+        ingredients: formData.ingredients,
+        instructions: formData.instructions,
+        image_url: formData.imageUrl,
+        difficulty: formData.difficulty,
+        cuisine_type: formData.cuisine_type || null,
+        cooking_method: formData.cooking_method || null,
+        categories: formData.categories || [],
+        diet_tags: formData.diet_tags || [],
+        season_occasion: formData.season_occasion || []
       };
       
       console.log("Submitting updated recipe:", recipeData);
       
       // Update recipe in database
-      const result = await updateRecipe(id, recipeData);
+      const result = await updateRecipe(recipeId, recipeData);
       
       if (result) {
-        navigate(`/recipe/${id}`);
+        navigate(`/recipe/${recipeId}`);
         toast.success("Recipe updated successfully!");
       }
     } catch (error) {
@@ -101,11 +169,14 @@ export const useEditRecipeForm = () => {
   };
 
   return {
-    recipe,
+    formData,
+    setFormData,
     isLoading,
     isSubmitting,
+    imagePreview,
+    handleImageChange,
     handleSubmit,
-    sourceType,
-    setSourceType
+    addIngredient,
+    removeIngredient
   };
 };
