@@ -112,18 +112,18 @@ export const saveRecipe = async (recipeData: any) => {
   }
 };
 
-export const updateRecipe = async (recipeData: any) => {
+export const updateRecipe = async (id: string, updates: any) => {
   // Ensure ingredients is an array and not null
-  const ingredientsArray = Array.isArray(recipeData.ingredients) 
-    ? recipeData.ingredients 
-    : [];
+  const ingredientsArray = updates.ingredients && Array.isArray(updates.ingredients) 
+    ? updates.ingredients 
+    : undefined;
   
-  console.log('Updating recipe data:', recipeData);
+  console.log('Updating recipe data:', { id, ...updates });
   
   // Prepare data for update
   const dataToUpdate = {
-    ...recipeData,
-    ingredients: ingredientsArray
+    ...updates,
+    ...(ingredientsArray !== undefined && { ingredients: ingredientsArray })
   };
   
   console.log('Formatted data for update:', dataToUpdate);
@@ -132,7 +132,7 @@ export const updateRecipe = async (recipeData: any) => {
     const { data, error } = await supabase
       .from("recipes")
       .update(dataToUpdate)
-      .eq("id", recipeData.id)
+      .eq("id", id)
       .select();
     
     if (error) {
