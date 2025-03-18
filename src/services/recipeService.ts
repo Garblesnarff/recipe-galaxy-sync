@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ImportedRecipeData } from "@/types/recipe";
 
@@ -149,7 +148,6 @@ export const updateRecipe = async (id: string, updates: any) => {
   }
 };
 
-// New function to adapt recipe for dietary restrictions
 export const adaptRecipeForDietaryRestrictions = async (
   recipeId: string, 
   restrictions: string[]
@@ -176,10 +174,8 @@ export const adaptRecipeForDietaryRestrictions = async (
       throw new Error('Recipe not found');
     }
 
-    // Format the list of restrictions for the prompt
-    const restrictionsText = restrictions.join(', ');
-
-    // Call edge function to adapt the recipe using LLM
+    // Call edge function to adapt the recipe using Groq
+    console.log('Calling adapt-recipe-for-restrictions with:', { recipeId, restrictions });
     const response = await supabase.functions.invoke('adapt-recipe-for-restrictions', {
       body: { 
         recipe, 
@@ -192,6 +188,7 @@ export const adaptRecipeForDietaryRestrictions = async (
       throw new Error(response.error.message || 'Error adapting recipe');
     }
 
+    console.log('Adaptation response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error in adaptRecipeForDietaryRestrictions:', error);
