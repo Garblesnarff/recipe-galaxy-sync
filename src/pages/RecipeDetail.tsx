@@ -34,12 +34,15 @@ const RecipeDetail = () => {
   // This handles both string[] and RecipeIngredient[] formats
   const formattedIngredients: RecipeIngredient[] = Array.isArray(recipe.ingredients) 
     ? recipe.ingredients.map(ing => {
-        if (typeof ing === 'string') {
+        // First convert to unknown, then handle different cases
+        const ingredient = ing as unknown;
+        
+        if (typeof ingredient === 'string') {
           // Parse string ingredients into structured format
-          const parts = ing.trim().split(/\s+/);
+          const parts = ingredient.trim().split(/\s+/);
           let quantity = '';
           let unit = '';
-          let name = ing;
+          let name = ingredient as string;
           
           // Try to extract quantity (first part if it's a number)
           if (parts.length > 0 && /^[\d\/\.\-]+$/.test(parts[0])) {
@@ -54,9 +57,27 @@ const RecipeDetail = () => {
           }
           
           return { name, quantity, unit };
+        } 
+        // If it's already a RecipeIngredient-like object
+        else if (typeof ingredient === 'object' && ingredient !== null) {
+          const ingObj = ingredient as Record<string, unknown>;
+          // Ensure it has at least a name property
+          if (ingObj.name && typeof ingObj.name === 'string') {
+            return {
+              name: ingObj.name,
+              quantity: typeof ingObj.quantity === 'string' ? ingObj.quantity : '',
+              unit: typeof ingObj.unit === 'string' ? ingObj.unit : '',
+              notes: typeof ingObj.notes === 'string' ? ingObj.notes : undefined
+            };
+          }
         }
-        // If it's already a RecipeIngredient object
-        return ing as RecipeIngredient;
+        
+        // Default fallback for any unhandled types
+        return { 
+          name: typeof ingredient === 'string' ? ingredient : 'Unknown ingredient',
+          quantity: '',
+          unit: '' 
+        };
       })
     : [];
   

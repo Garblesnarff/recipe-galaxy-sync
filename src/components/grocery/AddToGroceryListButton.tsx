@@ -29,11 +29,13 @@ export const AddToGroceryListButton = ({
       const ingredientStrings = ingredients.map(ing => {
         if (typeof ing === 'string') {
           return ing.trim();
-        } else {
-          // Format structured ingredient
+        } else if (ing && typeof ing === 'object' && 'name' in ing) {
+          // Format structured ingredient with proper checks
           const { quantity, unit, name } = ing;
+          if (!name) return ''; // Skip ingredients without a name
           return [quantity || '', unit || '', name || ''].filter(Boolean).join(' ').trim();
         }
+        return ''; // Return empty string for invalid items
       }).filter(ing => ing.trim() !== ''); // Filter out empty strings
       
       if (ingredientStrings.length === 0) {
@@ -42,6 +44,7 @@ export const AddToGroceryListButton = ({
         return;
       }
       
+      console.log("Adding ingredients to grocery list:", ingredientStrings);
       const success = await addIngredientsToGroceryList(ingredientStrings, recipeId);
       if (success) {
         toast.success("Added to grocery list");
