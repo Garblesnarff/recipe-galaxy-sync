@@ -31,6 +31,7 @@ export const EditRecipe = () => {
         handleSubmit={handleSubmit}
         onAddIngredient={addIngredient}
         onRemoveIngredient={removeIngredient}
+        recipeId={id || ''}
       />
     </RecipeFormLayout>
   );

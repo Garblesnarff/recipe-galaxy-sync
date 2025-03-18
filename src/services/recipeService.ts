@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ImportedRecipeData } from "@/types/recipe";
 
@@ -116,14 +117,14 @@ export const updateRecipe = async (id: string, updates: any) => {
   // Ensure ingredients is an array and not null
   const ingredientsArray = updates.ingredients && Array.isArray(updates.ingredients) 
     ? updates.ingredients 
-    : undefined;
+    : [];
   
   console.log('Updating recipe data:', { id, ...updates });
   
   // Prepare data for update
   const dataToUpdate = {
     ...updates,
-    ...(ingredientsArray !== undefined && { ingredients: ingredientsArray })
+    ingredients: ingredientsArray
   };
   
   console.log('Formatted data for update:', dataToUpdate);
@@ -144,6 +145,56 @@ export const updateRecipe = async (id: string, updates: any) => {
     return data;
   } catch (error) {
     console.error('Exception updating recipe:', error);
+    throw error;
+  }
+};
+
+// New function to adapt recipe for dietary restrictions
+export const adaptRecipeForDietaryRestrictions = async (
+  recipeId: string, 
+  restrictions: string[]
+) => {
+  if (!restrictions || restrictions.length === 0) {
+    console.log('No restrictions provided, skipping adaptation');
+    return null;
+  }
+
+  try {
+    // First get the recipe
+    const { data: recipe, error } = await supabase
+      .from("recipes")
+      .select("*")
+      .eq("id", recipeId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching recipe for adaptation:', error);
+      throw error;
+    }
+
+    if (!recipe) {
+      throw new Error('Recipe not found');
+    }
+
+    // Format the list of restrictions for the prompt
+    const restrictionsText = restrictions.join(', ');
+
+    // Call edge function to adapt the recipe using LLM
+    const response = await supabase.functions.invoke('adapt-recipe-for-restrictions', {
+      body: { 
+        recipe, 
+        restrictions 
+      }
+    });
+    
+    if (response.error) {
+      console.error('Error adapting recipe:', response.error);
+      throw new Error(response.error.message || 'Error adapting recipe');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error in adaptRecipeForDietaryRestrictions:', error);
     throw error;
   }
 };
