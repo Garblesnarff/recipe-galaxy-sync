@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useAdaptedRecipe } from "./useAdaptedRecipe";
 
 interface Rating {
   rating: number;
@@ -18,6 +18,12 @@ export const useRecipeDetail = () => {
   const [userRating, setUserRating] = useState(0);
   const [currentServings, setCurrentServings] = useState<number>(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { 
+    adaptedRecipe, 
+    isAdapted, 
+    handleAdaptRecipe, 
+    resetAdaptation 
+  } = useAdaptedRecipe();
 
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
@@ -39,6 +45,17 @@ export const useRecipeDetail = () => {
       return data;
     },
   });
+
+  // Display the adapted recipe or the original
+  const displayedRecipe = isAdapted && adaptedRecipe ? 
+    { ...recipe, ...adaptedRecipe } : 
+    recipe;
+
+  // Reset adaptation when navigating away
+  const handleResetAdaptation = () => {
+    resetAdaptation();
+    toast.info("Returned to original recipe");
+  };
 
   const calculateAverageRating = (ratings: Rating[]) => {
     if (!ratings || !Array.isArray(ratings) || ratings.length === 0) return 0;
@@ -97,7 +114,6 @@ export const useRecipeDetail = () => {
       toast.success(isFavorite ? "Added to favorites" : "Removed from favorites");
     },
     onError: () => {
-      // Revert the UI state if the mutation fails
       setIsFavorite(!isFavorite);
       toast.error("Failed to update favorite status");
     },
@@ -127,7 +143,8 @@ export const useRecipeDetail = () => {
   };
 
   return {
-    recipe,
+    recipe: displayedRecipe,
+    originalRecipe: recipe,
     isLoading,
     navigateToEdit,
     isFavorite,
@@ -136,6 +153,9 @@ export const useRecipeDetail = () => {
     currentServings,
     setCurrentServings,
     userRating,
-    navigate
+    navigate,
+    isAdapted,
+    handleAdaptRecipe,
+    handleResetAdaptation
   };
 };

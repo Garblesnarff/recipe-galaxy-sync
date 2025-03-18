@@ -1,140 +1,136 @@
 
-import { useRecipeDetail } from "@/hooks/useRecipeDetail";
 import { RecipeHeader } from "@/components/recipe/RecipeHeader";
-import { RecipeEditButton } from "@/components/recipe/RecipeEditButton";
-import { RecipeMetadata } from "@/components/recipe/RecipeMetadata";
-import { RecipeTags } from "@/components/recipe/RecipeTags";
-import { RecipeSource } from "@/components/recipe/RecipeSource";
+import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { RecipeIngredientsList } from "@/components/recipe/RecipeIngredientsList";
 import { RecipeInstructionsList } from "@/components/recipe/RecipeInstructionsList";
-import { RecipeActions } from "@/components/recipe/RecipeActions";
 import { RecipeLoadingState } from "@/components/recipe/RecipeLoadingState";
-import { RecipeIngredient } from "@/types/recipeIngredient";
+import { RecipeMetadata } from "@/components/recipe/RecipeMetadata";
+import { RecipeSource } from "@/components/recipe/RecipeSource";
+import { RecipeTags } from "@/components/recipe/RecipeTags";
+import { RecipeActions } from "@/components/recipe/RecipeActions";
+import { SaleIndicator } from "@/components/SaleIndicator";
+import { RecipeEditButton } from "@/components/recipe/RecipeEditButton";
+import { DietaryWarnings } from "@/components/recipe/DietaryWarnings";
+import { RecipeTimer } from "@/components/recipe/RecipeTimer";
+import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { useRecipeDetail } from "@/hooks/useRecipeDetail";
+import { AdaptRecipeDialog } from "@/components/recipe/AdaptRecipeDialog";
+import { AdaptedRecipeBanner } from "@/components/recipe/AdaptedRecipeBanner";
+import { cn } from "@/lib/utils";
+import { DietaryRestriction } from "@/types/dietary";
 
-const RecipeDetail = () => {
+export const RecipeDetail = () => {
+  const [showTimer, setShowTimer] = useState(false);
   const {
     recipe,
     isLoading,
     navigateToEdit,
     isFavorite,
     handleToggleFavorite,
-    handleRating,
     currentServings,
     setCurrentServings,
-    navigate
+    isAdapted,
+    handleAdaptRecipe,
+    handleResetAdaptation
   } = useRecipeDetail();
 
+  const handleTimerClick = () => {
+    setShowTimer(true);
+  };
+
+  const handleCloseTimer = () => {
+    setShowTimer(false);
+  };
+
   if (isLoading || !recipe) {
-    return <RecipeLoadingState isLoading={isLoading} />;
+    return <RecipeLoadingState />;
   }
 
-  const ratingsArray = (recipe.ratings as unknown as { rating: number; timestamp: string }[]) || [];
-  
-  // Convert ingredients to the proper format if they aren't already
-  // This handles both string[] and RecipeIngredient[] formats
-  const formattedIngredients: RecipeIngredient[] = Array.isArray(recipe.ingredients) 
-    ? recipe.ingredients.map(ing => {
-        // First convert to unknown, then handle different cases
-        const ingredient = ing as unknown;
-        
-        if (typeof ingredient === 'string') {
-          // Parse string ingredients into structured format
-          const parts = ingredient.trim().split(/\s+/);
-          let quantity = '';
-          let unit = '';
-          let name = ingredient as string;
-          
-          // Try to extract quantity (first part if it's a number)
-          if (parts.length > 0 && /^[\d\/\.\-]+$/.test(parts[0])) {
-            quantity = parts[0];
-            
-            // Try to extract unit (second part if present)
-            if (parts.length > 1) {
-              unit = parts[1];
-              // Name is everything else
-              name = parts.slice(2).join(' ');
-            }
-          }
-          
-          return { name, quantity, unit };
-        } 
-        // If it's already a RecipeIngredient-like object
-        else if (typeof ingredient === 'object' && ingredient !== null) {
-          const ingObj = ingredient as Record<string, unknown>;
-          // Ensure it has at least a name property
-          if (ingObj.name && typeof ingObj.name === 'string') {
-            return {
-              name: ingObj.name,
-              quantity: typeof ingObj.quantity === 'string' ? ingObj.quantity : '',
-              unit: typeof ingObj.unit === 'string' ? ingObj.unit : '',
-              notes: typeof ingObj.notes === 'string' ? ingObj.notes : undefined
-            };
-          }
-        }
-        
-        // Default fallback for any unhandled types
-        return { 
-          name: typeof ingredient === 'string' ? ingredient : 'Unknown ingredient',
-          quantity: '',
-          unit: '' 
-        };
-      })
-    : [];
-  
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <RecipeHeader 
-        title={recipe.title}
-        imageUrl={recipe.image_url}
-        rating={recipe.rating}
-        ratingsCount={ratingsArray.length}
-        isFavorite={isFavorite}
-        onToggleFavorite={handleToggleFavorite}
-      />
+    <div className="container mx-auto max-w-3xl px-4 py-6 ">
+      <div className="flex flex-wrap md:flex-nowrap gap-4">
+        <div className="w-full space-y-6">
+          <div className="flex items-start justify-between">
+            <RecipeEditButton onClick={navigateToEdit} className="ml-auto" />
+          </div>
 
-      <div className="container">
-        <div className="bg-white px-6 pb-6 pt-0 shadow-sm">
-          <RecipeEditButton onClick={navigateToEdit} />
+          {isAdapted && (
+            <AdaptedRecipeBanner 
+              adaptedFor={recipe.adaptedFor as DietaryRestriction[]} 
+              onReset={handleResetAdaptation} 
+            />
+          )}
 
-          <RecipeMetadata 
-            cookTime={recipe.cook_time}
-            prepTime={recipe.prep_time}
-            difficulty={recipe.difficulty}
-            description={recipe.description}
-            servings={recipe.servings}
-            date={recipe.created_at}
-          />
+          <Card className={cn("p-4", isAdapted && "border-indigo-300")}>
+            <div className="space-y-6">
+              <RecipeHeader
+                title={recipe.title || ""}
+                description={recipe.description || ""}
+                isFavorite={isFavorite}
+                onToggleFavorite={handleToggleFavorite}
+              />
 
-          <RecipeTags 
-            categories={recipe.categories}
-            diet_tags={recipe.diet_tags}
-            cuisine_type={recipe.cuisine_type}
-            season_occasion={recipe.season_occasion}
-            cooking_method={recipe.cooking_method}
-          />
+              <RecipeImage imageUrl={recipe.image_url} alt={recipe.title} />
 
-          <RecipeSource sourceUrl={recipe.source_url} />
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                  <AdaptRecipeDialog 
+                    recipeId={recipe.id}
+                    onAdapt={handleAdaptRecipe}
+                  />
+                  
+                  <SaleIndicator
+                    ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
+                  />
+                </div>
 
-          <RecipeIngredientsList 
-            ingredients={recipe.ingredients as string[]}
-            servings={currentServings}
-            originalServings={recipe.servings}
-          />
+                <RecipeTimer
+                  prepTime={recipe.prep_time}
+                  cookTime={recipe.cook_time}
+                  isOpen={showTimer}
+                  onOpen={handleTimerClick}
+                  onClose={handleCloseTimer}
+                />
+              </div>
 
-          <RecipeInstructionsList 
-            instructions={recipe.instructions}
-          />
+              <RecipeMetadata
+                prepTime={recipe.prep_time}
+                cookTime={recipe.cook_time}
+                servings={currentServings}
+                difficulty={recipe.difficulty}
+                rating={recipe.rating}
+                onServingsChange={setCurrentServings}
+              />
 
-          <RecipeActions 
-            recipe={{
-              id: recipe.id,
-              cook_time: recipe.cook_time,
-              prep_time: recipe.prep_time,
-              is_favorite: recipe.is_favorite
-            }}
-            ingredients={formattedIngredients}
-            hideOptions={false}
-          />
+              <DietaryWarnings ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []} />
+
+              <RecipeIngredientsList
+                ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
+                servings={recipe.servings}
+                currentServings={currentServings}
+              />
+
+              <RecipeInstructionsList
+                instructions={recipe.instructions || ""}
+              />
+
+              <RecipeTags
+                categories={recipe.categories || []}
+                cuisineType={recipe.cuisine_type}
+                dietTags={recipe.diet_tags || []}
+                cookingMethod={recipe.cooking_method}
+                seasonOccasion={recipe.season_occasion || []}
+              />
+
+              <RecipeSource
+                sourceUrl={recipe.source_url}
+                sourceType={recipe.source_type}
+              />
+
+              <RecipeActions recipeId={recipe.id} />
+            </div>
+          </Card>
         </div>
       </div>
     </div>
