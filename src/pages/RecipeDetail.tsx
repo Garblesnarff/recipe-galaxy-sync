@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,8 @@ const RecipeDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [userRating, setUserRating] = useState(0);
+  const [currentServings, setCurrentServings] = useState<number>(0);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
@@ -33,6 +36,13 @@ const RecipeDetail = () => {
         .single();
 
       if (error) throw error;
+      
+      // Set initial state based on recipe data
+      if (data) {
+        setCurrentServings(data.servings || 4);
+        setIsFavorite(data.is_favorite || false);
+      }
+      
       return data;
     },
   });
@@ -64,7 +74,7 @@ const RecipeDetail = () => {
         .from("recipes")
         .update({ 
           ratings: newRatings,
-          rating: calculateAverageRating(currentRatings)
+          rating: calculateAverageRating([...currentRatings, { rating, timestamp: new Date().toISOString() }])
         })
         .eq("id", recipeId);
 
@@ -78,11 +88,43 @@ const RecipeDetail = () => {
       toast.error("Failed to submit rating");
     },
   });
+  
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ recipeId, isFavorite }: { recipeId: string; isFavorite: boolean }) => {
+      const { error } = await supabase
+        .from("recipes")
+        .update({ is_favorite: isFavorite })
+        .eq("id", recipeId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recipe", id] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      toast.success(isFavorite ? "Added to favorites" : "Removed from favorites");
+    },
+    onError: () => {
+      // Revert the UI state if the mutation fails
+      setIsFavorite(!isFavorite);
+      toast.error("Failed to update favorite status");
+    },
+  });
 
   const navigateToEdit = () => {
     if (recipe) {
       navigate(`/edit-recipe/${recipe.id}`);
     }
+  };
+  
+  const handleToggleFavorite = () => {
+    if (!recipe) return;
+    
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+    toggleFavoriteMutation.mutate({ 
+      recipeId: recipe.id, 
+      isFavorite: newFavoriteState 
+    });
   };
 
   if (isLoading) {
@@ -121,12 +163,14 @@ const RecipeDetail = () => {
   const ratingsArray = (recipe.ratings as unknown as Rating[]) || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <RecipeHeader 
         title={recipe.title}
         imageUrl={recipe.image_url}
         rating={recipe.rating}
         ratingsCount={ratingsArray.length}
+        isFavorite={isFavorite}
+        onToggleFavorite={handleToggleFavorite}
       />
 
       <div className="container">
@@ -145,8 +189,11 @@ const RecipeDetail = () => {
 
           <RecipeMetadata 
             cookTime={recipe.cook_time}
+            prepTime={recipe.prep_time}
             difficulty={recipe.difficulty}
             description={recipe.description}
+            servings={recipe.servings}
+            date={recipe.created_at}
           />
 
           {(recipe.categories?.length > 0 || recipe.diet_tags?.length > 0 || recipe.cuisine_type) && (
@@ -176,12 +223,34 @@ const RecipeDetail = () => {
                     {season}
                   </span>
                 ))}
+                
+                {recipe.cooking_method && recipe.cooking_method !== "Various" && (
+                  <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                    {recipe.cooking_method}
+                  </span>
+                )}
               </div>
+            </div>
+          )}
+
+          {recipe.source_url && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-2">Source</h3>
+              <a 
+                href={recipe.source_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline break-all"
+              >
+                {recipe.source_url}
+              </a>
             </div>
           )}
 
           <RecipeIngredientsList 
             ingredients={recipe.ingredients as string[]}
+            servings={currentServings}
+            originalServings={recipe.servings}
           />
 
           <RecipeInstructionsList 
@@ -192,6 +261,8 @@ const RecipeDetail = () => {
             ingredients={recipe.ingredients as string[]}
             recipeId={recipe.id}
             onRateClick={handleRating}
+            servings={currentServings}
+            onServingsChange={setCurrentServings}
           />
         </div>
       </div>
