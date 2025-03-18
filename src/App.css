@@ -1,4 +1,3 @@
-
 #root {
   max-width: 100%;
   margin: 0 auto;
@@ -11,6 +10,7 @@ body {
   color: #333;
   line-height: 1.5;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-bottom: 4rem;
 }
 
 .container {
@@ -54,10 +54,25 @@ body {
 
 /* Add bottom padding to account for fixed navigation */
 .page-content {
-  padding-bottom: 4rem;
+  padding-bottom: 5rem;
 }
 
-/* NEW NAVIGATION STYLES - completely redone */
+/* Bottom navigation styles */
+.bottom-navigation {
+  background-color: white;
+  border-top: 1px solid #eaeaea;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4rem;
+  z-index: 50;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* Navigation button styles */
 .nav-button {
   display: flex;
   flex-direction: column;
