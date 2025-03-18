@@ -57,6 +57,13 @@ export const useEditRecipeForm = (recipeId: string) => {
           ? data.ingredients.map(item => typeof item === 'string' ? item : String(item))
           : [];
 
+        // Ensure recipe_type is one of the valid values
+        const validRecipeType = (data.recipe_type === 'manual' || 
+                               data.recipe_type === 'webpage' || 
+                               data.recipe_type === 'youtube') 
+                               ? data.recipe_type 
+                               : 'manual';
+
         setFormData({
           title: data.title || '',
           description: data.description || '',
@@ -67,7 +74,7 @@ export const useEditRecipeForm = (recipeId: string) => {
           currentIngredient: '',
           imageUrl: data.image_url || '',
           source_url: data.source_url || '',
-          recipe_type: data.recipe_type || 'manual',
+          recipe_type: validRecipeType,
           categories: Array.isArray(data.categories) ? data.categories : [],
           cuisine_type: data.cuisine_type || '',
           diet_tags: Array.isArray(data.diet_tags) ? data.diet_tags : [],
