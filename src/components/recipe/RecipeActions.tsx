@@ -59,7 +59,7 @@ export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: Reci
               {isFavorite ? 'Favorited' : 'Favorite'}
             </Button>
             
-            <Link to={`/recipes/${recipe.id}/edit`} className="flex-1">
+            <Link to={`/edit-recipe/${recipe.id}`} className="flex-1">
               <Button variant="outline" className="w-full">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit

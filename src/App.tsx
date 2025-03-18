@@ -6,7 +6,7 @@ import RecipeDetail from "@/pages/RecipeDetail";
 import AddRecipe from "@/pages/AddRecipe";
 import GroceryList from "@/pages/GroceryList";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import EditRecipe from "@/pages/EditRecipe";
 import Collections from "@/pages/Collections";
 import CollectionDetail from "@/pages/CollectionDetail";
@@ -27,7 +27,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNavigation />
-      <Toaster />
+      <Toaster richColors position="top-center" />
     </>
   );
 }
