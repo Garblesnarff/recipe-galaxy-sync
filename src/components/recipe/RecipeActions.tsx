@@ -1,9 +1,13 @@
 
-import { Button } from "@/components/ui/button";
-import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
-import { Star, Printer, Timer, Minus, Plus } from "lucide-react";
 import { useState } from "react";
-import { RecipeTimer } from "./RecipeTimer";
+import { Button } from "@/components/ui/button";
+import { Clock, Star, Bookmark, Timer, Users, Share } from "lucide-react";
+import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
+import { RecipeTimer } from "@/components/recipe/RecipeTimer";
+import { Collection } from "@/types/collection";
+import { fetchRecipeCollections } from "@/services/collectionService";
+import { AddToCollectionDialog } from "@/components/collections/AddToCollectionDialog";
+import { useQuery } from "@tanstack/react-query";
 
 interface RecipeActionsProps {
   ingredients: string[];
@@ -11,83 +15,104 @@ interface RecipeActionsProps {
   onRateClick: () => void;
   servings: number;
   onServingsChange: (servings: number) => void;
-  cookTime?: number; // Add optional cookTime prop
+  cookTime?: number;
 }
 
-export const RecipeActions = ({ 
-  ingredients, 
-  recipeId, 
+export const RecipeActions = ({
+  ingredients,
+  recipeId,
   onRateClick,
   servings,
   onServingsChange,
   cookTime
 }: RecipeActionsProps) => {
-  const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
   
-  const handlePrint = () => {
-    window.print();
-  };
-  
-  const handleServingsChange = (delta: number) => {
-    const newServings = Math.max(1, servings + delta);
-    onServingsChange(newServings);
+  // Fetch collections that contain this recipe
+  const { data: recipeCollections = [] } = useQuery({
+    queryKey: ["recipeCollections", recipeId],
+    queryFn: () => fetchRecipeCollections(recipeId)
+  });
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: document.title,
+          text: "Check out this recipe!",
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
   };
 
-  const handleOpenTimer = () => {
-    setIsTimerOpen(true);
-  };
-  
   return (
-    <div className="space-y-4 mt-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="font-medium">Servings</div>
-        <div className="flex items-center border rounded-md">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2" 
-            onClick={() => handleServingsChange(-1)}
-            disabled={servings <= 1}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="mx-2 font-medium">{servings}</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2" 
-            onClick={() => handleServingsChange(1)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+    <div className="mt-8 space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={onRateClick}>
+          <Star className="mr-1 h-4 w-4" /> Rate
+        </Button>
+        
+        <Button variant="outline" onClick={() => setIsCollectionDialogOpen(true)}>
+          <Bookmark className="mr-1 h-4 w-4" /> {recipeCollections.length > 0 ? "In Collections" : "Save"}
+        </Button>
+        
+        <Button variant="outline" onClick={handleShare}>
+          <Share className="mr-1 h-4 w-4" /> Share
+        </Button>
+        
+        <AddToGroceryListButton 
+          recipeId={recipeId} 
+          ingredients={ingredients} 
+          servings={servings}
+        />
+      </div>
+      
+      <div className="flex flex-wrap gap-4 items-center">
+        {cookTime && cookTime > 0 && (
+          <div>
+            <RecipeTimer 
+              initialMinutes={cookTime} 
+              label="Start Timer"
+            />
+          </div>
+        )}
+        
+        <div className="flex items-center">
+          <Users className="mr-1 h-4 w-4 text-gray-500" />
+          <span className="mr-2">Servings:</span>
+          <div className="flex items-center">
+            <button
+              className="w-8 h-8 flex items-center justify-center border rounded-l-md"
+              onClick={() => onServingsChange(Math.max(1, servings - 1))}
+              disabled={servings <= 1}
+            >
+              -
+            </button>
+            <span className="w-8 h-8 flex items-center justify-center border-t border-b">
+              {servings}
+            </span>
+            <button
+              className="w-8 h-8 flex items-center justify-center border rounded-r-md"
+              onClick={() => onServingsChange(servings + 1)}
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
-        <AddToGroceryListButton 
-          variant="outline" 
-          className="flex-1"
-          ingredients={ingredients}
-          recipeId={recipeId}
-        />
-        <Button variant="app" className="flex-1" onClick={onRateClick}>
-          <Star className="mr-1 h-4 w-4" /> Rate Recipe
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="flex-1" onClick={handlePrint}>
-          <Printer className="mr-1 h-4 w-4" /> Print Recipe
-        </Button>
-        <Button variant="outline" className="flex-1" onClick={handleOpenTimer}>
-          <Timer className="mr-1 h-4 w-4" /> Start Timer
-        </Button>
-      </div>
-
-      <RecipeTimer 
-        isOpen={isTimerOpen} 
-        onOpenChange={setIsTimerOpen} 
-        initialTime={cookTime ? Math.floor(cookTime / 60) : 0} 
+      <AddToCollectionDialog 
+        isOpen={isCollectionDialogOpen}
+        onClose={() => setIsCollectionDialogOpen(false)}
+        recipeId={recipeId}
+        currentCollections={recipeCollections}
       />
     </div>
   );
