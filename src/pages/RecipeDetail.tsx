@@ -29,12 +29,6 @@ const RecipeDetail = () => {
 
   const ratingsArray = (recipe.ratings as unknown as { rating: number; timestamp: string }[]) || [];
   
-  // Convert cookTime from string to number if needed
-  const cookTimeInMinutes = recipe.cook_time ? 
-    typeof recipe.cook_time === 'string' ? 
-      parseInt(recipe.cook_time, 10) : recipe.cook_time 
-    : undefined;
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <RecipeHeader 
@@ -80,12 +74,14 @@ const RecipeDetail = () => {
           />
 
           <RecipeActions 
-            ingredients={recipe.ingredients as string[]}
-            recipeId={recipe.id}
-            onRateClick={handleRating}
-            servings={currentServings}
-            onServingsChange={setCurrentServings}
-            cookTime={cookTimeInMinutes}
+            recipe={{
+              id: recipe.id,
+              cook_time: recipe.cook_time,
+              prep_time: recipe.prep_time,
+              is_favorite: recipe.is_favorite
+            }}
+            ingredients={recipe.ingredients as any}
+            hideOptions={false}
           />
         </div>
       </div>

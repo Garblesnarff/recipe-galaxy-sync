@@ -4,7 +4,7 @@ import { Clock, Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useInterval } from "@/hooks/use-interval";
+import { useInterval } from "@/hooks/useInterval";
 import { toast } from "sonner";
 
 export interface RecipeTimerProps {

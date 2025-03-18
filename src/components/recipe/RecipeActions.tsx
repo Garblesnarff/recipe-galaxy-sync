@@ -1,9 +1,9 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, Heart, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RecipeTimer } from "@/components/recipe/RecipeTimer";
-import { Recipe } from "@/types/recipe";
 import { RecipeIngredient } from "@/types/recipeIngredient";
 import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
 import { Link } from "react-router-dom";
@@ -11,7 +11,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateRecipe } from "@/services/recipeService";
 
 interface RecipeActionsProps {
-  recipe: Recipe;
+  recipe: {
+    id: string;
+    cook_time?: string;
+    prep_time?: string;
+    is_favorite?: boolean;
+  };
   ingredients: RecipeIngredient[];
   hideOptions?: boolean;
 }

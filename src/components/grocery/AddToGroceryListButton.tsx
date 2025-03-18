@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
-import { addRecipeToGroceryList } from "@/services/groceryAdd";
+import { addIngredientsToGroceryList } from "@/services/groceryAdd";
 import { toast } from "sonner";
 
 export interface AddToGroceryListButtonProps {
@@ -19,7 +19,7 @@ export const AddToGroceryListButton = ({
   const handleAddToGroceryList = async () => {
     setIsAdding(true);
     try {
-      await addRecipeToGroceryList(recipeId, ingredients);
+      await addIngredientsToGroceryList(ingredients, recipeId);
       toast.success("Added to grocery list");
     } catch (error) {
       console.error("Failed to add to grocery list", error);
