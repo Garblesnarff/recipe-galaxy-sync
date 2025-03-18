@@ -1,172 +1,104 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { Clock, Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Drawer, 
-  DrawerClose, 
-  DrawerContent, 
-  DrawerFooter, 
-  DrawerHeader, 
-  DrawerTitle 
-} from "@/components/ui/drawer";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PlayCircle, PauseCircle, Timer, XCircle } from "lucide-react";
+import { useInterval } from "@/hooks/use-interval";
 import { toast } from "sonner";
 
-interface RecipeTimerProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialTime?: number; // time in minutes
+export interface RecipeTimerProps {
+  minutes: number;
+  label: string;
 }
 
-export function RecipeTimer({ isOpen, onOpenChange, initialTime = 0 }: RecipeTimerProps) {
-  const [time, setTime] = useState<number>(initialTime * 60); // Convert minutes to seconds
-  const [totalTime, setTotalTime] = useState<number>(initialTime * 60);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [customTime, setCustomTime] = useState<string>("");
-  const timerRef = useRef<number | null>(null);
+export const RecipeTimer = ({ minutes, label }: RecipeTimerProps) => {
+  const initialSeconds = minutes * 60;
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+  const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(100);
 
-  useEffect(() => {
-    if (isRunning) {
-      timerRef.current = window.setInterval(() => {
-        setTime((prevTime) => {
-          if (prevTime <= 1) {
-            clearInterval(timerRef.current!);
-            setIsRunning(false);
-            toast.success("Timer complete!");
-            return 0;
-          }
-          return prevTime - 1;
+  useInterval(
+    () => {
+      if (secondsLeft > 0) {
+        setSecondsLeft(secondsLeft - 1);
+        setProgress((secondsLeft - 1) / initialSeconds * 100);
+      } else {
+        setIsRunning(false);
+        toast(`${label} timer is complete!`, {
+          description: "Your timer has finished.",
         });
-      }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
       }
-    };
-  }, [isRunning]);
+    },
+    isRunning ? 1000 : null
+  );
 
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-
-    const padZero = (num: number) => (num < 10 ? `0${num}` : num);
-
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
     if (hours > 0) {
-      return `${padZero(hours)}:${padZero(minutes)}:${padZero(remainingSeconds)}`;
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-
-    return `${padZero(minutes)}:${padZero(remainingSeconds)}`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleStartPause = () => {
-    setIsRunning(!isRunning);
-  };
-
+  const handleStart = () => setIsRunning(true);
+  const handlePause = () => setIsRunning(false);
   const handleReset = () => {
     setIsRunning(false);
-    setTime(totalTime);
-  };
-
-  const handleSetCustomTime = () => {
-    const timeValue = parseInt(customTime, 10);
-    if (!isNaN(timeValue) && timeValue > 0) {
-      const newTime = timeValue * 60;
-      setTime(newTime);
-      setTotalTime(newTime);
-      setCustomTime("");
-      toast.success(`Timer set for ${timeValue} minutes`);
-    } else {
-      toast.error("Please enter a valid time in minutes");
-    }
+    setSecondsLeft(initialSeconds);
+    setProgress(100);
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <DrawerHeader className="text-center">
-          <DrawerTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
-            <Timer className="h-6 w-6" />
-            Recipe Timer
-          </DrawerTitle>
-        </DrawerHeader>
-
-        <div className="px-4 pb-4">
-          <div className="text-center py-6">
-            <div className="text-5xl font-mono mb-4">{formatTime(time)}</div>
-            <Progress 
-              value={time === 0 ? 0 : (time / totalTime) * 100} 
-              className="h-2 mb-8" 
-              color="recipe-green"
-            />
-          </div>
-
-          <div className="flex justify-center space-x-3 mb-8">
-            <Button 
-              size="lg" 
-              variant="app" 
-              onClick={handleStartPause} 
-              className="h-16 w-16 rounded-full p-0 flex items-center justify-center"
-            >
-              {isRunning ? (
-                <PauseCircle className="h-8 w-8" />
-              ) : (
-                <PlayCircle className="h-8 w-8" />
-              )}
-            </Button>
-            
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={handleReset} 
-              className="h-16 w-16 rounded-full p-0 flex items-center justify-center"
-            >
-              <XCircle className="h-8 w-8" />
-            </Button>
-          </div>
-
-          <div className="flex space-x-2 mb-4">
-            <input
-              type="number"
-              placeholder="Set minutes"
-              className="border rounded px-3 py-2 flex-1"
-              value={customTime}
-              onChange={(e) => setCustomTime(e.target.value)}
-            />
-            <Button onClick={handleSetCustomTime} variant="app">
-              Set
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {[5, 10, 15, 20, 30, 45].map((min) => (
-              <Button 
-                key={min} 
-                variant="outline"
-                onClick={() => {
-                  const seconds = min * 60;
-                  setTime(seconds);
-                  setTotalTime(seconds);
-                  toast.success(`Timer set for ${min} minutes`);
-                }}
-              >
-                {min} min
-              </Button>
-            ))}
-          </div>
+    <div className="border rounded-md p-3 space-y-2 bg-white">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <Clock className="h-4 w-4 text-gray-500" />
+          <span className="text-sm font-medium">{label}</span>
         </div>
-
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        <Badge variant={isRunning ? "default" : "outline"}>
+          {formatTime(secondsLeft)}
+        </Badge>
+      </div>
+      
+      <Progress value={progress} className="h-1.5" />
+      
+      <div className="flex justify-end space-x-1">
+        {!isRunning ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-7 w-7 p-0" 
+            onClick={handleStart}
+            disabled={initialSeconds === 0}
+          >
+            <Play className="h-3 w-3" />
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-7 w-7 p-0" 
+            onClick={handlePause}
+          >
+            <Pause className="h-3 w-3" />
+          </Button>
+        )}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-7 w-7 p-0" 
+          onClick={handleReset}
+          disabled={secondsLeft === initialSeconds}
+        >
+          <RotateCcw className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
   );
-}
+};
+
+export default RecipeTimer;

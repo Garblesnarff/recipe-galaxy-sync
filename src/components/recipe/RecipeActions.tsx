@@ -1,119 +1,110 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Clock, Star, Bookmark, Timer, Users, Share } from "lucide-react";
-import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
+import { Calendar, Heart, Pencil } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RecipeTimer } from "@/components/recipe/RecipeTimer";
-import { Collection } from "@/types/collection";
-import { fetchRecipeCollections } from "@/services/collectionService";
-import { AddToCollectionDialog } from "@/components/collections/AddToCollectionDialog";
-import { useQuery } from "@tanstack/react-query";
+import { Recipe } from "@/types/recipe";
+import { RecipeIngredient } from "@/types/recipeIngredient";
+import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
+import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateRecipe } from "@/services/recipeService";
 
 interface RecipeActionsProps {
-  ingredients: string[];
-  recipeId: string;
-  onRateClick: () => void;
-  servings: number;
-  onServingsChange: (servings: number) => void;
-  cookTime?: number;
+  recipe: Recipe;
+  ingredients: RecipeIngredient[];
+  hideOptions?: boolean;
 }
 
 export const RecipeActions = ({
+  recipe,
   ingredients,
-  recipeId,
-  onRateClick,
-  servings,
-  onServingsChange,
-  cookTime
+  hideOptions = false,
 }: RecipeActionsProps) => {
-  const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
-  
-  // Fetch collections that contain this recipe
-  const { data: recipeCollections = [] } = useQuery({
-    queryKey: ["recipeCollections", recipeId],
-    queryFn: () => fetchRecipeCollections(recipeId)
+  const [addToPlannerOpen, setAddToPlannerOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+  const { mutate: toggleFavorite, isPending: isFavoritePending } = useMutation({
+    mutationFn: async (isFavorite: boolean) => {
+      if (!recipe.id) return;
+      return updateRecipe(recipe.id, { is_favorite: isFavorite });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe', recipe.id] });
+    },
   });
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: document.title,
-          text: "Check out this recipe!",
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.error("Error sharing:", error);
-      }
-    } else {
-      // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
-    }
-  };
-
   return (
-    <div className="mt-8 space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={onRateClick}>
-          <Star className="mr-1 h-4 w-4" /> Rate
-        </Button>
-        
-        <Button variant="outline" onClick={() => setIsCollectionDialogOpen(true)}>
-          <Bookmark className="mr-1 h-4 w-4" /> {recipeCollections.length > 0 ? "In Collections" : "Save"}
-        </Button>
-        
-        <Button variant="outline" onClick={handleShare}>
-          <Share className="mr-1 h-4 w-4" /> Share
-        </Button>
-        
+    <div className="flex flex-col space-y-2 mt-4">
+      <div className="flex space-x-2">
+        <Popover open={addToPlannerOpen} onOpenChange={setAddToPlannerOpen}>
+          <PopoverTrigger asChild>
+            <Button className="flex-1">
+              <Calendar className="mr-2 h-4 w-4" />
+              Add to Meal Plan
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <div className="grid gap-2">
+              <div className="space-y-2">
+                <h4 className="font-medium">Add to Meal Plan</h4>
+                <p className="text-sm text-gray-500">
+                  Select a day and meal to add this recipe to your meal plan.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <p>Coming soon...</p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <AddToGroceryListButton 
-          recipeId={recipeId} 
-          ingredients={ingredients} 
-          servings={servings}
+          recipeId={recipe.id} 
+          ingredients={ingredients.map(ing => ing.name)}
         />
       </div>
-      
-      <div className="flex flex-wrap gap-4 items-center">
-        {cookTime && cookTime > 0 && (
-          <div>
-            <RecipeTimer 
-              initialMinutes={cookTime} 
-              label="Start Timer"
-            />
-          </div>
-        )}
-        
-        <div className="flex items-center">
-          <Users className="mr-1 h-4 w-4 text-gray-500" />
-          <span className="mr-2">Servings:</span>
-          <div className="flex items-center">
-            <button
-              className="w-8 h-8 flex items-center justify-center border rounded-l-md"
-              onClick={() => onServingsChange(Math.max(1, servings - 1))}
-              disabled={servings <= 1}
-            >
-              -
-            </button>
-            <span className="w-8 h-8 flex items-center justify-center border-t border-b">
-              {servings}
-            </span>
-            <button
-              className="w-8 h-8 flex items-center justify-center border rounded-r-md"
-              onClick={() => onServingsChange(servings + 1)}
-            >
-              +
-            </button>
-          </div>
-        </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <RecipeTimer 
+          minutes={parseInt(recipe.cook_time || "0")} 
+          label="Cook Time"
+        />
+        <RecipeTimer 
+          minutes={parseInt(recipe.prep_time || "0")} 
+          label="Prep Time" 
+        />
       </div>
-      
-      <AddToCollectionDialog 
-        isOpen={isCollectionDialogOpen}
-        onClose={() => setIsCollectionDialogOpen(false)}
-        recipeId={recipeId}
-        currentCollections={recipeCollections}
-      />
+
+      {!hideOptions && (
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => toggleFavorite(!recipe.is_favorite)}
+            disabled={isFavoritePending}
+          >
+            {recipe.is_favorite ? (
+              <>
+                <Heart className="mr-2 h-4 w-4 fill-red-500 text-red-500" />
+                Remove from Favorites
+              </>
+            ) : (
+              <>
+                <Heart className="mr-2 h-4 w-4" />
+                Add to Favorites
+              </>
+            )}
+          </Button>
+          <Link to={`/edit-recipe/${recipe.id}`}>
+            <Button variant="secondary" className="flex-1">
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Recipe
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
