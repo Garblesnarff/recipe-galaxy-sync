@@ -41,8 +41,13 @@ export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: Reci
   // Convert ingredients to the format expected by AddToGroceryListButton
   const ingredientStrings = ingredients.map(ingredient => {
     const { quantity, unit, name } = ingredient;
-    return `${quantity || ''} ${unit || ''} ${name}`.trim();
-  });
+    // Format as "quantity unit name" where quantity and unit are optional
+    return [
+      quantity || '',
+      unit || '',
+      name || ''
+    ].filter(Boolean).join(' ').trim();
+  }).filter(str => str.length > 0); // Filter out any empty strings
 
   return (
     <div className="flex flex-col gap-4 mt-6">

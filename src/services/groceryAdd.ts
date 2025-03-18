@@ -1,48 +1,53 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { parseIngredient } from "./groceryUtils";
 import { toast } from "sonner";
-import { parseIngredient, handleGroceryError } from "./groceryUtils";
 import { GroceryItem } from "./groceryTypes";
 
-// Add a single ingredient to grocery list
-export const addToGroceryList = async (
-  item: Omit<GroceryItem, "id" | "user_id" | "created_at" | "is_purchased">
-): Promise<GroceryItem | null> => {
+// Add a single item to the grocery list
+export const addToGroceryList = async (item: Omit<GroceryItem, "id" | "created_at">): Promise<boolean> => {
   try {
     const { data, error } = await supabase
       .from("grocery_items")
-      .insert({
-        ...item,
-        is_purchased: false
-      })
-      .select()
-      .single();
+      .insert([item])
+      .select();
 
     if (error) {
       console.error("Error adding to grocery list:", error);
-      toast.error("Failed to add item to grocery list");
-      return null;
+      toast.error("Failed to add to grocery list");
+      return false;
     }
 
-    toast.success("Added to grocery list");
-    return data;
+    return true;
   } catch (error) {
-    return handleGroceryError(error, "addToGroceryList");
+    console.error("Error adding to grocery list:", error);
+    toast.error("Failed to add to grocery list");
+    return false;
   }
 };
 
-// Add multiple ingredients to grocery list
+// Add multiple ingredients to the grocery list
 export const addIngredientsToGroceryList = async (
   ingredients: string[],
-  recipeId: string
+  recipeId?: string
 ): Promise<boolean> => {
   try {
-    // Parse ingredients
-    const groceryItems = ingredients.map(ingredient => parseIngredient(ingredient, recipeId));
+    // Parse each ingredient and filter out nulls
+    const parsedIngredients = ingredients
+      .map(ingredient => parseIngredient(ingredient, recipeId))
+      .filter(item => item !== null) as Omit<GroceryItem, "id" | "created_at">[];
 
-    const { error } = await supabase
+    if (parsedIngredients.length === 0) {
+      toast.error("No valid ingredients to add");
+      return false;
+    }
+
+    console.log("Adding to grocery list:", parsedIngredients);
+
+    const { data, error } = await supabase
       .from("grocery_items")
-      .insert(groceryItems);
+      .insert(parsedIngredients)
+      .select();
 
     if (error) {
       console.error("Error adding ingredients to grocery list:", error);
@@ -50,11 +55,10 @@ export const addIngredientsToGroceryList = async (
       return false;
     }
 
-    toast.success(`Added ${ingredients.length} ingredients to grocery list`);
     return true;
   } catch (error) {
-    console.error("Error in addIngredientsToGroceryList:", error);
-    toast.error("An unexpected error occurred");
+    console.error("Error adding ingredients to grocery list:", error);
+    toast.error("Failed to add ingredients");
     return false;
   }
 };
