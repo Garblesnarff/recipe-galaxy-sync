@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ReplacementIcon } from "lucide-react";
+import { ReplacementIcon } from "@/components/ui/replacement-icon";
 
 interface IngredientSubstitutionDialogProps {
   ingredient: string;
