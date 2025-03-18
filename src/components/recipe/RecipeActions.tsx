@@ -7,7 +7,7 @@ import { RecipeTimer } from "@/components/recipe/RecipeTimer";
 import { RecipeIngredient } from "@/types/recipeIngredient";
 import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
 import { Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { updateRecipe } from "@/services/recipeService";
 
 interface RecipeActionsProps {
@@ -21,94 +21,69 @@ interface RecipeActionsProps {
   hideOptions?: boolean;
 }
 
-export const RecipeActions = ({
-  recipe,
-  ingredients,
-  hideOptions = false,
-}: RecipeActionsProps) => {
-  const [addToPlannerOpen, setAddToPlannerOpen] = useState(false);
+export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: RecipeActionsProps) => {
+  const [isFavorite, setIsFavorite] = useState(recipe.is_favorite || false);
 
-  const queryClient = useQueryClient();
-  const { mutate: toggleFavorite, isPending: isFavoritePending } = useMutation({
-    mutationFn: async (isFavorite: boolean) => {
-      if (!recipe.id) return;
-      return updateRecipe(recipe.id, { is_favorite: isFavorite });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      queryClient.invalidateQueries({ queryKey: ['recipe', recipe.id] });
-    },
+  const handleFavoriteToggle = async () => {
+    try {
+      const newFavoriteStatus = !isFavorite;
+      await updateRecipe(recipe.id, { is_favorite: newFavoriteStatus });
+      setIsFavorite(newFavoriteStatus);
+      toast.success(newFavoriteStatus ? "Added to favorites" : "Removed from favorites");
+    } catch (error) {
+      console.error("Error toggling favorite status:", error);
+      toast.error("Failed to update favorite status");
+    }
+  };
+
+  const cookTimeInMinutes = recipe.cook_time ? parseInt(recipe.cook_time, 10) : 0;
+
+  // Convert ingredients to the format expected by AddToGroceryListButton
+  const ingredientStrings = ingredients.map(ingredient => {
+    const { quantity, unit, name } = ingredient;
+    return `${quantity || ''} ${unit || ''} ${name}`.trim();
   });
 
   return (
-    <div className="flex flex-col space-y-2 mt-4">
-      <div className="flex space-x-2">
-        <Popover open={addToPlannerOpen} onOpenChange={setAddToPlannerOpen}>
+    <div className="flex flex-col gap-4 mt-6">
+      <div className="flex gap-2">
+        <AddToGroceryListButton 
+          recipeId={recipe.id}
+          ingredients={ingredientStrings}
+        />
+        
+        {!hideOptions && (
+          <>
+            <Button variant="outline" className="flex-1" onClick={handleFavoriteToggle}>
+              <Heart className={`mr-2 h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              {isFavorite ? 'Favorited' : 'Favorite'}
+            </Button>
+            
+            <Link to={`/recipes/${recipe.id}/edit`} className="flex-1">
+              <Button variant="outline" className="w-full">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+          </>
+        )}
+      </div>
+
+      {cookTimeInMinutes > 0 && (
+        <Popover>
           <PopoverTrigger asChild>
-            <Button className="flex-1">
+            <Button variant="outline" className="w-full">
               <Calendar className="mr-2 h-4 w-4" />
-              Add to Meal Plan
+              Start Cooking Timer
             </Button>
           </PopoverTrigger>
-          <PopoverContent>
-            <div className="grid gap-2">
-              <div className="space-y-2">
-                <h4 className="font-medium">Add to Meal Plan</h4>
-                <p className="text-sm text-gray-500">
-                  Select a day and meal to add this recipe to your meal plan.
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <p>Coming soon...</p>
-              </div>
-            </div>
+          <PopoverContent className="w-80">
+            <RecipeTimer 
+              minutes={cookTimeInMinutes} 
+              label={`${recipe.cook_time} Cooking Time`}
+            />
           </PopoverContent>
         </Popover>
-
-        <AddToGroceryListButton 
-          recipeId={recipe.id} 
-          ingredients={ingredients.map(ing => ing.name)}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <RecipeTimer 
-          minutes={parseInt(recipe.cook_time || "0")} 
-          label="Cook Time"
-        />
-        <RecipeTimer 
-          minutes={parseInt(recipe.prep_time || "0")} 
-          label="Prep Time" 
-        />
-      </div>
-
-      {!hideOptions && (
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => toggleFavorite(!recipe.is_favorite)}
-            disabled={isFavoritePending}
-          >
-            {recipe.is_favorite ? (
-              <>
-                <Heart className="mr-2 h-4 w-4 fill-red-500 text-red-500" />
-                Remove from Favorites
-              </>
-            ) : (
-              <>
-                <Heart className="mr-2 h-4 w-4" />
-                Add to Favorites
-              </>
-            )}
-          </Button>
-          <Link to={`/edit-recipe/${recipe.id}`}>
-            <Button variant="secondary" className="flex-1">
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Recipe
-            </Button>
-          </Link>
-        </div>
       )}
     </div>
   );
