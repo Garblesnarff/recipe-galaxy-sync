@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, Heart, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -38,10 +38,10 @@ export const RecipeActions = ({
   }
   
   const [isFavorite, setIsFavorite] = useState(recipe?.is_favorite || false);
-  const [recipeIngredients, setRecipeIngredients] = useState<string[] | RecipeIngredient[]>(ingredients);
+  const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[] | string[]>(ingredients);
   
   // Fetch ingredients if not provided and recipeId is available
-  useState(() => {
+  useEffect(() => {
     const fetchRecipeIngredients = async () => {
       if (ingredients.length === 0 && effectiveRecipeId) {
         try {
@@ -57,7 +57,9 @@ export const RecipeActions = ({
           }
           
           if (data && data.ingredients) {
-            setRecipeIngredients(data.ingredients);
+            // Safely cast the ingredients to our expected type
+            const fetchedIngredients = data.ingredients as RecipeIngredient[] | string[];
+            setRecipeIngredients(fetchedIngredients);
           }
         } catch (error) {
           console.error("Error fetching recipe:", error);
@@ -126,4 +128,3 @@ export const RecipeActions = ({
     </div>
   );
 };
-
