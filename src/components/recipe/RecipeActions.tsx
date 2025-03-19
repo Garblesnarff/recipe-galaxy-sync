@@ -9,6 +9,7 @@ import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListBut
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { updateRecipe } from "@/services/recipeService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecipeActionsProps {
   recipe?: {
@@ -37,6 +38,35 @@ export const RecipeActions = ({
   }
   
   const [isFavorite, setIsFavorite] = useState(recipe?.is_favorite || false);
+  const [recipeIngredients, setRecipeIngredients] = useState<string[] | RecipeIngredient[]>(ingredients);
+  
+  // Fetch ingredients if not provided and recipeId is available
+  useState(() => {
+    const fetchRecipeIngredients = async () => {
+      if (ingredients.length === 0 && effectiveRecipeId) {
+        try {
+          const { data, error } = await supabase
+            .from('recipes')
+            .select('ingredients')
+            .eq('id', effectiveRecipeId)
+            .single();
+            
+          if (error) {
+            console.error("Error fetching recipe ingredients:", error);
+            return;
+          }
+          
+          if (data && data.ingredients) {
+            setRecipeIngredients(data.ingredients);
+          }
+        } catch (error) {
+          console.error("Error fetching recipe:", error);
+        }
+      }
+    };
+    
+    fetchRecipeIngredients();
+  }, [effectiveRecipeId, ingredients]);
 
   const handleFavoriteToggle = async () => {
     try {
@@ -57,7 +87,7 @@ export const RecipeActions = ({
       <div className="flex gap-2">
         <AddToGroceryListButton 
           recipeId={effectiveRecipeId}
-          ingredients={ingredients}
+          ingredients={recipeIngredients}
         />
         
         {!hideOptions && (
@@ -88,7 +118,7 @@ export const RecipeActions = ({
           <PopoverContent className="w-80">
             <RecipeTimer 
               minutes={cookTimeInMinutes} 
-              label={`${recipe.cook_time} Cooking Time`}
+              label={`${recipe?.cook_time} Cooking Time`}
             />
           </PopoverContent>
         </Popover>
@@ -96,3 +126,4 @@ export const RecipeActions = ({
     </div>
   );
 };
+

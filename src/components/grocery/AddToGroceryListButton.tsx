@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { addIngredientsToGroceryList } from "@/services/groceryService";
@@ -28,23 +28,30 @@ export const AddToGroceryListButton = ({
   const [isAdding, setIsAdding] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+  const [processedIngredients, setProcessedIngredients] = useState<string[]>([]);
   
-  // Format ingredients to strings for display and selection
-  const processedIngredients = ingredients.map(ing => {
-    if (typeof ing === 'string') {
-      return ing.trim();
-    } else if (ing && typeof ing === 'object' && 'name' in ing) {
-      // Format structured ingredient with proper checks
-      const { quantity, unit, name } = ing;
-      if (!name) return ''; // Skip ingredients without a name
-      return [quantity || '', unit || '', name || ''].filter(Boolean).join(' ').trim();
-    }
-    return ''; // Return empty string for invalid items
-  }).filter(ing => ing.trim() !== ''); // Filter out empty strings
+  // Process ingredients whenever they change
+  useEffect(() => {
+    // Format ingredients to strings for display and selection
+    const formatted = ingredients.map(ing => {
+      if (typeof ing === 'string') {
+        return ing.trim();
+      } else if (ing && typeof ing === 'object' && 'name' in ing) {
+        // Format structured ingredient with proper checks
+        const { quantity, unit, name } = ing;
+        if (!name) return ''; // Skip ingredients without a name
+        return [quantity || '', unit || '', name || ''].filter(Boolean).join(' ').trim();
+      }
+      return ''; // Return empty string for invalid items
+    }).filter(ing => ing.trim() !== ''); // Filter out empty strings
+    
+    setProcessedIngredients(formatted);
+    console.log("Processed ingredients:", formatted);
+  }, [ingredients]);
 
-  // Initialize all ingredients as selected
+  // Initialize all ingredients as selected when opening dialog
   const initializeSelection = () => {
-    setSelectedIngredients(processedIngredients);
+    setSelectedIngredients([...processedIngredients]);
   };
 
   // Open dialog and initialize selected ingredients

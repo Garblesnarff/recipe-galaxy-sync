@@ -133,6 +133,7 @@ export const RecipeDetail = () => {
 
               <RecipeActions
                 recipeId={recipe.id}
+                ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
               />
             </div>
           </Card>
