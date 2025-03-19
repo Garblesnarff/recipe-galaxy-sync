@@ -36,6 +36,16 @@ export const validateUrl = (url: string): boolean => {
   }
 };
 
+// Function to extract domain from URL for error handling
+const getDomain = (url: string): string => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname.replace('www.', '');
+  } catch {
+    return "";
+  }
+};
+
 export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeData> => {
   if (!url || !validateUrl(url)) {
     console.error('Invalid URL provided:', url);
@@ -43,6 +53,7 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
   }
 
   const endpoint = isYouTubeUrl(url) ? 'extract-youtube-recipe' : 'scrape-recipe';
+  const domain = getDomain(url);
   console.log(`Calling ${endpoint} function with URL:`, url);
   
   // Create request body object
@@ -73,6 +84,11 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
         errorMessage += `: ${error.details}`;
       }
       
+      // Special handling for HelloFresh
+      if (domain === 'hellofresh.com') {
+        errorMessage = `HelloFresh recipes are currently difficult to import automatically. Please try copying the ingredients and instructions manually.`;
+      }
+      
       throw new Error(errorMessage);
     }
 
@@ -92,6 +108,10 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
         throw new Error(`Failed to access the recipe website. It might be temporarily unavailable or blocking our request.`);
       } else if (error.message.includes('parse') || error.message.includes('JSON')) {
         throw new Error(`The recipe couldn't be extracted from this website format. Please try another URL or enter it manually.`);
+      } else if (error.message.includes('compute resources')) {
+        throw new Error(`The recipe is too complex to process automatically. Please try copying the recipe details manually.`);
+      } else if (error.message.includes('blocking')) {
+        throw new Error(`This website appears to be blocking our recipe extractor. Please try copying the recipe details manually.`);
       }
       throw error;
     } else {

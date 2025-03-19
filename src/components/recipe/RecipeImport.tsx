@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Link as LinkIcon, Loader2 } from "lucide-react";
 import { validateUrl } from "@/services/recipeService";
 import { useState, useEffect } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface RecipeImportProps {
   recipeUrl: string;
@@ -24,13 +24,23 @@ export const RecipeImport = ({
 }: RecipeImportProps) => {
   const [urlError, setUrlError] = useState("");
   const [isYouTube, setIsYouTube] = useState(false);
+  const [domain, setDomain] = useState<string>("");
 
   useEffect(() => {
     // Determine if URL is a YouTube URL
     if (recipeUrl) {
       setIsYouTube(recipeUrl.includes('youtube.com') || recipeUrl.includes('youtu.be'));
+      
+      // Extract domain for UI hints
+      try {
+        const url = new URL(recipeUrl);
+        setDomain(url.hostname.replace('www.', ''));
+      } catch {
+        setDomain("");
+      }
     } else {
       setIsYouTube(false);
+      setDomain("");
     }
   }, [recipeUrl]);
 
@@ -43,6 +53,9 @@ export const RecipeImport = ({
       setUrlError("");
     }
   };
+
+  // Check if there's a known site with issues
+  const isProblemSite = domain && domain.includes('hellofresh');
 
   return (
     <div className="mb-6">
@@ -86,7 +99,17 @@ export const RecipeImport = ({
           </Alert>
         )}
         
-        {isYouTube && !urlError && (
+        {isProblemSite && !urlError && !isImporting && !importError && (
+          <Alert variant="default" className="mt-2 bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-700">Possible Import Difficulty</AlertTitle>
+            <AlertDescription className="text-amber-600">
+              HelloFresh recipes can be difficult to import automatically. If import fails, you may need to copy the recipe details manually.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isYouTube && !urlError && !isProblemSite && (
           <span className="text-sm text-blue-500">
             YouTube video detected! We'll extract recipe details from this video.
           </span>

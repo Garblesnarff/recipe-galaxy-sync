@@ -61,42 +61,90 @@ export function cleanText(text: string): string {
  * @param url - The URL to fetch
  * @param retries - Number of retry attempts
  * @param signal - AbortSignal for fetch timeout
+ * @param headers - Custom headers to send with request
+ * @param isProblemSite - Flag for sites known to have anti-scraping measures
  * @returns The fetch response
  */
-export async function fetchWithRetry(url: string, retries = 3, signal?: AbortSignal): Promise<Response> {
+export async function fetchWithRetry(
+  url: string, 
+  retries = 3, 
+  signal?: AbortSignal,
+  customHeaders?: Record<string, string>,
+  isProblemSite = false
+): Promise<Response> {
   let lastError;
+  
+  // Default headers with good browser simulation
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    ...customHeaders
+  };
 
   for (let i = 0; i < retries; i++) {
     try {
-      // Add user agent to avoid being blocked by some sites
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-        },
-        signal
-      });
+      console.log(`🔄 Fetch attempt ${i + 1} for ${url}`);
       
-      if (response.ok) return response;
+      let fetchOptions: RequestInit = {
+        headers,
+        signal,
+        redirect: 'follow',
+      };
       
-      console.error(`Attempt ${i + 1}: Failed to fetch URL with status ${response.status} ${response.statusText}`);
+      // For problematic sites, we might want different strategies
+      if (isProblemSite) {
+        // Add a random delay before fetching to seem more like a human
+        const randomDelay = Math.floor(Math.random() * 1000) + 500;
+        await new Promise(r => setTimeout(r, randomDelay));
+        
+        // Modify fetch options for problematic sites
+        fetchOptions = {
+          ...fetchOptions,
+          cache: 'no-store',
+          credentials: 'omit',
+        };
+      }
+      
+      const response = await fetch(url, fetchOptions);
+      
+      // Log response details for debugging
+      console.log(`📊 Response status: ${response.status}, Content-Type: ${response.headers.get('content-type')}`);
+      
+      // Check for redirects that might indicate anti-bot measures
+      const finalUrl = response.url;
+      if (finalUrl !== url) {
+        console.log(`🔀 Redirected to: ${finalUrl}`);
+      }
+      
+      if (response.ok) {
+        // Check content type to ensure we got HTML
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+          console.warn(`⚠️ Response is not HTML: ${contentType}`);
+        }
+        return response;
+      }
+      
+      console.error(`❌ Attempt ${i + 1}: Failed to fetch URL with status ${response.status} ${response.statusText}`);
       lastError = new Error(`HTTP error ${response.status}: ${response.statusText}`);
     } catch (error) {
-      console.error(`Attempt ${i + 1}: Error fetching URL:`, error);
+      console.error(`❌ Attempt ${i + 1}: Error fetching URL:`, error);
       lastError = error;
       
       // If this is an abort error (timeout), don't retry
       if (error.name === 'AbortError') {
-        throw new Error(`Timeout fetching URL after ${30} seconds`);
+        throw new Error(`Timeout fetching URL after ${isProblemSite ? 20 : 30} seconds`);
       }
       
       if (i === retries - 1) throw error;
     }
     
-    // Exponential backoff with a cap
-    const delay = Math.min(1000 * Math.pow(2, i), 5000);
-    console.log(`Retrying in ${delay}ms...`);
+    // Exponential backoff with a cap and some randomness
+    const baseDelay = Math.min(1000 * Math.pow(2, i), 5000);
+    const jitter = Math.random() * 1000;
+    const delay = baseDelay + jitter;
+    console.log(`⏱️ Retrying in ${Math.round(delay)}ms...`);
     await new Promise(r => setTimeout(r, delay));
   }
   
