@@ -60,19 +60,45 @@ export function cleanText(text: string): string {
  * Utility function to fetch a URL with retry logic
  * @param url - The URL to fetch
  * @param retries - Number of retry attempts
+ * @param signal - AbortSignal for fetch timeout
  * @returns The fetch response
  */
-export async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+export async function fetchWithRetry(url: string, retries = 3, signal?: AbortSignal): Promise<Response> {
+  let lastError;
+
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url);
+      // Add user agent to avoid being blocked by some sites
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+        },
+        signal
+      });
+      
       if (response.ok) return response;
-      console.error(`Attempt ${i + 1}: Failed to fetch URL with status ${response.status}`);
+      
+      console.error(`Attempt ${i + 1}: Failed to fetch URL with status ${response.status} ${response.statusText}`);
+      lastError = new Error(`HTTP error ${response.status}: ${response.statusText}`);
     } catch (error) {
       console.error(`Attempt ${i + 1}: Error fetching URL:`, error);
+      lastError = error;
+      
+      // If this is an abort error (timeout), don't retry
+      if (error.name === 'AbortError') {
+        throw new Error(`Timeout fetching URL after ${30} seconds`);
+      }
+      
       if (i === retries - 1) throw error;
     }
-    await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+    
+    // Exponential backoff with a cap
+    const delay = Math.min(1000 * Math.pow(2, i), 5000);
+    console.log(`Retrying in ${delay}ms...`);
+    await new Promise(r => setTimeout(r, delay));
   }
-  throw new Error(`Failed to fetch URL after ${retries} attempts`);
+  
+  throw lastError || new Error(`Failed to fetch URL after ${retries} attempts`);
 }

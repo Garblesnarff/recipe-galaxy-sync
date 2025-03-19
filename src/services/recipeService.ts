@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ImportedRecipeData } from "@/types/recipe";
 
@@ -52,30 +53,49 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
     console.log(`Invoking ${endpoint} function with payload:`, JSON.stringify(requestBody));
     
     // Pass the object directly, not stringified
-    const response = await supabase.functions.invoke(endpoint, {
+    const { data, error } = await supabase.functions.invoke(endpoint, {
       body: requestBody
     });
     
-    console.log(`Response from ${endpoint}:`, response);
+    console.log(`Response from ${endpoint}:`, { data, error });
     
-    if (response.error) {
-      console.error(`Error response from ${endpoint}:`, response.error);
-      throw new Error(response.error.message || `Error from ${endpoint}`);
+    if (error) {
+      console.error(`Error response from ${endpoint}:`, error);
+      
+      // Extract detailed error information if available
+      let errorMessage = `Error from ${endpoint}`;
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check if there are additional details in the error
+      if (error.details) {
+        errorMessage += `: ${error.details}`;
+      }
+      
+      throw new Error(errorMessage);
     }
 
-    if (!response.data) {
+    if (!data) {
       console.error(`No data received from ${endpoint}`);
-      throw new Error(`No data received from ${endpoint}`);
+      throw new Error(`No recipe data found. Please try a different URL or enter the recipe manually.`);
     }
 
-    console.log(`Successfully received data from ${endpoint}:`, response.data);
-    return response.data;
+    console.log(`Successfully received data from ${endpoint}:`, data);
+    return data;
   } catch (error) {
     console.error(`Error in importRecipeFromUrl (${endpoint}):`, error);
+    
+    // Provide more meaningful error messages
     if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('fetch')) {
+        throw new Error(`Failed to access the recipe website. It might be temporarily unavailable or blocking our request.`);
+      } else if (error.message.includes('parse') || error.message.includes('JSON')) {
+        throw new Error(`The recipe couldn't be extracted from this website format. Please try another URL or enter it manually.`);
+      }
       throw error;
     } else {
-      throw new Error(`Failed to import recipe from ${url}`);
+      throw new Error(`Failed to import recipe from ${url}. Please try again later or enter it manually.`);
     }
   }
 };

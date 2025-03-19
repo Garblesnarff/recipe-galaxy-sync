@@ -16,6 +16,7 @@ interface AddRecipeFormProps {
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
   isImporting: boolean;
+  importError?: string;
   recipeUrl: string;
   onUrlChange: (url: string) => void;
   onImport: () => void;
@@ -31,6 +32,7 @@ export const AddRecipeForm = ({
   handleImageChange,
   handleSubmit,
   isImporting,
+  importError,
   recipeUrl,
   onUrlChange,
   onImport,
@@ -48,6 +50,7 @@ export const AddRecipeForm = ({
         onUrlChange={onUrlChange}
         onImport={onImport}
         isImporting={isImporting}
+        importError={importError}
       />
 
       <RecipeDetails 

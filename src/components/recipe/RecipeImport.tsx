@@ -2,22 +2,25 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link as LinkIcon, Loader2 } from "lucide-react";
+import { AlertCircle, Link as LinkIcon, Loader2 } from "lucide-react";
 import { validateUrl } from "@/services/recipeService";
 import { useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RecipeImportProps {
   recipeUrl: string;
   onUrlChange: (url: string) => void;
   onImport: () => void;
   isImporting: boolean;
+  importError?: string;
 }
 
 export const RecipeImport = ({
   recipeUrl,
   onUrlChange,
   onImport,
-  isImporting
+  isImporting,
+  importError
 }: RecipeImportProps) => {
   const [urlError, setUrlError] = useState("");
   const [isYouTube, setIsYouTube] = useState(false);
@@ -71,9 +74,18 @@ export const RecipeImport = ({
             )}
           </Button>
         </div>
+        
         {urlError && (
           <span className="text-sm text-red-500">{urlError}</span>
         )}
+        
+        {importError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{importError}</AlertDescription>
+          </Alert>
+        )}
+        
         {isYouTube && !urlError && (
           <span className="text-sm text-blue-500">
             YouTube video detected! We'll extract recipe details from this video.

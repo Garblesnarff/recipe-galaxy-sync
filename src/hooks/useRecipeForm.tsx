@@ -11,6 +11,7 @@ export const useRecipeForm = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | undefined>();
   const [recipeUrl, setRecipeUrl] = useState("");
   const [formData, setFormData] = useState<RecipeFormData>({
     title: "",
@@ -53,7 +54,10 @@ export const useRecipeForm = () => {
       return;
     }
 
+    // Reset any previous error
+    setImportError(undefined);
     setIsImporting(true);
+    
     try {
       console.log("Importing recipe from URL:", recipeUrl);
       const data = await importRecipeFromUrl(recipeUrl);
@@ -101,7 +105,9 @@ export const useRecipeForm = () => {
       toast.success("Recipe imported successfully!");
     } catch (error) {
       console.error('Error importing recipe:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to import recipe. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to import recipe. Please try again.";
+      setImportError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsImporting(false);
     }
@@ -177,6 +183,7 @@ export const useRecipeForm = () => {
     imageFile,
     imagePreview,
     isImporting,
+    importError,
     recipeUrl,
     setRecipeUrl,
     handleImageChange,
