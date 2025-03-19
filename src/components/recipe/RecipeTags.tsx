@@ -5,6 +5,10 @@ interface RecipeTagsProps {
   cuisine_type?: string;
   season_occasion?: string[];
   cooking_method?: string;
+  cuisineType?: string;
+  dietTags?: string[];
+  seasonOccasion?: string[];
+  cookingMethod?: string;
 }
 
 export const RecipeTags = ({
@@ -12,9 +16,23 @@ export const RecipeTags = ({
   diet_tags,
   cuisine_type,
   season_occasion,
-  cooking_method
+  cooking_method,
+  // Also accept camelCase versions for compatibility
+  cuisineType,
+  dietTags,
+  seasonOccasion,
+  cookingMethod
 }: RecipeTagsProps) => {
-  if (!categories?.length && !diet_tags?.length && !cuisine_type && !cooking_method) {
+  // Use the appropriate version, preferring the snake_case version if both are present
+  const effectiveCuisineType = cuisine_type || cuisineType;
+  const effectiveDietTags = diet_tags || dietTags || [];
+  const effectiveSeasonOccasion = season_occasion || seasonOccasion || [];
+  const effectiveCookingMethod = cooking_method || cookingMethod;
+
+  if (!categories?.length && 
+      !effectiveDietTags?.length && 
+      !effectiveCuisineType && 
+      !effectiveCookingMethod) {
     return null;
   }
 
@@ -22,9 +40,9 @@ export const RecipeTags = ({
     <div className="mt-4 mb-6">
       <h3 className="text-lg font-medium mb-2">Categories & Tags</h3>
       <div className="flex flex-wrap gap-2">
-        {cuisine_type && cuisine_type !== "Uncategorized" && (
+        {effectiveCuisineType && effectiveCuisineType !== "Uncategorized" && (
           <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            {cuisine_type}
+            {effectiveCuisineType}
           </span>
         )}
         
@@ -34,21 +52,21 @@ export const RecipeTags = ({
           </span>
         ))}
         
-        {diet_tags?.map((tag, index) => (
+        {effectiveDietTags?.map((tag, index) => (
           <span key={`diet-${index}`} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
             {tag}
           </span>
         ))}
         
-        {season_occasion?.map((season, index) => (
+        {effectiveSeasonOccasion?.map((season, index) => (
           <span key={`season-${index}`} className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
             {season}
           </span>
         ))}
         
-        {cooking_method && cooking_method !== "Various" && (
+        {effectiveCookingMethod && effectiveCookingMethod !== "Various" && (
           <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-            {cooking_method}
+            {effectiveCookingMethod}
           </span>
         )}
       </div>

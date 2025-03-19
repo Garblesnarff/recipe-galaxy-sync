@@ -11,23 +11,37 @@ import { toast } from "sonner";
 import { updateRecipe } from "@/services/recipeService";
 
 interface RecipeActionsProps {
-  recipe: {
+  recipe?: {
     id: string;
     cook_time?: string;
     prep_time?: string;
     is_favorite?: boolean;
   };
-  ingredients: RecipeIngredient[];
+  ingredients?: RecipeIngredient[];
   hideOptions?: boolean;
+  recipeId?: string;
 }
 
-export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: RecipeActionsProps) => {
-  const [isFavorite, setIsFavorite] = useState(recipe.is_favorite || false);
+export const RecipeActions = ({ 
+  recipe, 
+  ingredients = [], 
+  hideOptions = false,
+  recipeId
+}: RecipeActionsProps) => {
+  // Use recipeId if provided, otherwise get it from the recipe object
+  const effectiveRecipeId = recipeId || recipe?.id;
+  
+  if (!effectiveRecipeId) {
+    console.error("RecipeActions requires either recipe or recipeId prop");
+    return null;
+  }
+  
+  const [isFavorite, setIsFavorite] = useState(recipe?.is_favorite || false);
 
   const handleFavoriteToggle = async () => {
     try {
       const newFavoriteStatus = !isFavorite;
-      await updateRecipe(recipe.id, { is_favorite: newFavoriteStatus });
+      await updateRecipe(effectiveRecipeId, { is_favorite: newFavoriteStatus });
       setIsFavorite(newFavoriteStatus);
       toast.success(newFavoriteStatus ? "Added to favorites" : "Removed from favorites");
     } catch (error) {
@@ -36,13 +50,13 @@ export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: Reci
     }
   };
 
-  const cookTimeInMinutes = recipe.cook_time ? parseInt(recipe.cook_time, 10) : 0;
+  const cookTimeInMinutes = recipe?.cook_time ? parseInt(recipe.cook_time, 10) : 0;
 
   return (
     <div className="flex flex-col gap-4 mt-6">
       <div className="flex gap-2">
         <AddToGroceryListButton 
-          recipeId={recipe.id}
+          recipeId={effectiveRecipeId}
           ingredients={ingredients}
         />
         
@@ -53,7 +67,7 @@ export const RecipeActions = ({ recipe, ingredients, hideOptions = false }: Reci
               {isFavorite ? 'Favorited' : 'Favorite'}
             </Button>
             
-            <Link to={`/edit-recipe/${recipe.id}`} className="flex-1">
+            <Link to={`/edit-recipe/${effectiveRecipeId}`} className="flex-1">
               <Button variant="outline" className="w-full">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit

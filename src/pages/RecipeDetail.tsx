@@ -44,7 +44,7 @@ export const RecipeDetail = () => {
   };
 
   if (isLoading || !recipe) {
-    return <RecipeLoadingState />;
+    return <RecipeLoadingState isLoading={isLoading} />;
   }
 
   return (
@@ -52,7 +52,7 @@ export const RecipeDetail = () => {
       <div className="flex flex-wrap md:flex-nowrap gap-4">
         <div className="w-full space-y-6">
           <div className="flex items-start justify-between">
-            <RecipeEditButton onClick={navigateToEdit} className="ml-auto" />
+            <RecipeEditButton onClick={navigateToEdit} />
           </div>
 
           {isAdapted && (
@@ -66,12 +66,13 @@ export const RecipeDetail = () => {
             <div className="space-y-6">
               <RecipeHeader
                 title={recipe.title || ""}
-                description={recipe.description || ""}
                 isFavorite={isFavorite}
                 onToggleFavorite={handleToggleFavorite}
+                rating={recipe.rating}
+                ratingsCount={recipe.ratings?.length || 0}
               />
 
-              <RecipeImage imageUrl={recipe.image_url} alt={recipe.title} />
+              <RecipeImage imageUrl={recipe.image_url} />
 
               <div className="flex justify-between items-center">
                 <div className="flex gap-2">
@@ -81,13 +82,13 @@ export const RecipeDetail = () => {
                   />
                   
                   <SaleIndicator
-                    ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
+                    salesCount={2}
                   />
                 </div>
 
                 <RecipeTimer
-                  prepTime={recipe.prep_time}
-                  cookTime={recipe.cook_time}
+                  minutes={recipe.cook_time ? parseInt(recipe.cook_time) : 0}
+                  label={recipe.cook_time ? `${recipe.cook_time} Cooking Time` : ""}
                   isOpen={showTimer}
                   onOpen={handleTimerClick}
                   onClose={handleCloseTimer}
@@ -103,7 +104,9 @@ export const RecipeDetail = () => {
                 onServingsChange={setCurrentServings}
               />
 
-              <DietaryWarnings ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []} />
+              <DietaryWarnings
+                ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
+              />
 
               <RecipeIngredientsList
                 ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
@@ -116,11 +119,11 @@ export const RecipeDetail = () => {
               />
 
               <RecipeTags
-                categories={recipe.categories || []}
+                categories={recipe.categories}
                 cuisineType={recipe.cuisine_type}
-                dietTags={recipe.diet_tags || []}
+                dietTags={recipe.diet_tags}
                 cookingMethod={recipe.cooking_method}
-                seasonOccasion={recipe.season_occasion || []}
+                seasonOccasion={recipe.season_occasion}
               />
 
               <RecipeSource
@@ -128,7 +131,9 @@ export const RecipeDetail = () => {
                 sourceType={recipe.source_type}
               />
 
-              <RecipeActions recipeId={recipe.id} />
+              <RecipeActions
+                recipeId={recipe.id}
+              />
             </div>
           </Card>
         </div>

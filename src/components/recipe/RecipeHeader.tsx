@@ -6,18 +6,20 @@ import { Rating } from "@/components/ui/rating";
 
 interface RecipeHeaderProps {
   title: string;
+  description?: string;
   imageUrl?: string;
   rating?: number;
-  ratingsCount: number;
+  ratingsCount?: number;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
 
 export const RecipeHeader = ({ 
   title, 
+  description,
   imageUrl, 
   rating, 
-  ratingsCount,
+  ratingsCount = 0,
   isFavorite = false,
   onToggleFavorite
 }: RecipeHeaderProps) => {

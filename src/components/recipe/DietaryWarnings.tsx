@@ -8,16 +8,30 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { useDietaryWarnings } from "@/hooks/useDietaryWarnings";
 
 interface DietaryWarningsProps {
-  ingredientsWithWarnings: IngredientWithWarnings[];
-  userRestrictions: DietaryRestriction[];
+  ingredientsWithWarnings?: IngredientWithWarnings[];
+  userRestrictions?: DietaryRestriction[];
+  ingredients?: string[];
 }
 
 export const DietaryWarnings = ({ 
-  ingredientsWithWarnings, 
-  userRestrictions 
+  ingredientsWithWarnings: propIngredientsWithWarnings, 
+  userRestrictions: propUserRestrictions,
+  ingredients = []
 }: DietaryWarningsProps) => {
+  // If raw ingredients are provided, use the hook to process them
+  const hookResult = useDietaryWarnings(ingredients);
+  
+  // Use either provided values or ones from the hook
+  const ingredientsWithWarnings = propIngredientsWithWarnings || hookResult.ingredientsWithWarnings;
+  const userRestrictions = propUserRestrictions || hookResult.userRestrictions;
+  
+  if (!ingredientsWithWarnings?.length || !userRestrictions?.length) {
+    return null;
+  }
+  
   // Count warnings for each restriction
   const restrictionCounts: Record<DietaryRestriction, number> = {
     'gluten-free': 0,

@@ -1,5 +1,5 @@
 
-import { Clock, ChefHat, Users, Calendar } from "lucide-react";
+import { Clock, ChefHat, Users, Calendar, Star } from "lucide-react";
 
 interface RecipeMetadataProps {
   cookTime?: string;
@@ -8,6 +8,8 @@ interface RecipeMetadataProps {
   description?: string;
   servings?: number;
   date?: string;
+  rating?: number;
+  onServingsChange?: (value: number) => void;
 }
 
 export const RecipeMetadata = ({ 
@@ -16,7 +18,9 @@ export const RecipeMetadata = ({
   difficulty, 
   description,
   servings,
-  date
+  date,
+  rating,
+  onServingsChange
 }: RecipeMetadataProps) => {
   return (
     <>
@@ -45,7 +49,25 @@ export const RecipeMetadata = ({
         {servings && (
           <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
             <Users className="mr-1 h-4 w-4 text-gray-500" />
-            <span>{servings} servings</span>
+            <span>
+              {servings} servings
+              {onServingsChange && (
+                <span className="ml-2">
+                  <button 
+                    onClick={() => onServingsChange(Math.max(1, servings - 1))}
+                    className="px-1 bg-gray-200 rounded"
+                  >
+                    -
+                  </button>
+                  <button 
+                    onClick={() => onServingsChange(servings + 1)}
+                    className="px-1 ml-1 bg-gray-200 rounded"
+                  >
+                    +
+                  </button>
+                </span>
+              )}
+            </span>
           </div>
         )}
         
@@ -53,6 +75,13 @@ export const RecipeMetadata = ({
           <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
             <Calendar className="mr-1 h-4 w-4 text-gray-500" />
             <span>Added: {new Date(date).toLocaleDateString()}</span>
+          </div>
+        )}
+        
+        {rating !== undefined && rating > 0 && (
+          <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
+            <Star className="mr-1 h-4 w-4 text-amber-500 fill-amber-500" />
+            <span>{rating}/5</span>
           </div>
         )}
       </div>

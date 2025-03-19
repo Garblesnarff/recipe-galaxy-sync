@@ -2,14 +2,31 @@
 import { Tag, TagLabel, TagLeftIcon } from "@/components/ui/tag";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TagsIcon } from "lucide-react";
+import { useMemo } from "react";
 
 interface SaleIndicatorProps {
-  salesCount: number;
+  salesCount?: number;
+  ingredients?: any[];
   className?: string;
   onlyIcon?: boolean;
 }
 
-export const SaleIndicator = ({ salesCount, className = "", onlyIcon = false }: SaleIndicatorProps) => {
+export const SaleIndicator = ({ 
+  salesCount: propSalesCount, 
+  ingredients = [],
+  className = "", 
+  onlyIcon = false 
+}: SaleIndicatorProps) => {
+  // If ingredients are provided, we would calculate the sale count
+  // This is a placeholder implementation - in a real app you'd check ingredients against a sales database
+  const salesCount = useMemo(() => {
+    if (propSalesCount !== undefined) return propSalesCount;
+    
+    // This would be where we'd check ingredients against a sales database
+    // For now, just return a random count for demo purposes
+    return Math.floor(Math.random() * 2); // 0 or 1 items on sale
+  }, [propSalesCount, ingredients]);
+  
   if (salesCount <= 0) return null;
 
   return (

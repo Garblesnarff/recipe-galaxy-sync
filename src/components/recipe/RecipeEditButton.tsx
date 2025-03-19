@@ -4,11 +4,12 @@ import { Edit } from "lucide-react";
 
 interface RecipeEditButtonProps {
   onClick: () => void;
+  className?: string;
 }
 
-export const RecipeEditButton = ({ onClick }: RecipeEditButtonProps) => {
+export const RecipeEditButton = ({ onClick, className }: RecipeEditButtonProps) => {
   return (
-    <div className="flex justify-end -mt-4 mb-4">
+    <div className={`flex justify-end -mt-4 mb-4 ${className || ''}`}>
       <Button 
         onClick={onClick}
         variant="outline"

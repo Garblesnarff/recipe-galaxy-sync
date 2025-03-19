@@ -8,15 +8,47 @@ import { useInterval } from "@/hooks/useInterval";
 import { toast } from "sonner";
 
 export interface RecipeTimerProps {
-  minutes: number;
-  label: string;
+  minutes?: number;
+  label?: string;
+  prepTime?: any;
+  cookTime?: any;
+  isOpen?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
 }
 
-export const RecipeTimer = ({ minutes, label }: RecipeTimerProps) => {
-  const initialSeconds = minutes * 60;
+export const RecipeTimer = ({ 
+  minutes,
+  label,
+  prepTime,
+  cookTime,
+  isOpen,
+  onOpen,
+  onClose
+}: RecipeTimerProps) => {
+  // Convert cookTime to minutes if provided
+  const calculatedMinutes = minutes || 
+    (cookTime ? parseInt(cookTime.toString(), 10) : 0);
+  
+  const calculatedLabel = label || 
+    (cookTime ? `${cookTime} Cooking Time` : "Timer");
+  
+  const initialSeconds = calculatedMinutes * 60;
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(100);
+  
+  // If we're in popup mode
+  if (onOpen && onClose) {
+    if (!isOpen) {
+      return (
+        <Button variant="outline" size="sm" onClick={onOpen}>
+          <Clock className="mr-2 h-4 w-4" />
+          {prepTime && cookTime ? `${prepTime} + ${cookTime}` : cookTime || prepTime}
+        </Button>
+      );
+    }
+  }
 
   useInterval(
     () => {
@@ -25,7 +57,7 @@ export const RecipeTimer = ({ minutes, label }: RecipeTimerProps) => {
         setProgress((secondsLeft - 1) / initialSeconds * 100);
       } else {
         setIsRunning(false);
-        toast(`${label} timer is complete!`, {
+        toast(`${calculatedLabel} timer is complete!`, {
           description: "Your timer has finished.",
         });
       }
@@ -57,7 +89,7 @@ export const RecipeTimer = ({ minutes, label }: RecipeTimerProps) => {
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Clock className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium">{label}</span>
+          <span className="text-sm font-medium">{calculatedLabel}</span>
         </div>
         <Badge variant={isRunning ? "default" : "outline"}>
           {formatTime(secondsLeft)}
@@ -97,6 +129,14 @@ export const RecipeTimer = ({ minutes, label }: RecipeTimerProps) => {
           <RotateCcw className="h-3 w-3" />
         </Button>
       </div>
+      
+      {onClose && (
+        <div className="flex justify-center mt-2">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface RecipeLoadingStateProps {
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
-export const RecipeLoadingState = ({ isLoading }: RecipeLoadingStateProps) => {
+export const RecipeLoadingState = ({ isLoading }: RecipeLoadingStateProps = {}) => {
   const navigate = useNavigate();
 
   if (isLoading) {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Check, CheckSquare, Square, Copy, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,20 +10,20 @@ interface RecipeIngredientsListProps {
   ingredients: string[];
   servings?: number;
   originalServings?: number;
+  currentServings?: number;
 }
 
 export const RecipeIngredientsList = ({ 
   ingredients, 
   servings = 0,
-  originalServings = 0
+  originalServings = 0,
+  currentServings
 }: RecipeIngredientsListProps) => {
+  const effectiveServings = currentServings !== undefined ? currentServings : servings;
   const [checkedIngredients, setCheckedIngredients] = useState<{[key: number]: boolean}>({});
   
-  // Get dietary warnings for ingredients
   const { ingredientsWithWarnings, hasWarnings, userRestrictions, loading } = useDietaryWarnings(ingredients);
   
-  // This helper function cleans the ingredient text by removing various box symbols
-  // and other common prefixes that might appear in scraped recipes
   const cleanIngredientText = (text: string): string => {
     return text
       .replace(/^[▢□■◆○◯✓✅⬜⬛☐☑︎☑️]/u, '') // Remove various box/bullet symbols at start
@@ -53,16 +52,13 @@ export const RecipeIngredientsList = ({
     });
   };
 
-  // Calculate scaled ingredients if servings and originalServings are provided
   const getScaledIngredient = (ingredient: string) => {
-    if (!servings || !originalServings || servings === originalServings) {
+    if (!effectiveServings || !originalServings || effectiveServings === originalServings) {
       return ingredient;
     }
     
-    const ratio = servings / originalServings;
+    const ratio = effectiveServings / originalServings;
     
-    // Regular expression to match quantity patterns at the beginning of the string
-    // Matches: 1, 1.5, 1 1/2, 1/2, etc.
     const quantityRegex = /^(\d+(?:\.\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s+/;
     
     const match = ingredient.match(quantityRegex);
@@ -72,25 +68,20 @@ export const RecipeIngredientsList = ({
     const originalQuantity = match[1];
     let scaledQuantity;
     
-    // Handle different quantity formats
     if (originalQuantity.includes('/')) {
-      // Handle fractions like "1/2" or "1 1/2"
       if (originalQuantity.includes(' ')) {
-        // Mixed number like "1 1/2"
         const [whole, fraction] = originalQuantity.split(' ');
         const [numerator, denominator] = fraction.split('/').map(Number);
         const decimal = Number(whole) + (numerator / denominator);
         const scaled = decimal * ratio;
         scaledQuantity = scaled.toFixed(1);
       } else {
-        // Simple fraction like "1/2"
         const [numerator, denominator] = originalQuantity.split('/').map(Number);
         const decimal = numerator / denominator;
         const scaled = decimal * ratio;
         scaledQuantity = scaled.toFixed(1);
       }
     } else {
-      // Simple number
       const scaled = parseFloat(originalQuantity) * ratio;
       scaledQuantity = scaled.toFixed(1).replace(/\.0$/, '');
     }
@@ -113,15 +104,14 @@ export const RecipeIngredientsList = ({
         )}
       </div>
       
-      {servings > 0 && originalServings > 0 && (
+      {effectiveServings > 0 && originalServings > 0 && (
         <div className="mb-4">
           <Badge variant="outline" className="bg-recipe-green-light text-recipe-green-dark">
-            Recipe scaled for {servings} servings
+            Recipe scaled for {effectiveServings} servings
           </Badge>
         </div>
       )}
       
-      {/* Display dietary warnings if present */}
       {hasWarnings && !loading && (
         <DietaryWarnings 
           ingredientsWithWarnings={ingredientsWithWarnings} 
@@ -133,19 +123,16 @@ export const RecipeIngredientsList = ({
         {ingredientsWithWarnings.map((ingredientWithWarnings, index) => {
           const { text: ingredient, warnings, substitutions } = ingredientWithWarnings;
           
-          // Skip rendering the "Ingredients 1x 2x 3x" text entirely
           if (/^Ingredients\s+\d+x\s+\d+x\s+\d+x$/.test(ingredient)) {
             return null;
           }
           
           let displayIngredient = cleanIngredientText(ingredient);
           
-          // Apply scaling if needed
-          if (servings && originalServings) {
+          if (effectiveServings && originalServings) {
             displayIngredient = getScaledIngredient(displayIngredient);
           }
           
-          // Skip empty ingredients after cleaning
           if (!displayIngredient) {
             return null;
           }
