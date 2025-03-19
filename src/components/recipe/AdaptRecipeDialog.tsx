@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { adaptRecipeForDietaryRestrictions } from "@/services/recipeService";
+import { adaptRecipeForDietaryRestrictions } from "@/services/recipe";
 import { DietaryRestriction } from "@/types/dietary";
 import {
   Dialog,

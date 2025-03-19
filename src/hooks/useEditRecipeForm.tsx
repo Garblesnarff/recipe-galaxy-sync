@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateRecipe } from '@/services/recipeService';
+import { updateRecipe, uploadImage } from '@/services/recipe';
 import { RecipeFormData } from '@/types/recipe';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadImage } from '@/services/recipeService';
 
 export const useEditRecipeForm = (recipeId: string) => {
   const navigate = useNavigate();
@@ -52,12 +50,10 @@ export const useEditRecipeForm = (recipeId: string) => {
       }
 
       if (data) {
-        // Handle the ingredients array properly, ensuring it's always a string array
         const ingredientsArray = Array.isArray(data.ingredients) 
           ? data.ingredients.map(item => typeof item === 'string' ? item : String(item))
           : [];
 
-        // Ensure recipe_type is one of the valid values
         const validRecipeType = (data.recipe_type === 'manual' || 
                                data.recipe_type === 'webpage' || 
                                data.recipe_type === 'youtube') 
@@ -101,14 +97,11 @@ export const useEditRecipeForm = (recipeId: string) => {
     if (!file) return;
 
     try {
-      // Create a URL to preview the image
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
       
-      // Upload the image and get the URL
       const imageUrl = await uploadImage(file);
       
-      // Update form data with the new image URL
       setFormData(prev => ({
         ...prev,
         imageUrl
@@ -143,7 +136,6 @@ export const useEditRecipeForm = (recipeId: string) => {
     setIsSubmitting(true);
     
     try {
-      // Format data for Supabase
       const recipeData = {
         title: formData.title,
         description: formData.description,
@@ -165,7 +157,6 @@ export const useEditRecipeForm = (recipeId: string) => {
       
       console.log("Submitting updated recipe:", recipeData);
       
-      // Update recipe in database
       const result = await updateRecipe(recipeId, recipeData);
       
       if (result) {

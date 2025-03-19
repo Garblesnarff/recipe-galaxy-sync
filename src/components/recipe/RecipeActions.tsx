@@ -8,7 +8,7 @@ import { RecipeIngredient } from "@/types/recipeIngredient";
 import { AddToGroceryListButton } from "@/components/grocery/AddToGroceryListButton";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { updateRecipe } from "@/services/recipeService";
+import { updateRecipe } from "@/services/recipe";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RecipeActionsProps {
