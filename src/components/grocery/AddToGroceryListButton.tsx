@@ -10,7 +10,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -99,6 +100,9 @@ export const AddToGroceryListButton = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add ingredients to grocery list</DialogTitle>
+            <DialogDescription>
+              Select ingredients to add to your grocery list
+            </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
@@ -120,21 +124,27 @@ export const AddToGroceryListButton = ({
             </div>
             
             <div className="max-h-[300px] overflow-y-auto space-y-2">
-              {processedIngredients.map((ingredient, index) => (
-                <div key={index} className="flex items-start space-x-2">
-                  <Checkbox 
-                    id={`ingredient-${index}`}
-                    checked={selectedIngredients.includes(ingredient)}
-                    onCheckedChange={() => toggleIngredient(ingredient)}
-                  />
-                  <Label 
-                    htmlFor={`ingredient-${index}`}
-                    className="text-sm leading-tight cursor-pointer"
-                  >
-                    {ingredient}
-                  </Label>
+              {processedIngredients.length > 0 ? (
+                processedIngredients.map((ingredient, index) => (
+                  <div key={index} className="flex items-start space-x-2">
+                    <Checkbox 
+                      id={`ingredient-${index}`}
+                      checked={selectedIngredients.includes(ingredient)}
+                      onCheckedChange={() => toggleIngredient(ingredient)}
+                    />
+                    <Label 
+                      htmlFor={`ingredient-${index}`}
+                      className="text-sm leading-tight cursor-pointer"
+                    >
+                      {ingredient}
+                    </Label>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-2 text-gray-500">
+                  No ingredients found
                 </div>
-              ))}
+              )}
             </div>
           </div>
           
