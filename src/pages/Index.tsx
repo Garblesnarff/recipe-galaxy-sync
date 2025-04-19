@@ -1,18 +1,17 @@
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
-import { Menu, Plus, Search, RefreshCw } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Menu, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useCallback, useMemo } from "react";
 import debounce from "lodash/debounce";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { triggerSalesScrape } from "@/services/salesService";
+import { triggerSalesScrape } from "@/services/sales"; // Updated import path
 import { toast } from "sonner";
 import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
-import { IngredientSale } from "@/services/sales";
+import { IngredientSale } from "@/services/sales"; // Updated import path
 
 const Index = () => {
   const navigate = useNavigate();

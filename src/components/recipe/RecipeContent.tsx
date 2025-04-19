@@ -3,6 +3,18 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Recipe } from "@/types/recipe";
 import { DietaryRestriction } from "@/types/dietary";
+import { RecipeHeader } from "@/components/recipe/RecipeHeader";
+import { RecipeImage } from "@/components/recipe/RecipeImage";
+import { AdaptRecipeDialog } from "@/components/recipe/AdaptRecipeDialog";
+import { SaleIndicator } from "@/components/SaleIndicator";
+import { RecipeTimer } from "@/components/recipe/RecipeTimer";
+import { RecipeMetadata } from "@/components/recipe/RecipeMetadata";
+import { DietaryWarnings } from "@/components/recipe/DietaryWarnings";
+import { RecipeIngredientsList } from "@/components/recipe/RecipeIngredientsList";
+import { RecipeInstructionsList } from "@/components/recipe/RecipeInstructionsList";
+import { RecipeTags } from "@/components/recipe/RecipeTags";
+import { RecipeSource } from "@/components/recipe/RecipeSource";
+import { RecipeActions } from "@/components/recipe/RecipeActions";
 
 interface RecipeContentProps {
   recipe: Recipe;

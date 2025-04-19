@@ -1,12 +1,12 @@
+
 import { Card } from "@/components/ui/card";
 import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
 import { Check, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
-import { fetchSalesForIngredients, IngredientSale } from "@/services/salesService";
+import { fetchSalesForIngredients } from "@/services/sales";
 import { SaleIndicator } from "@/components/SaleIndicator";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 import { IngredientSale } from "@/services/sales";
 
 interface RecipeCardProps {
