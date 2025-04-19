@@ -5,20 +5,25 @@ import { toast } from "sonner";
 
 export const fetchCollections = async (): Promise<Collection[]> => {
   try {
-    // Get collections with recipe count
-    const { data, error } = await supabase
-      .from('collections')
+    // Get collections with recipe count using 'any' type assertion
+    const { data, error } = await (supabase
+      .from('collections') as any)
       .select(`
         *,
-        collection_recipes:collection_recipes(count)
+        collection_recipes(count)
       `)
       .order('name');
 
     if (error) throw error;
 
     // Format the data to extract recipe count
-    return data.map(collection => ({
-      ...collection,
+    return data.map((collection: any) => ({
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+      cover_image_url: collection.cover_image_url,
+      created_at: collection.created_at,
+      updated_at: collection.updated_at,
       recipe_count: collection.collection_recipes?.[0]?.count || 0
     })) as Collection[];
   } catch (error) {
@@ -30,11 +35,12 @@ export const fetchCollections = async (): Promise<Collection[]> => {
 
 export const fetchCollectionById = async (id: string): Promise<Collection | null> => {
   try {
-    const { data, error } = await supabase
-      .from('collections')
+    // Using 'any' type assertion
+    const { data, error } = await (supabase
+      .from('collections') as any)
       .select(`
         *,
-        collection_recipes:collection_recipes(count)
+        collection_recipes(count)
       `)
       .eq('id', id)
       .single();
@@ -42,7 +48,12 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
     if (error) throw error;
 
     return {
-      ...data,
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      cover_image_url: data.cover_image_url,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
       recipe_count: data.collection_recipes?.[0]?.count || 0
     } as Collection;
   } catch (error) {
@@ -54,8 +65,9 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
 
 export const fetchCollectionRecipes = async (collectionId: string) => {
   try {
-    const { data, error } = await supabase
-      .from('collection_recipes')
+    // Using 'any' type assertion
+    const { data, error } = await (supabase
+      .from('collection_recipes') as any)
       .select(`
         recipe_id,
         recipes:recipe_id(*)
@@ -65,7 +77,7 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
     if (error) throw error;
     
     // Extract the recipe objects from the nested structure
-    return data.map(item => item.recipes);
+    return data.map((item: any) => item.recipes);
   } catch (error) {
     console.error("Error fetching collection recipes:", error);
     toast.error("Failed to fetch recipes in this collection");
@@ -75,8 +87,9 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
 
 export const fetchRecipeCollections = async (recipeId: string): Promise<Collection[]> => {
   try {
-    const { data, error } = await supabase
-      .from('collection_recipes')
+    // Using 'any' type assertion
+    const { data, error } = await (supabase
+      .from('collection_recipes') as any)
       .select(`
         collections:collection_id(*)
       `)
@@ -84,8 +97,15 @@ export const fetchRecipeCollections = async (recipeId: string): Promise<Collecti
 
     if (error) throw error;
     
-    // Extract the collection objects from the nested structure
-    return data.map(item => item.collections as Collection);
+    // Extract the collection objects and map them to our Collection type
+    return data.map((item: any) => ({
+      id: item.collections.id,
+      name: item.collections.name,
+      description: item.collections.description,
+      cover_image_url: item.collections.cover_image_url,
+      created_at: item.collections.created_at,
+      updated_at: item.collections.updated_at
+    })) as Collection[];
   } catch (error) {
     console.error("Error fetching recipe collections:", error);
     toast.error("Failed to fetch collections for this recipe");

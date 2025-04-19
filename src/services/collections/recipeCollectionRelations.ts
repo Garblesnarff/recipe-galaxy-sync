@@ -8,8 +8,9 @@ export const addRecipeToCollection = async (
 ): Promise<boolean> => {
   try {
     // Check if the recipe is already in the collection to avoid duplicates
-    const { data: existingData } = await supabase
-      .from('collection_recipes')
+    // Using 'any' type assertion
+    const { data: existingData } = await (supabase
+      .from('collection_recipes') as any)
       .select('*')
       .eq('collection_id', collectionId)
       .eq('recipe_id', recipeId);
@@ -21,8 +22,8 @@ export const addRecipeToCollection = async (
     }
 
     // Add recipe to collection
-    const { error } = await supabase
-      .from('collection_recipes')
+    const { error } = await (supabase
+      .from('collection_recipes') as any)
       .insert({
         collection_id: collectionId,
         recipe_id: recipeId
@@ -44,8 +45,9 @@ export const removeRecipeFromCollection = async (
   recipeId: string
 ): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('collection_recipes')
+    // Using 'any' type assertion
+    const { error } = await (supabase
+      .from('collection_recipes') as any)
       .delete()
       .eq('collection_id', collectionId)
       .eq('recipe_id', recipeId);
