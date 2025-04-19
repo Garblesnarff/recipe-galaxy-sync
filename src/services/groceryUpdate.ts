@@ -6,10 +6,10 @@ import { handleGroceryError } from "./groceryUtils";
 // Toggle purchased status of an item
 export const toggleItemPurchasedStatus = async (id: string, currentStatus: boolean): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from("grocery_items")
+    const { error } = await (supabase
+      .from("grocery_items" as any)
       .update({ is_purchased: !currentStatus })
-      .eq("id", id);
+      .eq("id", id)) as unknown as { error: any };
 
     if (error) {
       console.error("Error toggling item status:", error);
@@ -26,10 +26,10 @@ export const toggleItemPurchasedStatus = async (id: string, currentStatus: boole
 // Delete a grocery item
 export const deleteGroceryItem = async (id: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from("grocery_items")
+    const { error } = await (supabase
+      .from("grocery_items" as any)
       .delete()
-      .eq("id", id);
+      .eq("id", id)) as unknown as { error: any };
 
     if (error) {
       console.error("Error deleting grocery item:", error);
@@ -47,10 +47,10 @@ export const deleteGroceryItem = async (id: string): Promise<boolean> => {
 // Clear all purchased items
 export const clearPurchasedItems = async (): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from("grocery_items")
+    const { error } = await (supabase
+      .from("grocery_items" as any)
       .delete()
-      .eq("is_purchased", true);
+      .eq("is_purchased", true)) as unknown as { error: any };
 
     if (error) {
       console.error("Error clearing purchased items:", error);
@@ -70,10 +70,10 @@ export const clearAllItems = async (): Promise<boolean> => {
   try {
     // Using a different approach to delete all items
     // Instead of using a condition that tries to match all items
-    const { error } = await supabase
-      .from("grocery_items")
+    const { error } = await (supabase
+      .from("grocery_items" as any)
       .delete()
-      .not("id", "is", null); // Delete all items where id is not null (all items)
+      .not("id", "is", null)) as unknown as { error: any }; // Delete all items where id is not null (all items)
 
     if (error) {
       console.error("Error clearing all items:", error);
