@@ -38,8 +38,8 @@ export const fetchSalesForIngredients = async (
 
   try {
     // Get all active sales
-    const { data: salesData, error: salesError } = await supabase
-      .from("sales")
+    const { data: salesData, error: salesError } = await (supabase
+      .from("sales" as any)
       .select(`
         id, 
         store_id, 
@@ -51,7 +51,7 @@ export const fetchSalesForIngredients = async (
         stores (
           name
         )
-      `);
+      `)) as unknown as { data: SaleItem[], error: any };
 
     if (salesError) {
       console.error("Error fetching sales data:", salesError);
@@ -71,9 +71,9 @@ export const fetchSalesForIngredients = async (
     }));
 
     // Get ingredient mappings
-    const { data: mappingsData, error: mappingsError } = await supabase
-      .from("ingredient_mappings")
-      .select("canonical_name, variant_names");
+    const { data: mappingsData, error: mappingsError } = await (supabase
+      .from("ingredient_mappings" as any)
+      .select("canonical_name, variant_names")) as unknown as { data: { canonical_name: string, variant_names: string[] }[], error: any };
 
     if (mappingsError) {
       console.error("Error fetching ingredient mappings:", mappingsError);
@@ -174,9 +174,12 @@ export const testIngredientMatching = async (
     const normalizedIngredient = normalizeIngredient(ingredient);
     
     // Get ingredient mappings
-    const { data: mappingsData, error: mappingsError } = await supabase
-      .from("ingredient_mappings")
-      .select("canonical_name, variant_names, category");
+    const { data: mappingsData, error: mappingsError } = await (supabase
+      .from("ingredient_mappings" as any)
+      .select("canonical_name, variant_names, category")) as unknown as { 
+        data: { canonical_name: string, variant_names: string[], category: string }[], 
+        error: any 
+      };
 
     if (mappingsError) {
       console.error("Error fetching ingredient mappings:", mappingsError);
