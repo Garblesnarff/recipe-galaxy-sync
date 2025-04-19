@@ -1,8 +1,1 @@
-
-project_id = "hzvkzrkziuijksnxjcbw"
-[functions.scrape-recipe]
-verify_jwt = false
-[functions.extract-youtube-recipe]
-verify_jwt = false
-[functions.adapt-recipe-for-restrictions]
-verify_jwt = false
+project_id = "pnbkvdjmngbpqhcnykuk"
