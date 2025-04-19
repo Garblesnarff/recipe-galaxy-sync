@@ -9,11 +9,11 @@ export const addRecipeToCollection = async (
   try {
     // Check if the recipe is already in the collection to avoid duplicates
     // Use explicit any type assertion
-    const { data: existingData } = await supabase
+    const { data: existingData } = await (supabase
       .from('collection_recipes')
       .select('*')
       .eq('collection_id', collectionId)
-      .eq('recipe_id', recipeId) as any;
+      .eq('recipe_id', recipeId) as any);
 
     if (existingData && existingData.length > 0) {
       // Recipe is already in the collection
@@ -23,12 +23,12 @@ export const addRecipeToCollection = async (
 
     // Add recipe to collection
     // Use explicit any type assertion
-    const { error } = await supabase
+    const { error } = await (supabase
       .from('collection_recipes')
       .insert({
         collection_id: collectionId,
         recipe_id: recipeId
-      }) as any;
+      }) as any);
 
     if (error) throw error;
     
@@ -47,11 +47,11 @@ export const removeRecipeFromCollection = async (
 ): Promise<boolean> => {
   try {
     // Use explicit any type assertion
-    const { error } = await supabase
+    const { error } = await (supabase
       .from('collection_recipes')
       .delete()
       .eq('collection_id', collectionId)
-      .eq('recipe_id', recipeId) as any;
+      .eq('recipe_id', recipeId) as any);
 
     if (error) throw error;
     

@@ -6,13 +6,13 @@ import { toast } from "sonner";
 export const fetchCollections = async (): Promise<Collection[]> => {
   try {
     // Get collections with recipe count - use explicit any type assertion
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('collections')
       .select(`
         *,
         collection_recipes(count)
       `)
-      .order('name') as any;
+      .order('name') as any);
 
     if (error) throw error;
 
@@ -36,14 +36,14 @@ export const fetchCollections = async (): Promise<Collection[]> => {
 export const fetchCollectionById = async (id: string): Promise<Collection | null> => {
   try {
     // Use explicit any type assertion
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('collections')
       .select(`
         *,
         collection_recipes(count)
       `)
       .eq('id', id)
-      .single() as any;
+      .single() as any);
 
     if (error) throw error;
 
@@ -66,13 +66,13 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
 export const fetchCollectionRecipes = async (collectionId: string) => {
   try {
     // Use explicit any type assertion
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('collection_recipes')
       .select(`
         recipe_id,
         recipes:recipe_id(*)
       `)
-      .eq('collection_id', collectionId) as any;
+      .eq('collection_id', collectionId) as any);
 
     if (error) throw error;
     
@@ -88,12 +88,12 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
 export const fetchRecipeCollections = async (recipeId: string): Promise<Collection[]> => {
   try {
     // Use explicit any type assertion
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('collection_recipes')
       .select(`
         collections:collection_id(*)
       `)
-      .eq('recipe_id', recipeId) as any;
+      .eq('recipe_id', recipeId) as any);
 
     if (error) throw error;
     
