@@ -1,4 +1,3 @@
-
 export interface RecipeFormData {
   title: string;
   description: string;
@@ -46,7 +45,31 @@ export interface SortOption {
   direction: 'asc' | 'desc';
 }
 
-// Predefined options for recipe organization
+export interface Recipe {
+  id: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  ingredients: any[];
+  instructions: string;
+  prep_time?: string;
+  cook_time?: string;
+  servings: number;
+  difficulty?: string;
+  source_url?: string;
+  source_type?: string;
+  categories?: string[];
+  cuisine_type?: string;
+  diet_tags?: string[];
+  cooking_method?: string;
+  season_occasion?: string[];
+  rating?: number;
+  ratings?: any[];
+  is_favorite?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const CUISINE_TYPES = [
   "American", "Italian", "Mexican", "Chinese", "Indian", "Japanese", "Thai", 
   "Mediterranean", "French", "Greek", "Spanish", "Middle Eastern", "Korean", 
