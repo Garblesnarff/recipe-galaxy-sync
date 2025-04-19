@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
@@ -8,6 +7,7 @@ import { fetchSalesForIngredients, IngredientSale } from "@/services/salesServic
 import { SaleIndicator } from "@/components/SaleIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { IngredientSale } from "@/services/sales";
 
 interface RecipeCardProps {
   id: string;

@@ -1,4 +1,3 @@
-
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Search, RefreshCw } from "lucide-react";
@@ -13,6 +12,7 @@ import { triggerSalesScrape } from "@/services/salesService";
 import { toast } from "sonner";
 import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
+import { IngredientSale } from "@/services/sales";
 
 const Index = () => {
   const navigate = useNavigate();
