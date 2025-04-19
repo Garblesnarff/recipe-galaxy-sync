@@ -8,6 +8,7 @@ import { cleanInstructions } from "./instruction-cleaner.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
 // Get the Groq API key from environment variables
@@ -16,7 +17,10 @@ const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
   }
 
   console.log("⚡️ Recipe scraper function invoked");

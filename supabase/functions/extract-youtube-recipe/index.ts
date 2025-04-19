@@ -1,43 +1,42 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { corsHeaders, parseRequestBody, processYoutubeUrl } from "./request-handler.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { extractVideoInfo } from "./youtube-utils.ts";
+import { extractRecipeFromVideo } from "./gemini-client.ts";
+import { handleYouTubeRequest } from "./request-handler.ts";
+
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log("Handling OPTIONS request with CORS headers");
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204  
+    });
   }
 
   try {
-    // Get and validate the request body
-    const { url } = await parseRequestBody(req);
-
-    // Check for Gemini API key
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      console.error('GEMINI_API_KEY is missing');
-      throw new Error('GEMINI_API_KEY is required');
-    }
-    console.log('GEMINI_API_KEY is configured');
-
-    // Process the YouTube URL
-    const recipeData = await processYoutubeUrl(url, geminiApiKey);
-
-    // Return the recipe data
-    return new Response(JSON.stringify(recipeData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    const result = await handleYouTubeRequest(req);
+    return new Response(JSON.stringify(result), {
+      headers: { 
+        ...corsHeaders,
+        'Content-Type': 'application/json' 
+      }
     });
-
   } catch (error) {
-    console.error('Error in extract-youtube-recipe:', error);
+    console.error('Error in YouTube recipe extraction:', error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'An unknown error occurred',
-        status: 'error'
+      JSON.stringify({ 
+        error: error.message || 'Failed to extract recipe from YouTube video',
+        details: error.toString()
       }),
-      {
-        status: 400,
+      { 
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
