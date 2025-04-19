@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export const fetchCollections = async (): Promise<Collection[]> => {
   try {
-    // Get collections with recipe count
+    // Get collections with recipe count - use explicit any type assertion
     const { data, error } = await supabase
       .from('collections')
       .select(`
@@ -35,6 +35,7 @@ export const fetchCollections = async (): Promise<Collection[]> => {
 
 export const fetchCollectionById = async (id: string): Promise<Collection | null> => {
   try {
+    // Use explicit any type assertion
     const { data, error } = await supabase
       .from('collections')
       .select(`
@@ -64,6 +65,7 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
 
 export const fetchCollectionRecipes = async (collectionId: string) => {
   try {
+    // Use explicit any type assertion
     const { data, error } = await supabase
       .from('collection_recipes')
       .select(`
@@ -85,6 +87,7 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
 
 export const fetchRecipeCollections = async (recipeId: string): Promise<Collection[]> => {
   try {
+    // Use explicit any type assertion
     const { data, error } = await supabase
       .from('collection_recipes')
       .select(`

@@ -7,7 +7,3 @@ const SUPABASE_URL = "https://pnbkvdjmngbpqhcnykuk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBuYmt2ZGptbmdicHFoY255a3VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwMzExMjAsImV4cCI6MjA2MDYwNzEyMH0.KyktdNnuYgP458sBZH8DxNJM9v50zMQwu3VjNDhkowM";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-// Add these helper types to make working with the database easier
-export type Recipe = Database['public']['Tables']['recipes']['Row'];
-export type IngredientMapping = Database['public']['Tables']['ingredient_mappings']['Row'];

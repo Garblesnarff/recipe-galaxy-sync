@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export const updateCollection = async (id: string, updates: Partial<Collection>): Promise<boolean> => {
   try {
-    // Use a more direct type assertion approach
+    // Use explicit any type assertion to bypass TypeScript table checking
     const { error } = await supabase
       .from('collections')
       .update({

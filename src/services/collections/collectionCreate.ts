@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export const createCollection = async (collection: Partial<Collection>): Promise<string | null> => {
   try {
-    // Use a more direct type assertion approach for consistent TypeScript handling
+    // Use explicit any type assertion to bypass TypeScript table checking
     const { data, error } = await supabase
       .from('collections')
       .insert({
