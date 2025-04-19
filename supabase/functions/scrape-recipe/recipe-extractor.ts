@@ -1,316 +1,237 @@
 
-import { cleanText } from "./html-utils.ts";
+/**
+ * Recipe extraction utilities
+ */
 
 /**
- * Extracts ingredients from HTML content
- * @param html - The HTML content
- * @returns Array of ingredients
+ * Extracts the meta content from HTML
+ * @param html - The HTML content to extract from
+ * @param property - The meta property to extract
+ * @returns The meta content or undefined
  */
-export function extractIngredients(html: string): string[] {
-  const ingredients: Set<string> = new Set();
-  console.log('🌿 Extracting ingredients from HTML...');
+export function getMetaContent(html: string, property: string): string | undefined {
+  const regex = new RegExp(`<meta\\s+(?:property|name)=["']${property}["']\\s+content=["']([^"']+)["']`, 'i');
+  const match = html.match(regex);
+  if (match) return match[1];
 
-  // Try Schema.org Recipe markup first (JSON-LD)
-  try {
-    const jsonLdMatches = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/gs);
-    if (jsonLdMatches) {
-      for (const match of jsonLdMatches) {
-        try {
-          const jsonContent = match.replace(/<script type="application\/ld\+json">/, '').replace(/<\/script>/, '');
-          const schema = JSON.parse(jsonContent);
-          
-          // Handle different schema formats
-          let recipeData = null;
-          
-          // Direct recipe
-          if (schema['@type'] === 'Recipe') {
-            recipeData = schema;
-          } 
-          // Recipe in graph
-          else if (Array.isArray(schema['@graph'])) {
-            recipeData = schema['@graph'].find((item: any) => item['@type'] === 'Recipe');
-          }
-          // Recipe in context
-          else if (schema.hasOwnProperty('@context') && schema.hasOwnProperty('recipeIngredient')) {
-            recipeData = schema;
-          }
-          
-          if (recipeData?.recipeIngredient) {
-            console.log('📊 Found ingredients in Schema.org data');
-            recipeData.recipeIngredient.forEach((ingredient: string) => 
-              ingredients.add(cleanText(ingredient)));
-            
-            // If we found ingredients, we can break the loop
-            if (ingredients.size > 0) break;
-          }
-        } catch (e) {
-          console.log('⚠️ Error parsing Schema.org data in match:', e);
-        }
-      }
-    }
-  } catch (e) {
-    console.log('⚠️ Error extracting Schema.org data:', e);
-  }
-
-  // Try common ingredient list patterns if Schema.org didn't work
-  if (ingredients.size === 0) {
-    const ingredientPatterns = [
-      /<(?:li|div)[^>]*class="[^"]*(?:ingredient|ingredients)[^"]*"[^>]*>(.*?)<\/(?:li|div)>/gi,
-      /<(?:li|div)[^>]*class="[^"]*recipe-ingred[^"]*"[^>]*>(.*?)<\/(?:li|div)>/gi,
-      /<(?:li|div)[^>]*itemprop="recipeIngredient"[^>]*>(.*?)<\/(?:li|div)>/gi,
-      /<(?:li|div)[^>]*data-ingredient[^>]*>(.*?)<\/(?:li|div)>/gi,
-      /<(?:li|div)[^>]*ingredient-name[^>]*>(.*?)<\/(?:li|div)>/gi
-    ];
-
-    for (const pattern of ingredientPatterns) {
-      const matches = [...html.matchAll(pattern)];
-      if (matches.length > 0) {
-        console.log(`🔍 Found ${matches.length} ingredients using pattern: ${pattern.toString().substring(0, 40)}...`);
-      }
-      matches.forEach(match => {
-        const ingredient = cleanText(match[1]);
-        if (ingredient) {
-          ingredients.add(ingredient);
-        }
-      });
-      
-      // If we found a good number of ingredients, we can break the loop
-      if (ingredients.size > 5) break;
-    }
-
-    // If still no ingredients found, try looking for any list items within ingredient sections
-    if (ingredients.size === 0) {
-      console.log('🔍 Looking for ingredients in sections...');
-      // Look for sections that might contain ingredients
-      const sectionPatterns = [
-        /<(?:div|section)[^>]*>(?:.*?ingredients?.*?)<\/(?:div|section)>/gi,
-        /<(?:div|section|ul)[^>]*class="[^"]*(?:ingredient|ingredients)[^"]*"[^>]*>[\s\S]*?<\/(?:div|section|ul)>/gi
-      ];
-      
-      for (const sectionPattern of sectionPatterns) {
-        const sections = html.match(sectionPattern);
-        if (sections) {
-          console.log(`📑 Found ${sections.length} potential ingredient sections`);
-          sections.forEach(section => {
-            // Look for list items within the section
-            const items = section.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-            if (items) {
-              console.log(`📋 Found ${items.length} list items in section`);
-              items.forEach(item => {
-                const ingredient = cleanText(item);
-                if (ingredient) {
-                  ingredients.add(ingredient);
-                }
-              });
-            }
-            
-            // If there are no list items, try looking for other patterns within the section
-            if (ingredients.size === 0) {
-              const innerItems = section.match(/<(?:div|span|p)[^>]*>([\s\S]*?)<\/(?:div|span|p)>/gi);
-              if (innerItems) {
-                console.log(`📄 Found ${innerItems.length} text elements in section`);
-                innerItems.forEach(item => {
-                  const text = cleanText(item);
-                  // Only add it if it looks like an ingredient (not too long, not too short)
-                  if (text && text.length > 3 && text.length < 100) {
-                    ingredients.add(text);
-                  }
-                });
-              }
-            }
-          });
-        }
-        
-        // If we found ingredients, we can break the loop
-        if (ingredients.size > 0) break;
-      }
-    }
-  }
-
-  // If we still couldn't find ingredients, try a last-ditch effort with common patterns
-  if (ingredients.size === 0) {
-    console.log('⚠️ Using fallback ingredient extraction methods');
-    // Look for any text content that might be an ingredient list
-    const plainTextIngredients = html.match(/ingredients:?\s*([\s\S]*?)(?:preparation|instructions|directions|method|steps|$/i);
-    if (plainTextIngredients && plainTextIngredients[1]) {
-      const lines = plainTextIngredients[1].split(/\n|\r|\<br\>|\<\/p\>/).map(line => cleanText(line)).filter(Boolean);
-      lines.forEach(line => {
-        // Only add lines that look like ingredients (not headers, not too short)
-        if (line && line.length > 5 && line.length < 100 && !line.match(/^(ingredients|preparation|instructions|directions|method|steps)$/i)) {
-          ingredients.add(line);
-        }
-      });
-    }
-  }
-
-  return Array.from(ingredients);
+  // Try the reverse order (content first, then property)
+  const reverseRegex = new RegExp(`<meta\\s+content=["']([^"']+)["']\\s+(?:property|name)=["']${property}["']`, 'i');
+  const reverseMatch = html.match(reverseRegex);
+  return reverseMatch ? reverseMatch[1] : undefined;
 }
 
 /**
- * Extracts instructions from HTML content
- * @param html - The HTML content
- * @returns Formatted instructions as a string
+ * Extracts structured recipe data from HTML
+ * @param html - The HTML content to extract from
+ * @returns The structured recipe data or undefined
  */
-export function extractInstructions(html: string): string {
-  console.log('📝 Extracting instructions from HTML...');
-  
-  // Try Schema.org Recipe markup first
+function extractStructuredRecipeData(html: string) {
   try {
-    const jsonLdMatches = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/gs);
-    if (jsonLdMatches) {
-      for (const match of jsonLdMatches) {
-        try {
-          const jsonContent = match.replace(/<script type="application\/ld\+json">/, '').replace(/<\/script>/, '');
-          const schema = JSON.parse(jsonContent);
-          
-          // Handle different schema formats
-          let recipeData = null;
-          
-          // Direct recipe
-          if (schema['@type'] === 'Recipe') {
-            recipeData = schema;
-          } 
-          // Recipe in graph
-          else if (Array.isArray(schema['@graph'])) {
-            recipeData = schema['@graph'].find((item: any) => item['@type'] === 'Recipe');
-          }
-          // Recipe in context
-          else if (schema.hasOwnProperty('@context') && schema.hasOwnProperty('recipeInstructions')) {
-            recipeData = schema;
-          }
-          
-          if (recipeData?.recipeInstructions) {
-            console.log('📊 Found instructions in Schema.org data');
-            if (Array.isArray(recipeData.recipeInstructions)) {
-              return recipeData.recipeInstructions
-                .map((instruction: any, index: number) => {
-                  if (typeof instruction === 'string') {
-                    return `${index + 1}. ${cleanText(instruction)}`;
-                  }
-                  return `${index + 1}. ${cleanText(instruction.text || instruction.description || '')}`;
-                })
-                .filter(Boolean)
-                .join('\n\n');
-            } else if (typeof recipeData.recipeInstructions === 'string') {
-              const steps = recipeData.recipeInstructions.split(/\.\s+/).filter(Boolean);
-              return steps.map((step: string, index: number) => 
-                `${index + 1}. ${cleanText(step)}`
-              ).join('\n\n');
-            }
-          }
-        } catch (e) {
-          console.log('⚠️ Error parsing Schema.org data for instructions:', e);
+    // Look for JSON-LD structured data
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      const jsonData = JSON.parse(jsonLdMatch[1]);
+      
+      // Handle different structured data formats
+      if (jsonData['@type'] === 'Recipe' || 
+          (Array.isArray(jsonData['@graph']) && 
+           jsonData['@graph'].some((item: any) => item['@type'] === 'Recipe'))) {
+        
+        const recipeData = jsonData['@type'] === 'Recipe' ? jsonData : 
+          jsonData['@graph'].find((item: any) => item['@type'] === 'Recipe');
+        
+        if (recipeData) {
+          console.log('Found structured recipe data (JSON-LD)');
+          return recipeData;
         }
       }
     }
-  } catch (e) {
-    console.log('⚠️ Error extracting Schema.org instructions data:', e);
+
+    // Look for microdata
+    const microdataMatch = html.match(/<[^>]+itemtype=['"]http:\/\/schema.org\/Recipe['"][^>]*>([\s\S]*?)(?:<\/[^>]+>)/i);
+    if (microdataMatch) {
+      console.log('Found structured recipe data (microdata)');
+      // Basic processing of microdata could be added here
+    }
+
+    return undefined;
+  } catch (error) {
+    console.error('Error extracting structured recipe data:', error);
+    return undefined;
+  }
+}
+
+/**
+ * Extracts ingredients from HTML
+ * @param html - The HTML content to extract from
+ * @returns Array of ingredients
+ */
+export function extractIngredients(html: string): string[] {
+  // Try to get from structured data first
+  const structuredData = extractStructuredRecipeData(html);
+  if (structuredData?.recipeIngredient && Array.isArray(structuredData.recipeIngredient)) {
+    console.log('Extracting ingredients from structured data');
+    return structuredData.recipeIngredient;
   }
 
-  // Try common instruction patterns
-  const instructionBlocks: string[] = [];
-  
-  // Look for instruction containers
+  // Look for common ingredient patterns
+  const ingredientPatterns = [
+    // Look for a section that starts with ingredients and ends with another section
+    /<h[2-4][^>]*>\s*ingredients\s*<\/h[2-4]>[\s\S]*?<ul[^>]*>([\s\S]*?)<\/ul>/i,
+    // Try to find ordered list after "ingredients" heading
+    /<h[2-4][^>]*>\s*ingredients\s*<\/h[2-4]>[\s\S]*?<ol[^>]*>([\s\S]*?)<\/ol>/i,
+    // Look for div with "ingredient" in the class or id
+    /<div[^>]*(?:class|id)=["'][^"']*ingredient[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    // More general pattern - section with "ingredient" in class/id containing a list
+    /<[^>]*(?:class|id)=["'][^"']*ingredient[^"']*["'][^>]*>[\s\S]*?<ul[^>]*>([\s\S]*?)<\/ul>/i,
+    // Look for a section that starts with "ingredients:" and ends with another section
+    /ingredients:?\s*([\s\S]*?)(?:preparation|instructions|directions|method|steps|$)/i
+  ];
+
+  for (const pattern of ingredientPatterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      console.log('Found ingredients with pattern:', pattern);
+      
+      // Extract list items if they exist
+      const listItems = match[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+      if (listItems) {
+        return listItems.map(item => {
+          // Remove HTML tags and clean up whitespace
+          return item.replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+        }).filter(item => item.length > 0);
+      }
+      
+      // If no list items, return the cleaned content
+      return match[1].split(/\n|<br\s*\/?>/).map(line => {
+        return line.replace(/<[^>]+>/g, ' ')
+                 .replace(/\s+/g, ' ')
+                 .trim();
+      }).filter(line => line.length > 0);
+    }
+  }
+
+  // Fallback - look for any list items after the word "ingredients"
+  const fallbackMatch = html.match(/ingredients[^<]*(?:<[^>]+>)*[\s\S]*?(<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>)/i);
+  if (fallbackMatch) {
+    const listItems = fallbackMatch[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+    if (listItems) {
+      return listItems.map(item => item.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+                    .filter(item => item.length > 0);
+    }
+  }
+
+  // Last resort - look for paragraphs after "ingredients"
+  const lastResort = html.match(/ingredients[^<]*(?:<[^>]+>)*[\s\S]*?(<p[^>]*>[\s\S]*?<\/p>)/i);
+  if (lastResort) {
+    return lastResort[1].split(/\n|<br\s*\/?>/).map(line => {
+      return line.replace(/<[^>]+>/g, ' ')
+               .replace(/\s+/g, ' ')
+               .trim();
+    }).filter(line => line.length > 0);
+  }
+
+  return [];
+}
+
+/**
+ * Extracts instructions from HTML
+ * @param html - The HTML content to extract from
+ * @returns Instructions as text or undefined
+ */
+export function extractInstructions(html: string): string | undefined {
+  // Try to get from structured data first
+  const structuredData = extractStructuredRecipeData(html);
+  if (structuredData?.recipeInstructions) {
+    console.log('Extracting instructions from structured data');
+    
+    if (Array.isArray(structuredData.recipeInstructions)) {
+      // If it's an array, join the instructions with line breaks
+      return structuredData.recipeInstructions.map((instruction: any) => {
+        // Handle HowToStep objects
+        if (typeof instruction === 'object' && instruction.text) {
+          return instruction.text;
+        }
+        return instruction;
+      }).join('\n\n');
+    } else if (typeof structuredData.recipeInstructions === 'string') {
+      return structuredData.recipeInstructions;
+    }
+  }
+
+  // Look for common instruction patterns
   const instructionPatterns = [
-    /<(?:div|section)[^>]*class="[^"]*(?:instruction|instructions|steps|preparation|method)[^"]*"[^>]*>([\s\S]*?)<\/(?:div|section)>/i,
-    /<(?:div|section)[^>]*itemprop="recipeInstructions"[^>]*>([\s\S]*?)<\/(?:div|section)>/i,
-    /<(?:ol|ul)[^>]*class="[^"]*(?:instruction|instructions|steps)[^"]*"[^>]*>([\s\S]*?)<\/(?:ol|ul)>/i
+    // Look for a section that starts with "instructions", "directions", "method" etc.
+    /<h[2-4][^>]*>\s*(?:instructions|directions|method|steps|preparation)\s*<\/h[2-4]>([\s\S]*?)(?:<h[2-4]|<div[^>]*class=["'](?:footer|comments|tags)|$)/i,
+    // Look for ordered list after "instructions" heading
+    /<h[2-4][^>]*>\s*(?:instructions|directions|method|steps|preparation)\s*<\/h[2-4]>[\s\S]*?<ol[^>]*>([\s\S]*?)<\/ol>/i,
+    // Look for div with "instruction" in the class or id
+    /<div[^>]*(?:class|id)=["'][^"']*(?:instruction|direction|method|step|preparation)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    // More general pattern - section with "instruction" in class/id containing a list
+    /<[^>]*(?:class|id)=["'][^"']*(?:instruction|direction|method|step|preparation)[^"']*["'][^>]*>[\s\S]*?<ol[^>]*>([\s\S]*?)<\/ol>/i,
+    // Look for a section with numbered paragraphs
+    /((?:<p[^>]*>\s*\d+\.[\s\S]*?<\/p>\s*){2,})/i
   ];
 
   for (const pattern of instructionPatterns) {
     const match = html.match(pattern);
-    if (match) {
-      console.log(`🔍 Found instructions using pattern: ${pattern.toString().substring(0, 40)}...`);
-      const content = match[1];
+    if (match && match[1]) {
+      console.log('Found instructions with pattern:', pattern);
       
-      // Try to find ordered lists first
-      const orderedList = content.match(/<ol[^>]*>([\s\S]*?)<\/ol>/i);
-      if (orderedList) {
-        const steps = orderedList[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-        if (steps) {
-          console.log(`📋 Found ${steps.length} instruction steps in ordered list`);
-          steps.forEach((step, index) => {
-            const cleanStep = cleanText(step);
-            if (cleanStep) {
-              instructionBlocks.push(`${index + 1}. ${cleanStep}`);
-            }
-          });
-        }
-      } else {
-        // Try unordered lists if no ordered list is found
-        const unorderedList = content.match(/<ul[^>]*>([\s\S]*?)<\/ul>/i);
-        if (unorderedList) {
-          const steps = unorderedList[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-          if (steps) {
-            console.log(`📋 Found ${steps.length} instruction steps in unordered list`);
-            steps.forEach((step, index) => {
-              const cleanStep = cleanText(step);
-              if (cleanStep) {
-                instructionBlocks.push(`${index + 1}. ${cleanStep}`);
-              }
-            });
-          }
-        } else {
-          // Try paragraphs if no list is found
-          const paragraphs = content.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
-          if (paragraphs) {
-            console.log(`📝 Found ${paragraphs.length} instruction paragraphs`);
-            paragraphs.forEach((para, index) => {
-              const cleanPara = cleanText(para);
-              if (cleanPara) {
-                instructionBlocks.push(`${index + 1}. ${cleanPara}`);
-              }
-            });
-          } else {
-            // Try divs as a last resort
-            const divs = content.match(/<div[^>]*>([\s\S]*?)<\/div>/gi);
-            if (divs) {
-              console.log(`📑 Found ${divs.length} instruction divs`);
-              divs.forEach((div, index) => {
-                const cleanDiv = cleanText(div);
-                if (cleanDiv && cleanDiv.length > 10) {  // Only use divs with substantial content
-                  instructionBlocks.push(`${index + 1}. ${cleanDiv}`);
-                }
-              });
-            }
-          }
-        }
-      }
+      let instructions = match[1];
       
-      if (instructionBlocks.length > 0) break;
+      // Clean up the HTML
+      instructions = instructions
+        .replace(/<h[2-6][^>]*>[\s\S]*?<\/h[2-6]>/gi, '\n') // Remove sub-headings
+        .replace(/<script[\s\S]*?<\/script>/gi, '') // Remove scripts
+        .replace(/<style[\s\S]*?<\/style>/gi, '') // Remove styles
+        .replace(/<[^>]*(?:ads|comment|widget|sidebar)[^>]*>[\s\S]*?<\/[^>]*>/gi, '') // Remove ads, comments, etc.
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n') // Convert list items to bullet points
+        .replace(/<\/(?:p|div|section|article|br)>/gi, '\n') // Add line breaks at block ends
+        .replace(/<[^>]+>/g, ' ') // Remove remaining HTML tags
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
+      
+      return instructions;
     }
   }
 
-  // If no structured content is found, try to find any text content in the instruction section
-  if (instructionBlocks.length === 0) {
-    console.log('⚠️ Using fallback instruction extraction methods');
-    const instructionSection = html.match(/<div[^>]*>[\s\S]*?(?:instructions?|directions|method|steps)[\s\S]*?<\/div>/i);
-    if (instructionSection) {
-      const cleanInstructions = cleanText(instructionSection[0]);
-      if (cleanInstructions) {
-        // Split by periods and create numbered steps
-        const steps = cleanInstructions.split(/\.(?=\s|$)/).filter(Boolean);
-        steps.forEach((step, index) => {
-          const cleanStep = cleanText(step);
-          if (cleanStep && cleanStep.length > 10) {  // Only use steps with substantial content
-            instructionBlocks.push(`${index + 1}. ${cleanStep}`);
-          }
-        });
-      }
-    }
+  // Fallback - try to find any ordered list
+  const fallbackMatch = html.match(/<ol[^>]*>([\s\S]*?)<\/ol>/i);
+  if (fallbackMatch) {
+    let instructions = fallbackMatch[1];
+    instructions = instructions
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n');
+    
+    return instructions;
   }
 
-  return instructionBlocks.join('\n\n');
-}
+  // Last resort - look for paragraphs after a word likely to indicate instructions
+  const lastResort = html.match(/(?:instructions|directions|method|steps|preparation)[^<]*(?:<[^>]+>)*[\s\S]*?(<p[^>]*>[\s\S]*?<\/p>(?:\s*<p[^>]*>[\s\S]*?<\/p>)*)/i);
+  if (lastResort) {
+    let instructions = lastResort[1];
+    instructions = instructions
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n');
+    
+    return instructions;
+  }
 
-/**
- * Extract metadata from HTML using meta tags
- * @param html - The HTML content
- * @param name - The meta tag name or property
- * @returns The meta tag content
- */
-export function getMetaContent(html: string, name: string): string {
-  const match = html.match(new RegExp(`<meta[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']+)["']`, 'i'))
-    || html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["']${name}["']`, 'i'));
-  return match ? cleanText(match[1]) : '';
+  return undefined;
 }

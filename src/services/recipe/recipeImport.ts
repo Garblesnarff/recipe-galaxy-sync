@@ -72,6 +72,8 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
         throw new Error(`The recipe is too complex to process automatically. Please try copying the recipe details manually.`);
       } else if (error.message.includes('blocking')) {
         throw new Error(`This website appears to be blocking our recipe extractor. Please try copying the recipe details manually.`);
+      } else if (error.message.includes('Failed to send a request to the Edge Function')) {
+        throw new Error(`Unable to connect to our recipe extraction service. Please try again later or enter the recipe details manually.`);
       }
       throw error;
     } else {

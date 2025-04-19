@@ -54,6 +54,13 @@ export const RecipeImport = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && recipeUrl && !urlError && !isImporting) {
+      e.preventDefault();
+      onImport();
+    }
+  };
+
   // Check if there's a known site with issues
   const isProblemSite = domain && domain.includes('hellofresh');
 
@@ -67,12 +74,14 @@ export const RecipeImport = ({
             placeholder="Enter recipe URL (YouTube or recipe website)"
             value={recipeUrl}
             onChange={(e) => handleUrlChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             className={urlError ? "border-red-500" : ""}
             disabled={isImporting}
           />
           <Button 
             onClick={onImport} 
             disabled={isImporting || !!urlError || !recipeUrl}
+            className="whitespace-nowrap"
           >
             {isImporting ? (
               <>
@@ -95,6 +104,7 @@ export const RecipeImport = ({
         {importError && (
           <Alert variant="destructive" className="mt-2">
             <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Import Failed</AlertTitle>
             <AlertDescription>{importError}</AlertDescription>
           </Alert>
         )}
