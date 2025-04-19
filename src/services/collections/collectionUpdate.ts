@@ -5,15 +5,15 @@ import { toast } from "sonner";
 
 export const updateCollection = async (id: string, updates: Partial<Collection>): Promise<boolean> => {
   try {
-    // Use explicit any type assertion to bypass TypeScript table checking
-    const { error } = await (supabase
-      .from('collections')
+    // Cast to any type to bypass TypeScript table checking
+    const { error } = await supabase
+      .from('collections' as any)
       .update({
         name: updates.name,
         description: updates.description,
         cover_image_url: updates.cover_image_url
-      })
-      .eq('id', id) as any);
+      } as any)
+      .eq('id', id);
 
     if (error) throw error;
     
