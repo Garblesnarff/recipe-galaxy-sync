@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -10,6 +11,10 @@ export interface SaleItem {
   regular_price: string;
   discount_percentage: number;
   sale_ends_at: string;
+  // Define stores as an optional property to handle the nested structure
+  stores?: {
+    name: string;
+  };
 }
 
 export interface IngredientSale {
