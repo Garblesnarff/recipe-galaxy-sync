@@ -5,8 +5,8 @@ import { toast } from "sonner";
 
 export const createCollection = async (collection: Partial<Collection>): Promise<string | null> => {
   try {
-    // Cast to any type to bypass TypeScript table checking
-    const { data, error } = await supabase
+    // Use a specific cast for both the table and the inserted data
+    const { data, error } = await (supabase
       .from('collections' as any)
       .insert({
         name: collection.name,
@@ -14,7 +14,7 @@ export const createCollection = async (collection: Partial<Collection>): Promise
         cover_image_url: collection.cover_image_url
       } as any)
       .select('id')
-      .single();
+      .single()) as unknown as { data: { id: string }, error: any };
 
     if (error) throw error;
     

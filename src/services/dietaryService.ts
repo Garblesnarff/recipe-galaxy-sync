@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { IngredientClassification, IngredientSubstitution, DietaryRestriction } from "@/types/dietary";
 import { toast } from "sonner";
@@ -6,9 +5,12 @@ import { toast } from "sonner";
 // Get all ingredient classifications from the database
 export const getIngredientClassifications = async (): Promise<IngredientClassification[]> => {
   try {
-    const { data, error } = await supabase
-      .from('ingredient_classifications')
-      .select('*');
+    const { data, error } = await (supabase
+      .from('ingredient_classifications' as any)
+      .select('*')) as unknown as { 
+        data: IngredientClassification[], 
+        error: any 
+      };
     
     if (error) throw error;
     return data || [];
@@ -23,10 +25,13 @@ export const getIngredientSubstitutions = async (
   dietaryRestriction: DietaryRestriction
 ): Promise<IngredientSubstitution[]> => {
   try {
-    const { data, error } = await supabase
-      .from('ingredient_substitutions')
+    const { data, error } = await (supabase
+      .from('ingredient_substitutions' as any)
       .select('*')
-      .eq('dietary_restriction', dietaryRestriction);
+      .eq('dietary_restriction', dietaryRestriction)) as unknown as { 
+        data: IngredientSubstitution[], 
+        error: any 
+      };
     
     if (error) throw error;
     return data || [];
@@ -43,21 +48,27 @@ export const getSubstitutionsForIngredient = async (
 ): Promise<IngredientSubstitution[]> => {
   try {
     // First do an exact match search
-    let { data, error } = await supabase
-      .from('ingredient_substitutions')
+    let { data, error } = await (supabase
+      .from('ingredient_substitutions' as any)
       .select('*')
       .eq('dietary_restriction', dietaryRestriction)
-      .eq('original_ingredient', ingredient.toLowerCase().trim());
+      .eq('original_ingredient', ingredient.toLowerCase().trim())) as unknown as { 
+        data: IngredientSubstitution[], 
+        error: any 
+      };
     
     if (error) throw error;
     
     // If no results, try a partial match search
     if (!data || data.length === 0) {
-      const { data: partialData, error: partialError } = await supabase
-        .from('ingredient_substitutions')
+      const { data: partialData, error: partialError } = await (supabase
+        .from('ingredient_substitutions' as any)
         .select('*')
         .eq('dietary_restriction', dietaryRestriction)
-        .ilike('original_ingredient', `%${ingredient.toLowerCase().trim()}%`);
+        .ilike('original_ingredient', `%${ingredient.toLowerCase().trim()}%`)) as unknown as { 
+          data: IngredientSubstitution[], 
+          error: any 
+        };
       
       if (partialError) throw partialError;
       data = partialData;
@@ -139,11 +150,14 @@ export const getUserDietaryRestrictions = async (): Promise<DietaryRestriction[]
       return [];
     }
     
-    const { data, error } = await supabase
-      .from('profiles')
+    const { data, error } = await (supabase
+      .from('profiles' as any)
       .select('dietary_restrictions')
       .eq('id', session.user.id)
-      .single();
+      .single()) as unknown as { 
+        data: { dietary_restrictions: DietaryRestriction[] }, 
+        error: any 
+      };
     
     if (error) throw error;
     return (data?.dietary_restrictions || []) as DietaryRestriction[];
@@ -163,10 +177,10 @@ export const updateUserDietaryRestrictions = async (restrictions: DietaryRestric
       return false;
     }
     
-    const { error } = await supabase
-      .from('profiles')
+    const { error } = await (supabase
+      .from('profiles' as any)
       .update({ dietary_restrictions: restrictions })
-      .eq('id', session.user.id);
+      .eq('id', session.user.id)) as unknown as { error: any };
     
     if (error) throw error;
     

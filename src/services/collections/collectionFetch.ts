@@ -5,19 +5,30 @@ import { toast } from "sonner";
 
 export const fetchCollections = async (): Promise<Collection[]> => {
   try {
-    // Get collections with recipe count - using type cast
-    const { data, error } = await supabase
+    // Use a specific cast for the query and response
+    const { data, error } = await (supabase
       .from('collections' as any)
       .select(`
         *,
         collection_recipes:collection_recipes(count)
       `)
-      .order('name');
+      .order('name')) as unknown as { 
+        data: Array<{
+          id: string;
+          name: string;
+          description: string | null;
+          cover_image_url: string | null;
+          created_at: string;
+          updated_at: string;
+          collection_recipes: Array<{ count: number }> | null;
+        }>, 
+        error: any 
+      };
 
     if (error) throw error;
 
     // Format the data to extract recipe count
-    return data.map((collection: any) => ({
+    return data.map((collection) => ({
       id: collection.id,
       name: collection.name,
       description: collection.description,
@@ -35,15 +46,26 @@ export const fetchCollections = async (): Promise<Collection[]> => {
 
 export const fetchCollectionById = async (id: string): Promise<Collection | null> => {
   try {
-    // Using type cast for collections table
-    const { data, error } = await supabase
+    // Using specific cast for the query and response
+    const { data, error } = await (supabase
       .from('collections' as any)
       .select(`
         *,
         collection_recipes:collection_recipes(count)
       `)
       .eq('id', id)
-      .single();
+      .single()) as unknown as { 
+        data: {
+          id: string;
+          name: string;
+          description: string | null;
+          cover_image_url: string | null;
+          created_at: string;
+          updated_at: string;
+          collection_recipes: Array<{ count: number }> | null;
+        }, 
+        error: any 
+      };
 
     if (error) throw error;
 
@@ -65,19 +87,22 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
 
 export const fetchCollectionRecipes = async (collectionId: string) => {
   try {
-    // Using type cast for collection_recipes table
-    const { data, error } = await supabase
+    // Using specific cast for the query and response
+    const { data, error } = await (supabase
       .from('collection_recipes' as any)
       .select(`
         recipe_id,
         recipes:recipe_id(*)
       `)
-      .eq('collection_id', collectionId);
+      .eq('collection_id', collectionId)) as unknown as { 
+        data: Array<{ recipe_id: string; recipes: any }>, 
+        error: any 
+      };
 
     if (error) throw error;
     
     // Extract the recipe objects from the nested structure
-    return data.map((item: any) => item.recipes);
+    return data.map((item) => item.recipes);
   } catch (error) {
     console.error("Error fetching collection recipes:", error);
     toast.error("Failed to fetch recipes in this collection");
@@ -87,18 +112,28 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
 
 export const fetchRecipeCollections = async (recipeId: string): Promise<Collection[]> => {
   try {
-    // Using type cast for collection_recipes table
-    const { data, error } = await supabase
+    // Using specific cast for the query and response
+    const { data, error } = await (supabase
       .from('collection_recipes' as any)
       .select(`
         collections:collection_id(*)
       `)
-      .eq('recipe_id', recipeId);
+      .eq('recipe_id', recipeId)) as unknown as { 
+        data: Array<{ collections: {
+          id: string;
+          name: string;
+          description: string | null;
+          cover_image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        } }>, 
+        error: any 
+      };
 
     if (error) throw error;
     
     // Extract the collection objects and map them to our Collection type
-    return data.map((item: any) => ({
+    return data.map((item) => ({
       id: item.collections.id,
       name: item.collections.name,
       description: item.collections.description,

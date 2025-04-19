@@ -4,11 +4,11 @@ import { toast } from "sonner";
 
 export const deleteCollection = async (id: string): Promise<boolean> => {
   try {
-    // Cast to any type to bypass TypeScript table checking
-    const { error } = await supabase
+    // Cast to avoid TypeScript table checking
+    const { error } = await (supabase
       .from('collections' as any)
       .delete()
-      .eq('id', id);
+      .eq('id', id)) as unknown as { error: any };
 
     if (error) throw error;
     

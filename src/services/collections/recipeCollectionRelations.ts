@@ -8,12 +8,11 @@ export const addRecipeToCollection = async (
 ): Promise<boolean> => {
   try {
     // Check if the recipe is already in the collection to avoid duplicates
-    // Using type cast for collection_recipes table
-    const { data: existingData } = await supabase
+    const { data: existingData } = await (supabase
       .from('collection_recipes' as any)
       .select('*')
       .eq('collection_id', collectionId)
-      .eq('recipe_id', recipeId);
+      .eq('recipe_id', recipeId)) as unknown as { data: any[], error: any };
 
     if (existingData && existingData.length > 0) {
       // Recipe is already in the collection
@@ -21,14 +20,13 @@ export const addRecipeToCollection = async (
       return true;
     }
 
-    // Add recipe to collection
-    // Using type cast for collection_recipes table
-    const { error } = await supabase
+    // Add recipe to collection with proper casting
+    const { error } = await (supabase
       .from('collection_recipes' as any)
       .insert({
         collection_id: collectionId,
         recipe_id: recipeId
-      } as any);
+      } as any)) as unknown as { error: any };
 
     if (error) throw error;
     
@@ -46,12 +44,12 @@ export const removeRecipeFromCollection = async (
   recipeId: string
 ): Promise<boolean> => {
   try {
-    // Using type cast for collection_recipes table
-    const { error } = await supabase
+    // Cast properly for the delete operation
+    const { error } = await (supabase
       .from('collection_recipes' as any)
       .delete()
       .eq('collection_id', collectionId)
-      .eq('recipe_id', recipeId);
+      .eq('recipe_id', recipeId)) as unknown as { error: any };
 
     if (error) throw error;
     
