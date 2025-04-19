@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +29,8 @@ export const useRecipeDetail = () => {
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
     queryFn: async () => {
+      if (!id) throw new Error("Recipe ID is required");
+      
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
@@ -44,10 +47,11 @@ export const useRecipeDetail = () => {
       
       return data;
     },
+    enabled: !!id,
   });
 
   // Display the adapted recipe or the original
-  const displayedRecipe = isAdapted && adaptedRecipe ? 
+  const displayedRecipe = isAdapted && adaptedRecipe && recipe ? 
     { ...recipe, ...adaptedRecipe } : 
     recipe;
 
@@ -91,7 +95,9 @@ export const useRecipeDetail = () => {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recipe", id] });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: ["recipe", id] });
+      }
       toast.success("Rating submitted successfully!");
     },
     onError: () => {
@@ -109,8 +115,10 @@ export const useRecipeDetail = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recipe", id] });
-      queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: ["recipe", id] });
+        queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      }
       toast.success(isFavorite ? "Added to favorites" : "Removed from favorites");
     },
     onError: () => {
@@ -120,13 +128,13 @@ export const useRecipeDetail = () => {
   });
 
   const navigateToEdit = () => {
-    if (recipe) {
+    if (recipe && recipe.id) {
       navigate(`/edit-recipe/${recipe.id}`);
     }
   };
   
   const handleToggleFavorite = () => {
-    if (!recipe) return;
+    if (!recipe || !recipe.id) return;
     
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
@@ -137,9 +145,11 @@ export const useRecipeDetail = () => {
   };
 
   const handleRating = () => {
+    if (!recipe || !recipe.id) return;
+    
     const rating = 5; // Example hardcoded rating
     setUserRating(rating);
-    rateMutation.mutate({ recipeId: recipe?.id || "", rating });
+    rateMutation.mutate({ recipeId: recipe.id, rating });
   };
 
   return {

@@ -39,6 +39,8 @@ export const RecipeCard = ({
 
   useEffect(() => {
     const fetchSalesData = async () => {
+      if (!id) return;
+      
       setIsLoading(true);
       try {
         // Fetch the recipe ingredients
@@ -55,16 +57,18 @@ export const RecipeCard = ({
 
         // Convert ingredients to string array
         let ingredientList: string[] = [];
-        if (Array.isArray(data.ingredients)) {
-          // Map each ingredient to a string (handles when Json can be a number, boolean, etc.)
-          ingredientList = data.ingredients.map(ingredient => 
-            typeof ingredient === 'string' ? ingredient : String(ingredient)
-          );
-        } else if (typeof data.ingredients === 'object') {
-          // Handle case where ingredients might be stored as an object with keys
-          ingredientList = Object.values(data.ingredients).map(ingredient => 
-            typeof ingredient === 'string' ? ingredient : String(ingredient)
-          );
+        if (data && data.ingredients) {
+          if (Array.isArray(data.ingredients)) {
+            // Map each ingredient to a string (handles when Json can be a number, boolean, etc.)
+            ingredientList = data.ingredients.map(ingredient => 
+              typeof ingredient === 'string' ? ingredient : String(ingredient)
+            );
+          } else if (typeof data.ingredients === 'object') {
+            // Handle case where ingredients might be stored as an object with keys
+            ingredientList = Object.values(data.ingredients).map(ingredient => 
+              typeof ingredient === 'string' ? ingredient : String(ingredient)
+            );
+          }
         }
 
         if (ingredientList.length > 0) {

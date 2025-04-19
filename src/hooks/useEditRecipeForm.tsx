@@ -50,15 +50,17 @@ export const useEditRecipeForm = (recipeId: string) => {
       }
 
       if (data) {
-        const ingredientsArray = Array.isArray(data.ingredients) 
-          ? data.ingredients.map(item => typeof item === 'string' ? item : String(item))
+        const ingredientsArray = data.ingredients ? 
+          (Array.isArray(data.ingredients) 
+            ? data.ingredients.map(item => typeof item === 'string' ? item : String(item))
+            : [])
           : [];
 
-        const validRecipeType = (data.recipe_type === 'manual' || 
-                               data.recipe_type === 'webpage' || 
-                               data.recipe_type === 'youtube') 
-                               ? data.recipe_type 
-                               : 'manual';
+        const validRecipeType = (data.source_type === 'manual' || 
+                              data.source_type === 'webpage' || 
+                              data.source_type === 'youtube') 
+                              ? data.source_type as 'manual' | 'webpage' | 'youtube' 
+                              : 'manual';
 
         setFormData({
           title: data.title || '',
