@@ -11,5 +11,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Add these helper types to make working with the database easier
 export type Recipe = Database['public']['Tables']['recipes']['Row'];
 export type IngredientMapping = Database['public']['Tables']['ingredient_mappings']['Row'];
-export type Collection = Database['public']['Tables']['collections']['Row'];
-export type CollectionRecipe = Database['public']['Tables']['collection_recipes']['Row'];

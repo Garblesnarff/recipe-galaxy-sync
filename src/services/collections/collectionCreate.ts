@@ -1,5 +1,6 @@
 
-import { supabase, Collection } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { Collection } from "@/types/collection";
 import { toast } from "sonner";
 
 export const createCollection = async (collection: Partial<Collection>): Promise<string | null> => {
