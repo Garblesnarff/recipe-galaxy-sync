@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
@@ -8,6 +9,7 @@ import { IngredientSale } from "@/services/sales";
 import { RecipeCardImage } from "./recipe/card/RecipeCardImage";
 import { RecipeCardMeta } from "./recipe/card/RecipeCardMeta";
 import { RecipeCardHeader } from "./recipe/card/RecipeCardHeader";
+import { toast } from "sonner";
 
 interface RecipeCardProps {
   id: string;
@@ -20,6 +22,7 @@ interface RecipeCardProps {
   isFavorite?: boolean;
   onFavoriteToggle?: () => void;
   tags?: string[];
+  onDelete?: () => void;
 }
 
 export const RecipeCard = ({
@@ -33,6 +36,7 @@ export const RecipeCard = ({
   isFavorite = false,
   onFavoriteToggle,
   tags = [],
+  onDelete,
 }: RecipeCardProps) => {
   const [salesData, setSalesData] = useState<IngredientSale[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +87,23 @@ export const RecipeCard = ({
     }
   }, [id]);
 
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Recipe deleted successfully');
+      onDelete?.();
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      toast.error('Failed to delete recipe');
+    }
+  };
+
   return (
     <Link to={`/recipe/${id}`} className="block">
       <Card className="recipe-card group relative overflow-hidden">
@@ -90,6 +111,8 @@ export const RecipeCard = ({
           isFavorite={isFavorite}
           onFavoriteToggle={onFavoriteToggle}
           salesCount={salesData.length}
+          onDeleteClick={handleDelete}
+          title={title}
         />
         
         {salesData.length > 0 && (

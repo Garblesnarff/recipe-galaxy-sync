@@ -7,11 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useCallback, useMemo } from "react";
 import debounce from "lodash/debounce";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { triggerSalesScrape } from "@/services/sales"; // Updated import path
+import { triggerSalesScrape } from "@/services/sales";
 import { toast } from "sonner";
 import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
-import { IngredientSale } from "@/services/sales"; // Updated import path
+import { IngredientSale } from "@/services/sales";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ const Index = () => {
     queryFn: async () => {
       let query = supabase.from("recipes").select("*");
       
-      // Apply filters
       if (filters.searchQuery) {
         query = query.or(`title.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
       }
@@ -60,7 +59,6 @@ const Index = () => {
         query = query.eq('is_favorite', true);
       }
       
-      // Apply sorting
       query = query.order(sortOption.value, { 
         ascending: sortOption.direction === 'asc' 
       });
@@ -76,7 +74,6 @@ const Index = () => {
     try {
       const success = await triggerSalesScrape();
       if (success) {
-        // Refresh the recipe cards to show updated sale indicators
         refetch();
       }
     } catch (error) {
@@ -102,6 +99,10 @@ const Index = () => {
       console.error("Error updating favorite status:", error);
       toast.error("Failed to update favorite status");
     }
+  };
+
+  const handleDeleteRecipe = () => {
+    refetch();
   };
 
   return (
@@ -147,7 +148,6 @@ const Index = () => {
           </Button>
         </div>
         
-        {/* Recipe Filters */}
         <RecipeFilterBar 
           filters={filters}
           onFiltersChange={setFilters}
@@ -180,6 +180,7 @@ const Index = () => {
                   ...(recipe.cuisine_type ? [recipe.cuisine_type] : []),
                   ...(recipe.categories?.slice(0, 1) || [])
                 ]}
+                onDelete={handleDeleteRecipe}
               />
             ))}
           </div>
