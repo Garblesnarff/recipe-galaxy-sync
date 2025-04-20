@@ -30,37 +30,32 @@ export const RecipeHeader = ({
     if (!imageUrl) return undefined;
     
     if (typeof imageUrl === 'string') {
-      return imageUrl;
-    } 
-    
-    // Handle object with URL property
-    if (typeof imageUrl === 'object') {
-      // First check for url property
-      if (imageUrl.url) {
-        return imageUrl.url;
-      }
-      
-      // Then check for nested arrays
-      if (Array.isArray(imageUrl) && imageUrl.length > 0) {
-        const firstItem = imageUrl[0];
-        if (typeof firstItem === 'string') {
-          return firstItem;
-        } else if (firstItem?.url) {
-          return firstItem.url;
-        }
-      }
-    }
-    
-    // Handle stringified objects (from database)
-    if (typeof imageUrl === 'string') {
       try {
         const parsedUrl = JSON.parse(imageUrl);
-        if (parsedUrl.url) {
+        if (parsedUrl && typeof parsedUrl === 'object' && 'url' in parsedUrl) {
           return parsedUrl.url;
         }
       } catch (e) {
         // If parsing fails, just use the string as-is
         return imageUrl;
+      }
+      return imageUrl;
+    } 
+    
+    // Handle object with URL property
+    if (typeof imageUrl === 'object' && !Array.isArray(imageUrl)) {
+      if ('url' in imageUrl && imageUrl.url) {
+        return imageUrl.url;
+      }
+    }
+    
+    // Handle nested arrays
+    if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+      const firstItem = imageUrl[0];
+      if (typeof firstItem === 'string') {
+        return firstItem;
+      } else if (firstItem && typeof firstItem === 'object' && 'url' in firstItem) {
+        return firstItem.url;
       }
     }
     

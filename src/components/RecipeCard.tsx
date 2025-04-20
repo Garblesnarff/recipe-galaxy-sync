@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Rating } from "@/components/ui/rating";
 import { Link } from "react-router-dom";
@@ -131,11 +130,11 @@ export const RecipeCard = ({
     <Link to={`/recipe/${id}`} className="block">
       <Card className="recipe-card group relative overflow-hidden">
         <div className="absolute top-3 right-3 z-10 flex space-x-2">
-          {onToggleFavorite && (
+          {onFavoriteToggle && (
             <button 
               onClick={(e) => {
                 e.preventDefault();
-                onToggleFavorite();
+                onFavoriteToggle();
               }}
               className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
             >

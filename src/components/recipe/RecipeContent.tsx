@@ -46,7 +46,7 @@ export const RecipeContent = ({
       // Try to parse as JSON in case it's a stringified object from the DB
       try {
         const parsedImage = JSON.parse(imageUrl);
-        if (parsedImage.url) {
+        if (parsedImage && typeof parsedImage === 'object' && 'url' in parsedImage) {
           return parsedImage.url;
         }
       } catch (e) {
@@ -57,7 +57,7 @@ export const RecipeContent = ({
     
     // Handle object with URL property
     if (typeof imageUrl === 'object' && !Array.isArray(imageUrl)) {
-      if (imageUrl.url) {
+      if ('url' in imageUrl && imageUrl.url) {
         return imageUrl.url;
       }
     }
@@ -67,7 +67,7 @@ export const RecipeContent = ({
       const firstItem = imageUrl[0];
       if (typeof firstItem === 'string') {
         return firstItem;
-      } else if (firstItem?.url) {
+      } else if (firstItem && typeof firstItem === 'object' && 'url' in firstItem) {
         return firstItem.url;
       }
     }
