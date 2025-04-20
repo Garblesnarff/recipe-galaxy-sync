@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Recipe } from "@/types/recipe";
@@ -15,6 +14,7 @@ import { RecipeInstructionsList } from "@/components/recipe/RecipeInstructionsLi
 import { RecipeTags } from "@/components/recipe/RecipeTags";
 import { RecipeSource } from "@/components/recipe/RecipeSource";
 import { RecipeActions } from "@/components/recipe/RecipeActions";
+import { processImageUrl } from "@/utils/imageUtils";
 
 interface RecipeContentProps {
   recipe: Recipe;
@@ -37,52 +37,7 @@ export const RecipeContent = ({
   isFavorite,
   handleToggleFavorite
 }: RecipeContentProps) => {
-  // Process the image URL - could be a string or a complex object
-  const getProcessedImageUrl = (): string | undefined => {
-    const imageUrl = recipe.image_url;
-    if (!imageUrl) return undefined;
-    
-    if (typeof imageUrl === 'string') {
-      // Try to parse as JSON in case it's a stringified object from the DB
-      try {
-        const parsedImage = JSON.parse(imageUrl);
-        if (parsedImage && typeof parsedImage === 'object' && 'url' in parsedImage) {
-          return parsedImage.url as string;
-        }
-      } catch (e) {
-        // Not JSON, use as-is
-        return imageUrl;
-      }
-      return imageUrl;
-    } 
-    
-    // Handle object with URL property
-    if (typeof imageUrl === 'object' && imageUrl !== null && !Array.isArray(imageUrl)) {
-      // Use type assertion to tell TypeScript this is a Record with a url property
-      const imgObj = imageUrl as Record<string, any>;
-      if ('url' in imgObj && imgObj.url) {
-        return imgObj.url as string;
-      }
-    }
-    
-    // Handle array of images
-    if (Array.isArray(imageUrl) && imageUrl.length > 0) {
-      const firstItem = imageUrl[0];
-      if (typeof firstItem === 'string') {
-        return firstItem;
-      } else if (firstItem && typeof firstItem === 'object' && firstItem !== null) {
-        // Use type assertion for the nested object
-        const imgObj = firstItem as Record<string, any>;
-        if ('url' in imgObj && imgObj.url) {
-          return imgObj.url as string;
-        }
-      }
-    }
-    
-    return undefined;
-  };
-  
-  const processedImageUrl = getProcessedImageUrl();
+  const processedImageUrl = processImageUrl(recipe.image_url);
   
   return (
     <Card className={cn("p-4", isAdapted && "border-indigo-300")}>
