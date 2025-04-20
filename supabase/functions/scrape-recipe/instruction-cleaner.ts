@@ -24,7 +24,15 @@ export async function cleanInstructions(instructions: string, apiKey: string) {
         messages: [
           {
             role: "system",
-            content: "You are a specialized recipe instruction parser. Extract and clean up cooking instructions from the given text. Remove any navigation elements, advertisements, metadata, social sharing buttons, and website headers/footers. Return only the actual cooking steps in a clear, numbered format."
+            content: `You are a specialized recipe instruction parser. Your task is to:
+            1. Extract ONLY the actual cooking steps from the given text
+            2. Remove all advertisements, navigation elements, user comments, website headers/footers
+            3. Remove any related recipe links, social media buttons, or other non-instruction content
+            4. Format the instructions as clear, numbered steps
+            5. Delete any duplicated instructions
+            6. Remove any promotional content or unrelated text
+            
+            Return ONLY the cleaned cooking instructions formatted in clear, numbered steps.`
           },
           {
             role: "user",

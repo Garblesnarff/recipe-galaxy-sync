@@ -54,6 +54,7 @@ export type Database = {
           prep_time: string | null
           rating: number | null
           ratings: Json | null
+          recipe_type: string | null
           season_occasion: string[] | null
           servings: number | null
           source_type: string | null
@@ -78,6 +79,7 @@ export type Database = {
           prep_time?: string | null
           rating?: number | null
           ratings?: Json | null
+          recipe_type?: string | null
           season_occasion?: string[] | null
           servings?: number | null
           source_type?: string | null
@@ -102,6 +104,7 @@ export type Database = {
           prep_time?: string | null
           rating?: number | null
           ratings?: Json | null
+          recipe_type?: string | null
           season_occasion?: string[] | null
           servings?: number | null
           source_type?: string | null

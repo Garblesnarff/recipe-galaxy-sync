@@ -131,13 +131,29 @@ serve(async (req) => {
       const ingredients = extractIngredients(html);
       console.log('🧪 Extracted ingredients count:', ingredients.length);
       
+      // Extract title with fallback to meta-tags if heading parsing fails
+      let title = cleanText(html.match(/<h1[^>]*>([^<]+)<\/h1>/i)?.[1] || '');
+      if (!title) {
+        title = getMetaContent(html, 'og:title') || 
+                getMetaContent(html, 'title') || 
+                `${domain} Recipe`;
+      }
+      
+      // Extract image URL
+      const imageUrl = getMetaContent(html, 'og:image') || 
+                      getMetaContent(html, 'twitter:image') ||
+                      html.match(/<meta\s+property=['"]og:image['"] content=['"](https?:\/\/[^'"]+)['"]/i)?.[1];
+      
+      // Extract description
+      const description = getMetaContent(html, 'og:description') || 
+                        getMetaContent(html, 'description') ||
+                        '';
+      
       // Build the recipe object
       const recipe = {
-        title: getMetaContent(html, 'og:title') || 
-               cleanText(html.match(/<h1[^>]*>([^<]+)<\/h1>/i)?.[1] || ''),
-        description: getMetaContent(html, 'og:description') || 
-                    getMetaContent(html, 'description'),
-        image_url: getMetaContent(html, 'og:image'),
+        title: title,
+        description: description,
+        image_url: imageUrl,
         source_url: url,
         ingredients: ingredients,
         instructions: processedInstructions
