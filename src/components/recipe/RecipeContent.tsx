@@ -47,18 +47,21 @@ export const RecipeContent = ({
       try {
         const parsedImage = JSON.parse(imageUrl);
         if (parsedImage && typeof parsedImage === 'object' && 'url' in parsedImage) {
-          return parsedImage.url;
+          return parsedImage.url as string;
         }
       } catch (e) {
         // Not JSON, use as-is
         return imageUrl;
       }
+      return imageUrl;
     } 
     
     // Handle object with URL property
-    if (typeof imageUrl === 'object' && !Array.isArray(imageUrl)) {
-      if ('url' in imageUrl && imageUrl.url) {
-        return imageUrl.url;
+    if (typeof imageUrl === 'object' && imageUrl !== null && !Array.isArray(imageUrl)) {
+      // Use type assertion to tell TypeScript this is a Record with a url property
+      const imgObj = imageUrl as Record<string, any>;
+      if ('url' in imgObj && imgObj.url) {
+        return imgObj.url as string;
       }
     }
     
@@ -67,8 +70,12 @@ export const RecipeContent = ({
       const firstItem = imageUrl[0];
       if (typeof firstItem === 'string') {
         return firstItem;
-      } else if (firstItem && typeof firstItem === 'object' && 'url' in firstItem) {
-        return firstItem.url;
+      } else if (firstItem && typeof firstItem === 'object' && firstItem !== null) {
+        // Use type assertion for the nested object
+        const imgObj = firstItem as Record<string, any>;
+        if ('url' in imgObj && imgObj.url) {
+          return imgObj.url as string;
+        }
       }
     }
     
