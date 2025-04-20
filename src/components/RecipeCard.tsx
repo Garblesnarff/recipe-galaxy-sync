@@ -13,7 +13,7 @@ interface RecipeCardProps {
   id: string;
   title: string;
   description: string;
-  image?: string;
+  image?: string | Record<string, any>;
   rating: number;
   cookTime?: string;
   difficulty?: string;
@@ -36,6 +36,45 @@ export const RecipeCard = ({
 }: RecipeCardProps) => {
   const [salesData, setSalesData] = useState<IngredientSale[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Process image URL which could be string or object
+  const getProcessedImageUrl = (): string | undefined => {
+    if (!image) return undefined;
+    
+    if (typeof image === 'string') {
+      // Try to parse JSON string
+      try {
+        const parsedImage = JSON.parse(image);
+        if (parsedImage.url) {
+          return parsedImage.url;
+        }
+      } catch (e) {
+        // Not a JSON string, use as-is
+        return image;
+      }
+    } 
+    
+    // Handle object with URL property
+    if (typeof image === 'object' && !Array.isArray(image)) {
+      if (image.url) {
+        return image.url;
+      }
+    }
+    
+    // Handle array of images
+    if (Array.isArray(image) && image.length > 0) {
+      const firstItem = image[0];
+      if (typeof firstItem === 'string') {
+        return firstItem;
+      } else if (firstItem?.url) {
+        return firstItem.url;
+      }
+    }
+    
+    return undefined;
+  };
+  
+  const processedImageUrl = getProcessedImageUrl();
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -92,11 +131,11 @@ export const RecipeCard = ({
     <Link to={`/recipe/${id}`} className="block">
       <Card className="recipe-card group relative overflow-hidden">
         <div className="absolute top-3 right-3 z-10 flex space-x-2">
-          {onFavoriteToggle && (
+          {onToggleFavorite && (
             <button 
               onClick={(e) => {
                 e.preventDefault();
-                onFavoriteToggle();
+                onToggleFavorite();
               }}
               className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
             >
@@ -118,9 +157,9 @@ export const RecipeCard = ({
         )}
         
         <div className="recipe-image">
-          {image ? (
+          {processedImageUrl ? (
             <img
-              src={image}
+              src={processedImageUrl}
               alt={title}
               className="object-cover w-full h-full"
             />

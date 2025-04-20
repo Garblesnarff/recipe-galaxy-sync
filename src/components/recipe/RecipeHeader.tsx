@@ -7,7 +7,7 @@ import { Rating } from "@/components/ui/rating";
 interface RecipeHeaderProps {
   title: string;
   description?: string;
-  imageUrl?: string;
+  imageUrl?: string | Record<string, any>;
   rating?: number;
   ratingsCount?: number;
   isFavorite?: boolean;
@@ -24,6 +24,50 @@ export const RecipeHeader = ({
   onToggleFavorite
 }: RecipeHeaderProps) => {
   const navigate = useNavigate();
+  
+  // Process image URL which could be string or object
+  const getProcessedImageUrl = (): string | undefined => {
+    if (!imageUrl) return undefined;
+    
+    if (typeof imageUrl === 'string') {
+      return imageUrl;
+    } 
+    
+    // Handle object with URL property
+    if (typeof imageUrl === 'object') {
+      // First check for url property
+      if (imageUrl.url) {
+        return imageUrl.url;
+      }
+      
+      // Then check for nested arrays
+      if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+        const firstItem = imageUrl[0];
+        if (typeof firstItem === 'string') {
+          return firstItem;
+        } else if (firstItem?.url) {
+          return firstItem.url;
+        }
+      }
+    }
+    
+    // Handle stringified objects (from database)
+    if (typeof imageUrl === 'string') {
+      try {
+        const parsedUrl = JSON.parse(imageUrl);
+        if (parsedUrl.url) {
+          return parsedUrl.url;
+        }
+      } catch (e) {
+        // If parsing fails, just use the string as-is
+        return imageUrl;
+      }
+    }
+    
+    return undefined;
+  };
+  
+  const processedImageUrl = getProcessedImageUrl();
   
   const handleShare = async () => {
     if (navigator.share) {
@@ -45,10 +89,10 @@ export const RecipeHeader = ({
   
   return (
     <div className="relative">
-      {imageUrl ? (
+      {processedImageUrl ? (
         <div className="h-64 md:h-96 relative">
           <img
-            src={imageUrl}
+            src={processedImageUrl}
             alt={title}
             className="w-full h-full object-cover"
           />

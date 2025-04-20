@@ -37,6 +37,46 @@ export const RecipeContent = ({
   isFavorite,
   handleToggleFavorite
 }: RecipeContentProps) => {
+  // Process the image URL - could be a string or a complex object
+  const getProcessedImageUrl = (): string | undefined => {
+    const imageUrl = recipe.image_url;
+    if (!imageUrl) return undefined;
+    
+    if (typeof imageUrl === 'string') {
+      // Try to parse as JSON in case it's a stringified object from the DB
+      try {
+        const parsedImage = JSON.parse(imageUrl);
+        if (parsedImage.url) {
+          return parsedImage.url;
+        }
+      } catch (e) {
+        // Not JSON, use as-is
+        return imageUrl;
+      }
+    } 
+    
+    // Handle object with URL property
+    if (typeof imageUrl === 'object' && !Array.isArray(imageUrl)) {
+      if (imageUrl.url) {
+        return imageUrl.url;
+      }
+    }
+    
+    // Handle array of images
+    if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+      const firstItem = imageUrl[0];
+      if (typeof firstItem === 'string') {
+        return firstItem;
+      } else if (firstItem?.url) {
+        return firstItem.url;
+      }
+    }
+    
+    return undefined;
+  };
+  
+  const processedImageUrl = getProcessedImageUrl();
+  
   return (
     <Card className={cn("p-4", isAdapted && "border-indigo-300")}>
       <div className="space-y-6">
@@ -46,10 +86,10 @@ export const RecipeContent = ({
           onToggleFavorite={handleToggleFavorite}
           rating={recipe.rating}
           ratingsCount={recipe.ratings?.length || 0}
-          imageUrl={recipe.image_url}
+          imageUrl={processedImageUrl}
         />
 
-        <RecipeImage imageUrl={recipe.image_url} />
+        <RecipeImage imageUrl={processedImageUrl} />
 
         <div className="flex justify-between items-center">
           <div className="flex gap-2">

@@ -18,7 +18,24 @@ export function extractMetadata(html: string, url: string, domain: string) {
     console.log('Extracting metadata from structured data');
     title = structuredData.name || '';
     description = structuredData.description || '';
-    imageUrl = structuredData.image?.[0] || structuredData.image || '';
+    
+    // Handle different image formats in structured data
+    if (structuredData.image) {
+      if (typeof structuredData.image === 'string') {
+        imageUrl = structuredData.image;
+      } else if (Array.isArray(structuredData.image) && structuredData.image.length > 0) {
+        if (typeof structuredData.image[0] === 'string') {
+          imageUrl = structuredData.image[0];
+        } else if (structuredData.image[0]?.url) {
+          imageUrl = structuredData.image[0].url;
+        }
+      } else if (structuredData.image?.url) {
+        imageUrl = structuredData.image.url;
+      } else {
+        console.log('Complex image object found:', JSON.stringify(structuredData.image).substring(0, 200));
+      }
+    }
+    
     cookTime = structuredData.cookTime || structuredData.totalTime;
   }
   
@@ -85,7 +102,8 @@ export function extractMetadata(html: string, url: string, domain: string) {
     title, 
     hasDescription: !!description, 
     hasImage: !!imageUrl, 
-    hasCookTime: !!cookTime 
+    hasCookTime: !!cookTime,
+    imageUrl: typeof imageUrl === 'object' ? 'Complex object' : imageUrl?.substring(0, 100)
   });
 
   return {

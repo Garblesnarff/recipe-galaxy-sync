@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
 
 interface RecipeImageProps {
-  imageUrl?: string;
+  imageUrl?: string | Record<string, any>;
   alt?: string;
   onImageChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   imagePreview?: string | null;
@@ -17,6 +17,50 @@ export const RecipeImage = ({
   onImageChange,
   imagePreview
 }: RecipeImageProps) => {
+  // Process the image URL - could be a string or a complex object
+  const getProcessedImageUrl = (): string | undefined => {
+    if (!imageUrl) return undefined;
+    
+    if (typeof imageUrl === 'string') {
+      return imageUrl;
+    } 
+    
+    // Handle object with URL property
+    if (typeof imageUrl === 'object') {
+      // First check for url property
+      if (imageUrl.url) {
+        return imageUrl.url;
+      }
+      
+      // Then check for nested arrays
+      if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+        const firstItem = imageUrl[0];
+        if (typeof firstItem === 'string') {
+          return firstItem;
+        } else if (firstItem?.url) {
+          return firstItem.url;
+        }
+      }
+    }
+    
+    // Handle stringified objects (from database)
+    if (typeof imageUrl === 'string') {
+      try {
+        const parsedUrl = JSON.parse(imageUrl);
+        if (parsedUrl.url) {
+          return parsedUrl.url;
+        }
+      } catch (e) {
+        // If parsing fails, just use the string as-is
+        return imageUrl;
+      }
+    }
+    
+    return undefined;
+  };
+  
+  const processedImageUrl = getProcessedImageUrl();
+  
   // If we're in edit mode (with onImageChange)
   if (onImageChange) {
     return (
@@ -39,10 +83,10 @@ export const RecipeImage = ({
             <Upload className="mr-2 h-4 w-4" />
             Upload Image
           </Button>
-          {(imagePreview || imageUrl) && (
+          {(imagePreview || processedImageUrl) && (
             <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
               <img
-                src={imagePreview || imageUrl}
+                src={imagePreview || processedImageUrl}
                 alt="Recipe preview"
                 className="w-full h-full object-cover"
               />
@@ -54,12 +98,12 @@ export const RecipeImage = ({
   }
   
   // View mode (just displaying the image)
-  if (!imageUrl) return null;
+  if (!processedImageUrl) return null;
   
   return (
     <div className="mb-6 rounded-lg overflow-hidden">
       <img 
-        src={imageUrl} 
+        src={processedImageUrl} 
         alt={alt || "Recipe image"} 
         className="w-full object-cover"
       />

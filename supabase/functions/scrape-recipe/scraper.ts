@@ -84,8 +84,25 @@ export async function scrapeRecipe(url: string) {
     
     const metadata = extractMetadata(html, url, domain);
     
+    // Process image URL to ensure it's a string
+    let imageUrl = metadata.image_url;
+    if (typeof imageUrl === 'object' && imageUrl !== null) {
+      // Extract the URL from the object
+      if (imageUrl.url) {
+        imageUrl = imageUrl.url;
+      } else if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+        if (typeof imageUrl[0] === 'string') {
+          imageUrl = imageUrl[0];
+        } else if (imageUrl[0]?.url) {
+          imageUrl = imageUrl[0].url;
+        }
+      }
+      console.log('📸 Processed image URL from complex object:', imageUrl?.substring(0, 100));
+    }
+    
     const recipe = {
       ...metadata,
+      image_url: imageUrl,
       ingredients: ingredients,
       instructions: processedInstructions
     };
@@ -107,7 +124,8 @@ export async function scrapeRecipe(url: string) {
       title: recipe.title,
       ingredientsCount: recipe.ingredients.length,
       hasInstructions: !!recipe.instructions,
-      hasImage: !!recipe.image_url
+      hasImage: !!recipe.image_url,
+      imageUrl: typeof recipe.image_url === 'string' ? recipe.image_url?.substring(0, 100) : 'Not a string'
     });
 
     return recipe;
@@ -136,4 +154,3 @@ export async function scrapeRecipe(url: string) {
     };
   }
 }
-
