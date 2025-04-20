@@ -23,21 +23,67 @@ serve(async (req) => {
     });
   }
 
-  // Parse the request body
-  const { recipe, restrictions } = await req.json()
-
   try {
+    console.log('Edge function called: adapt-recipe-for-restrictions');
+    
+    // Check for API key
+    if (!groqApiKey) {
+      console.error('GROQ_API_KEY environment variable is not set');
+      return new Response(
+        JSON.stringify({ error: 'GROQ API key not configured' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
+    }
+
+    // Parse the request body
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('Request data received:', JSON.stringify({
+        recipeId: requestData.recipe?.id,
+        restrictions: requestData.restrictions
+      }));
+    } catch (e) {
+      console.error('Failed to parse request JSON:', e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    const { recipe, restrictions } = requestData;
+    
     if (!recipe || !restrictions || restrictions.length === 0) {
-      throw new Error('Recipe and dietary restrictions are required')
+      console.error('Missing required parameters:', { recipe: !!recipe, restrictions });
+      return new Response(
+        JSON.stringify({ error: 'Recipe and dietary restrictions are required' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     // Extract relevant information
-    const { id, title, ingredients, instructions } = recipe
+    const { id, title, ingredients, instructions } = recipe;
     
     // Ensure ingredients is an array
-    const ingredientsArray = Array.isArray(ingredients) ? ingredients : []
+    const ingredientsArray = Array.isArray(ingredients) ? ingredients : [];
     if (ingredientsArray.length === 0) {
-      throw new Error('No ingredients found in recipe')
+      console.error('No ingredients found in recipe');
+      return new Response(
+        JSON.stringify({ error: 'No ingredients found in recipe' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     // Build prompt for Groq LLM
@@ -70,49 +116,96 @@ Provide your response in the following JSON format:
 }
 `
 
-    console.log('Calling Groq API with model: deepseek-r1-distill-qwen-32b');
+    console.log('Using Groq model: deepseek-r1-distill-qwen-32b');
     
-    // Call Groq API using OpenAI compatibility
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-r1-distill-qwen-32b',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant specialized in adapting recipes for dietary restrictions.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-      }),
-    })
-
-    if (!groqResponse.ok) {
-      const error = await groqResponse.json()
-      console.error('Groq API error details:', JSON.stringify(error));
-      throw new Error(`Groq API error: ${JSON.stringify(error)}`)
+    // Call Groq API using OpenAI compatibility with more detailed error handling
+    let groqResponse;
+    try {
+      groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'deepseek-r1-distill-qwen-32b',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant specialized in adapting recipes for dietary restrictions.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+      
+      if (!groqResponse.ok) {
+        const errorText = await groqResponse.text();
+        console.error(`Groq API error (${groqResponse.status}):`, errorText);
+        
+        // Try to parse error as JSON
+        try {
+          const errorJson = JSON.parse(errorText);
+          const errorMessage = errorJson.error?.message || 'Unknown Groq API error';
+          console.error('Parsed error message:', errorMessage);
+          
+          return new Response(
+            JSON.stringify({ error: `Groq API error: ${errorMessage}` }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: groqResponse.status,
+            }
+          );
+        } catch (e) {
+          // If can't parse as JSON, return the raw text
+          return new Response(
+            JSON.stringify({ error: `Groq API error: ${errorText.substring(0, 200)}...` }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: groqResponse.status,
+            }
+          );
+        }
+      }
+    } catch (fetchError) {
+      console.error('Network error calling Groq API:', fetchError);
+      return new Response(
+        JSON.stringify({ error: `Network error: ${fetchError.message}` }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
-    const responseData = await groqResponse.json()
+    const responseData = await groqResponse.json();
     console.log('Groq API response received');
-    const responseContent = responseData.choices[0].message.content
+    const responseContent = responseData.choices[0].message.content;
 
     // Parse the JSON response from Groq
-    let adaptedRecipe
+    let adaptedRecipe;
     try {
       // Find the JSON part in the response (in case LLM adds extra text)
-      const jsonMatch = responseContent.match(/\{[\s\S]*\}/)
+      const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        adaptedRecipe = JSON.parse(jsonMatch[0])
+        adaptedRecipe = JSON.parse(jsonMatch[0]);
+        console.log('Successfully parsed adapted recipe response');
       } else {
-        throw new Error('Could not find valid JSON in the response')
+        console.error('Could not find valid JSON in the response');
+        console.log('Raw response content:', responseContent);
+        throw new Error('Could not find valid JSON in the response');
       }
     } catch (e) {
-      console.error('Error parsing Groq response:', e)
-      console.log('Raw response:', responseContent)
-      throw new Error('Failed to parse the adapted recipe')
+      console.error('Error parsing Groq response:', e);
+      console.log('Raw response:', responseContent.substring(0, 200) + '...');
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to parse the adapted recipe',
+          rawResponse: responseContent.substring(0, 500) + '...'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
     return new Response(
@@ -128,15 +221,18 @@ Provide your response in the following JSON format:
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
   } catch (error) {
-    console.error('Error adapting recipe:', error)
+    console.error('Unexpected error adapting recipe:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       }
-    )
+    );
   }
 })

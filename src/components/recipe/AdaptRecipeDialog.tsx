@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
   const [isAdapting, setIsAdapting] = useState(false);
   const [selectedRestrictions, setSelectedRestrictions] = useState<DietaryRestriction[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const dietaryOptions: { value: DietaryRestriction; label: string }[] = [
     { value: 'gluten-free', label: 'Gluten-Free' },
@@ -57,6 +58,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
     setError(null);
 
     try {
+      console.log(`Adapting recipe ${recipeId} for restrictions: ${selectedRestrictions.join(', ')}`);
       const adaptedRecipe = await adaptRecipeForDietaryRestrictions(recipeId, selectedRestrictions);
       
       if (!adaptedRecipe) {
@@ -72,6 +74,9 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
       // Show success message
       toast.success(`Recipe adapted for ${selectedRestrictions.join(', ')}`);
       
+      // Reset retry count on success
+      setRetryCount(0);
+      
       // Show substitution information
       if (adaptedRecipe.substitutions && adaptedRecipe.substitutions.length > 0) {
         const substitutionInfo = adaptedRecipe.substitutions.map(
@@ -85,7 +90,22 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
       }
     } catch (error) {
       console.error("Error adapting recipe:", error);
-      setError(error instanceof Error ? error.message : "Failed to adapt recipe");
+      setRetryCount(prev => prev + 1);
+      
+      let errorMessage = "Failed to adapt recipe";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // If there's a specific API error, show it
+      if (errorMessage.includes('Groq API error')) {
+        setError(`AI service error: ${errorMessage}`);
+      } else if (retryCount >= 2) {
+        // After multiple retries, show more detailed troubleshooting info
+        setError(`${errorMessage}. This may be due to temporary AI service issues or configuration problems.`);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsAdapting(false);
     }
@@ -94,6 +114,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
   const resetForm = () => {
     setSelectedRestrictions([]);
     setError(null);
+    setRetryCount(0);
   };
 
   return (
@@ -118,6 +139,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
         <div className="py-4">
           {error && (
             <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4 mr-2" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -141,7 +163,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
           </div>
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex flex-col space-y-2">
           <Button
             onClick={handleAdaptRecipe}
             disabled={isAdapting || selectedRestrictions.length === 0}
@@ -159,6 +181,12 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
               </>
             )}
           </Button>
+          
+          {retryCount > 0 && (
+            <p className="text-xs text-gray-500 text-center">
+              Having trouble? Try selecting fewer dietary restrictions or try again later.
+            </p>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
