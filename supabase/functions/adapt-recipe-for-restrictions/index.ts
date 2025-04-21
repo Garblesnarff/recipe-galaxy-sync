@@ -15,6 +15,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Edge function called: adapt-recipe-for-restrictions');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
@@ -24,8 +26,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Edge function called: adapt-recipe-for-restrictions');
-    
     // Check for API key
     if (!groqApiKey) {
       console.error('GROQ_API_KEY environment variable is not set');
@@ -49,7 +49,7 @@ serve(async (req) => {
     } catch (e) {
       console.error('Failed to parse request JSON:', e);
       return new Response(
-        JSON.stringify({ error: 'Invalid request format' }),
+        JSON.stringify({ error: 'Invalid request format', details: e.message }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -59,10 +59,22 @@ serve(async (req) => {
 
     const { recipe, restrictions } = requestData;
     
-    if (!recipe || !restrictions || restrictions.length === 0) {
-      console.error('Missing required parameters:', { recipe: !!recipe, restrictions });
+    // Validate required parameters
+    if (!recipe) {
+      console.error('Missing recipe data');
       return new Response(
-        JSON.stringify({ error: 'Recipe and dietary restrictions are required' }),
+        JSON.stringify({ error: 'Recipe data is required' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+    
+    if (!restrictions || !Array.isArray(restrictions) || restrictions.length === 0) {
+      console.error('Missing or invalid restrictions:', restrictions);
+      return new Response(
+        JSON.stringify({ error: 'Valid dietary restrictions array is required' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -72,6 +84,18 @@ serve(async (req) => {
 
     // Extract relevant information
     const { id, title, ingredients, instructions } = recipe;
+    
+    // Validate recipe content
+    if (!id || !title) {
+      console.error('Invalid recipe data - missing id or title');
+      return new Response(
+        JSON.stringify({ error: 'Recipe must contain id and title' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
     
     // Ensure ingredients is an array
     const ingredientsArray = Array.isArray(ingredients) ? ingredients : [];
@@ -116,11 +140,13 @@ Provide your response in the following JSON format:
 }
 `
 
-    console.log('Using Groq model: deepseek-r1-distill-qwen-32b');
+    const modelToUse = 'mixtral-8x7b-32768';
+    console.log(`Using Groq model: ${modelToUse}`);
     
     // Call Groq API using OpenAI compatibility with more detailed error handling
     let groqResponse;
     try {
+      console.log('Sending request to Groq API');
       groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -128,7 +154,7 @@ Provide your response in the following JSON format:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'deepseek-r1-distill-qwen-32b',
+          model: modelToUse,
           messages: [
             { role: 'system', content: 'You are a helpful assistant specialized in adapting recipes for dietary restrictions.' },
             { role: 'user', content: prompt }
@@ -136,6 +162,8 @@ Provide your response in the following JSON format:
           temperature: 0.7,
         }),
       });
+      
+      console.log(`Groq API response status: ${groqResponse.status}`);
       
       if (!groqResponse.ok) {
         const errorText = await groqResponse.text();
@@ -151,7 +179,7 @@ Provide your response in the following JSON format:
             JSON.stringify({ error: `Groq API error: ${errorMessage}` }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: groqResponse.status,
+              status: 502, // Gateway error
             }
           );
         } catch (e) {
@@ -160,7 +188,7 @@ Provide your response in the following JSON format:
             JSON.stringify({ error: `Groq API error: ${errorText.substring(0, 200)}...` }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: groqResponse.status,
+              status: 502,
             }
           );
         }

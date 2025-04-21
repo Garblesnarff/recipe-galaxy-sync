@@ -24,7 +24,7 @@ export const adaptRecipeForDietaryRestrictions = async (
     
     if (error) {
       console.error('Error fetching recipe for adaptation:', error);
-      throw error;
+      throw new Error(`Failed to fetch recipe: ${error.message}`);
     }
 
     if (!recipe) {
@@ -33,12 +33,20 @@ export const adaptRecipeForDietaryRestrictions = async (
 
     // Call edge function to adapt the recipe using Groq
     console.log('Calling adapt-recipe-for-restrictions with:', { recipeId, restrictions });
-    const response = await supabase.functions.invoke('adapt-recipe-for-restrictions', {
+    
+    // Add a timeout to the function call
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout after 20 seconds')), 20000)
+    );
+    
+    const functionPromise = supabase.functions.invoke('adapt-recipe-for-restrictions', {
       body: { 
         recipe, 
         restrictions 
       }
     });
+    
+    const response = await Promise.race([functionPromise, timeoutPromise]);
     
     // Check for response errors
     if (response.error) {
@@ -68,7 +76,13 @@ export const adaptRecipeForDietaryRestrictions = async (
     console.log('Adaptation response:', response.data);
     
     // Validate that we got a proper response
-    if (!response.data || !response.data.ingredients || !Array.isArray(response.data.ingredients)) {
+    if (!response.data) {
+      console.error('Empty response received from adaptation service');
+      toast.error('Received empty response from adaptation service');
+      throw new Error('Empty response from adaptation service');
+    }
+    
+    if (!response.data.ingredients || !Array.isArray(response.data.ingredients)) {
       console.error('Invalid adaptation response format:', response.data);
       toast.error('Received invalid recipe adaptation format');
       throw new Error('Invalid recipe adaptation format');
@@ -85,7 +99,7 @@ export const adaptRecipeForDietaryRestrictions = async (
     }
     
     // Only show toast if not already handled above
-    if (!errorMessage.includes('Adaptation') && !errorMessage.includes('Received invalid')) {
+    if (!errorMessage.includes('Adaptation') && !errorMessage.includes('Received')) {
       toast.error(errorMessage);
     }
     

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
   const [selectedRestrictions, setSelectedRestrictions] = useState<DietaryRestriction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [lastAttemptedRestrictions, setLastAttemptedRestrictions] = useState<DietaryRestriction[]>([]);
 
   const dietaryOptions: { value: DietaryRestriction; label: string }[] = [
     { value: 'gluten-free', label: 'Gluten-Free' },
@@ -56,6 +57,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
 
     setIsAdapting(true);
     setError(null);
+    setLastAttemptedRestrictions([...selectedRestrictions]);
 
     try {
       console.log(`Adapting recipe ${recipeId} for restrictions: ${selectedRestrictions.join(', ')}`);
@@ -97,12 +99,16 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
         errorMessage = error.message;
       }
       
-      // If there's a specific API error, show it
+      // Handle different error types with specific messages
       if (errorMessage.includes('Groq API error')) {
         setError(`AI service error: ${errorMessage}`);
+      } else if (errorMessage.includes('timeout')) {
+        setError(`The request timed out. The AI service may be busy. Please try again.`);
+      } else if (errorMessage.includes('Failed to fetch')) {
+        setError(`Network error: Could not connect to the adaptation service. Please check your internet connection.`);
       } else if (retryCount >= 2) {
         // After multiple retries, show more detailed troubleshooting info
-        setError(`${errorMessage}. This may be due to temporary AI service issues or configuration problems.`);
+        setError(`${errorMessage}. This may be due to the AI service having issues with this particular recipe or dietary restriction combination. Try selecting fewer restrictions.`);
       } else {
         setError(errorMessage);
       }
@@ -115,6 +121,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
     setSelectedRestrictions([]);
     setError(null);
     setRetryCount(0);
+    setLastAttemptedRestrictions([]);
   };
 
   return (
@@ -164,6 +171,18 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
         </div>
         
         <DialogFooter className="flex flex-col space-y-2">
+          {retryCount > 0 && lastAttemptedRestrictions.length > 0 && (
+            <Button
+              onClick={handleAdaptRecipe}
+              disabled={isAdapting}
+              variant="outline"
+              className="w-full mb-2"
+            >
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Retry Same Restrictions
+            </Button>
+          )}
+          
           <Button
             onClick={handleAdaptRecipe}
             disabled={isAdapting || selectedRestrictions.length === 0}
@@ -183,9 +202,14 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
           </Button>
           
           {retryCount > 0 && (
-            <p className="text-xs text-gray-500 text-center">
-              Having trouble? Try selecting fewer dietary restrictions or try again later.
-            </p>
+            <div className="text-xs text-gray-500 text-center space-y-1 pt-2">
+              <p>Having trouble? Try these options:</p>
+              <ul className="list-disc text-left pl-4">
+                <li>Select fewer dietary restrictions</li>
+                <li>Try one restriction at a time</li>
+                <li>Wait a minute and try again</li>
+              </ul>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
