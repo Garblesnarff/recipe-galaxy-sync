@@ -2,6 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define response type to ensure proper type checking
+interface EdgeFunctionResponse {
+  data: any;
+  error: null | {
+    message?: string;
+    error?: string;
+    details?: string;
+  };
+}
+
 /**
  * Adapts a recipe for specific dietary restrictions using AI
  */
@@ -35,7 +45,7 @@ export const adaptRecipeForDietaryRestrictions = async (
     console.log('Calling adapt-recipe-for-restrictions with:', { recipeId, restrictions });
     
     // Add a timeout to the function call
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise<never>((_, reject) => 
       setTimeout(() => reject(new Error('Request timeout after 20 seconds')), 20000)
     );
     
@@ -46,7 +56,7 @@ export const adaptRecipeForDietaryRestrictions = async (
       }
     });
     
-    const response = await Promise.race([functionPromise, timeoutPromise]);
+    const response = await Promise.race([functionPromise, timeoutPromise]) as EdgeFunctionResponse;
     
     // Check for response errors
     if (response.error) {
@@ -54,11 +64,15 @@ export const adaptRecipeForDietaryRestrictions = async (
       let errorMessage = 'Failed to adapt recipe';
       
       if (typeof response.error === 'string') {
-        errorMessage = response.error;
-      } else if (response.error.message) {
-        errorMessage = response.error.message;
-      } else if (response.error.error) {
-        errorMessage = response.error.error;
+        errorMessage = response.error as string;
+      } else if (response.error && typeof response.error === 'object') {
+        if ('message' in response.error && response.error.message) {
+          errorMessage = response.error.message;
+        } else if ('error' in response.error && response.error.error) {
+          errorMessage = response.error.error;
+        } else if ('details' in response.error && response.error.details) {
+          errorMessage = response.error.details;
+        }
       }
       
       // Display error to user
@@ -67,10 +81,10 @@ export const adaptRecipeForDietaryRestrictions = async (
     }
     
     // Check for application-level errors
-    if (response.data && response.data.error) {
+    if (response.data && typeof response.data === 'object' && 'error' in response.data) {
       console.error('Application error adapting recipe:', response.data.error);
       toast.error(`Adaptation error: ${response.data.error}`);
-      throw new Error(response.data.error);
+      throw new Error(response.data.error as string);
     }
 
     console.log('Adaptation response:', response.data);
@@ -82,7 +96,7 @@ export const adaptRecipeForDietaryRestrictions = async (
       throw new Error('Empty response from adaptation service');
     }
     
-    if (!response.data.ingredients || !Array.isArray(response.data.ingredients)) {
+    if (!('ingredients' in response.data) || !Array.isArray(response.data.ingredients)) {
       console.error('Invalid adaptation response format:', response.data);
       toast.error('Received invalid recipe adaptation format');
       throw new Error('Invalid recipe adaptation format');
