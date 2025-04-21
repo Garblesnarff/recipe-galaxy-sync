@@ -140,7 +140,9 @@ Provide your response in the following JSON format:
 }
 `
 
-    const modelToUse = 'mixtral-8x7b-32768';
+    // Using an up-to-date Groq model 
+    // Replaced the decommissioned mixtral-8x7b-32768 model with llama3-70b-8192
+    const modelToUse = 'llama3-70b-8192';
     console.log(`Using Groq model: ${modelToUse}`);
     
     // Call Groq API using OpenAI compatibility with more detailed error handling
