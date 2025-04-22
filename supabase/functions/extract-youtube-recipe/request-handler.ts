@@ -9,6 +9,30 @@ export const corsHeaders = {
 };
 
 /**
+ * Handles a YouTube recipe extraction request
+ * @param req - The HTTP request
+ * @returns The extracted recipe data
+ */
+export async function handleYouTubeRequest(req: Request) {
+  try {
+    const requestBody = await parseRequestBody(req);
+    const url = requestBody.url;
+    
+    // Check for Gemini API key in environment variables
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!apiKey) {
+      console.error('GEMINI_API_KEY environment variable is not set');
+      throw new Error('Server configuration error: Missing API key');
+    }
+    
+    return await processYoutubeUrl(url, apiKey);
+  } catch (error) {
+    console.error('Error in handleYouTubeRequest:', error);
+    throw error;
+  }
+}
+
+/**
  * Parses and validates the request body
  * @param req - The HTTP request
  * @returns The parsed request body

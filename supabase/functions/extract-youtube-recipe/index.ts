@@ -1,7 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { extractVideoInfo } from "./youtube-utils.ts";
-import { extractRecipeFromVideo } from "./gemini-client.ts";
 import { handleYouTubeRequest } from "./request-handler.ts";
 
 // CORS headers for cross-origin requests
