@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      grocery_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          is_purchased: boolean
+          item_name: string
+          quantity: string | null
+          recipe_id: string | null
+          unit: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_purchased?: boolean
+          item_name: string
+          quantity?: string | null
+          recipe_id?: string | null
+          unit?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_purchased?: boolean
+          item_name?: string
+          quantity?: string | null
+          recipe_id?: string | null
+          unit?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grocery_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_mappings: {
         Row: {
           canonical_name: string
