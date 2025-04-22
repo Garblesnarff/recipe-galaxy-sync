@@ -81,7 +81,7 @@ export const AddToGroceryListButton = ({
       console.log("Adding ingredients to grocery list:", selectedIngredients);
       const success = await addIngredientsToGroceryList(selectedIngredients, recipeId);
       if (success) {
-        toast.success("Added to grocery list");
+        toast.success(`Added ${selectedIngredients.length} items to grocery list`);
         setIsDialogOpen(false);
       }
     } catch (error) {
