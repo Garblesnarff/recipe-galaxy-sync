@@ -19,7 +19,8 @@ export const getGroceryList = async (): Promise<GroceryItem[]> => {
       return [];
     }
 
-    return data || [];
+    // Properly cast the data to the expected type
+    return (data || []) as GroceryItem[];
   } catch (error) {
     handleGroceryError(error, "getGroceryList");
     return [];
