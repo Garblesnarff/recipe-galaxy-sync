@@ -17,7 +17,7 @@ export const addToGroceryList = async (item: Omit<GroceryItem, "id" | "created_a
     
     const { data, error } = await supabase
       .from("grocery_items" as any)
-      .insert([groceryItem])
+      .insert([groceryItem as any])
       .select();
 
     if (error) {
@@ -62,7 +62,7 @@ export const addIngredientsToGroceryList = async (
 
     const { data, error } = await supabase
       .from("grocery_items" as any)
-      .insert(parsedIngredients)
+      .insert(parsedIngredients as any)
       .select();
 
     if (error) {
