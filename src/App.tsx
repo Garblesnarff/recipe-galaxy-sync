@@ -1,5 +1,5 @@
 
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import RecipeDetail from "@/pages/RecipeDetail";
@@ -11,6 +11,7 @@ import EditRecipe from "@/pages/EditRecipe";
 import Collections from "@/pages/Collections";
 import CollectionDetail from "@/pages/CollectionDetail";
 import EditCollection from "@/pages/EditCollection";
+import LandingPage from "@/pages/LandingPage";
 import "./App.css";
 
 function App() {
@@ -18,7 +19,8 @@ function App() {
     <>
       <div className="app-container min-h-screen">
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<Index />} />
           <Route path="/recipe/:id" element={<RecipeDetail />} />
           <Route path="/add-recipe" element={<AddRecipe />} />
           <Route path="/edit-recipe/:id" element={<EditRecipe />} />
