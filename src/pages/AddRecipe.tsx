@@ -5,6 +5,8 @@ import { RecipeFormLayout } from "@/components/layout/RecipeFormLayout";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 export const AddRecipe = () => {
+  const { userId } = useAuthSession();
+
   const {
     formData,
     setFormData,
@@ -18,18 +20,7 @@ export const AddRecipe = () => {
     handleSubmit,
     addIngredient,
     removeIngredient
-  } = useRecipeForm();
-  const { userId } = useAuthSession();
-
-  // Wrap handleSubmit so userId is passed into saveRecipe
-  const handleAddRecipe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) {
-      alert("You must be logged in to add a recipe.");
-      return;
-    }
-    handleSubmit(userId);
-  };
+  } = useRecipeForm(userId);
 
   return (
     <RecipeFormLayout title="Add New Recipe" backUrl="/">
@@ -40,7 +31,7 @@ export const AddRecipe = () => {
         isSubmitting={isSubmitting}
         imagePreview={imagePreview}
         handleImageChange={handleImageChange}
-        handleSubmit={handleAddRecipe}
+        handleSubmit={handleSubmit}
         isImporting={isImporting}
         recipeUrl={recipeUrl}
         onUrlChange={setRecipeUrl}

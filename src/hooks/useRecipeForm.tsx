@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { RecipeFormData } from "@/types/recipe";
 import { toast } from "sonner";
@@ -9,7 +10,7 @@ import {
   validateUrl 
 } from "@/services/recipe";
 
-export const useRecipeForm = () => {
+export const useRecipeForm = (userId: string | null) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -113,6 +114,10 @@ export const useRecipeForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("You must be logged in to add a recipe.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -143,7 +148,7 @@ export const useRecipeForm = () => {
       
       console.log("Saving recipe:", recipeToSave);
       
-      await saveRecipe(recipeToSave);
+      await saveRecipe(recipeToSave, userId);
       toast.success("Recipe added successfully!");
       navigate("/");
     } catch (error) {

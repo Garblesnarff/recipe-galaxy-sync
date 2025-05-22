@@ -15,11 +15,13 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const GroceryList = () => {
   const navigate = useNavigate();
   const [newItem, setNewItem] = useState("");
   const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
+  const { userId } = useAuthSession();
 
   const {
     data: groceryItems = [],
@@ -55,12 +57,15 @@ const GroceryList = () => {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItem.trim()) return;
+    if (!newItem.trim() || !userId) return;
 
-    const success = await addToGroceryList({
-      item_name: newItem.trim(),
-      is_purchased: false, // Add the missing required property
-    });
+    const success = await addToGroceryList(
+      {
+        item_name: newItem.trim(),
+        is_purchased: false,
+      },
+      userId
+    );
 
     if (success) {
       setNewItem("");
