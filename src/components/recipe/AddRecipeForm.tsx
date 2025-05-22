@@ -44,7 +44,7 @@ export const AddRecipeForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" data-testid="add-recipe-form">
       <RecipeImport
         recipeUrl={recipeUrl}
         onUrlChange={onUrlChange}

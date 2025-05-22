@@ -43,9 +43,11 @@ export const RecipeCardHeader = ({
               onFavoriteToggle();
             }}
             className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
+            data-testid="favorite-button"
           >
             <Heart 
-              className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} 
+              className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+              data-testid="heart-icon"
             />
           </button>
         )}

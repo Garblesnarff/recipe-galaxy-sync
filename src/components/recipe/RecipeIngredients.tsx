@@ -20,9 +20,10 @@ export const RecipeIngredients = ({
 }: RecipeIngredientsProps) => {
   return (
     <div>
-      <Label>Ingredients</Label>
+      <Label htmlFor="ingredient-input">Ingredients</Label>
       <div className="flex gap-2 mb-2">
         <Input
+          id="ingredient-input"
           value={currentIngredient}
           onChange={(e) => onIngredientChange(e.target.value)}
           placeholder="Add an ingredient"
