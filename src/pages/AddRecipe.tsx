@@ -33,13 +33,14 @@ export const AddRecipe = () => {
 
   return (
     <RecipeFormLayout title="Add New Recipe" backUrl="/">
+      {/* override submit to inject userId */}
       <AddRecipeForm
         formData={formData}
         setFormData={setFormData}
         isSubmitting={isSubmitting}
         imagePreview={imagePreview}
         handleImageChange={handleImageChange}
-        handleSubmit={handleAddRecipe} {/* override submit to inject userId */}
+        handleSubmit={handleAddRecipe}
         isImporting={isImporting}
         recipeUrl={recipeUrl}
         onUrlChange={setRecipeUrl}
