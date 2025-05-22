@@ -1,10 +1,10 @@
 
 project_id = "pnbkvdjmngbpqhcnykuk"
 [functions.scrape-recipe]
-verify_jwt = false
+verify_jwt = true
 [functions.extract-youtube-recipe]
-verify_jwt = false
+verify_jwt = true
 [functions.scrape-sales]
-verify_jwt = false
+verify_jwt = true
 [functions.adapt-recipe-for-restrictions]
-verify_jwt = false
+verify_jwt = true
