@@ -1,9 +1,18 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { session } = useAuthSession();
+
+  // Logout button handler
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    // Optionally, you may redirect to home
+    navigate("/");
+  }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-green-50 via-white to-yellow-50 py-0">
@@ -11,9 +20,23 @@ export default function LandingPage() {
         <div>
           <span className="text-2xl md:text-3xl font-extrabold text-primary">KitchenSync</span>
         </div>
-        <Button variant="outline" onClick={() => navigate("/dashboard")}>
-          Go to App
-        </Button>
+        <div className="flex gap-2">
+          {session ? (
+            <>
+              <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                Go to App
+              </Button>
+              <Button variant="ghost" onClick={handleLogout}>
+                Log out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => navigate("/auth")}>Sign In</Button>
+              <Button variant="app" onClick={() => navigate("/dashboard")}>Try Demo</Button>
+            </>
+          )}
+        </div>
       </nav>
 
       {/* Hero Section */}
