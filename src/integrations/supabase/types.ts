@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      collection_recipes: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          recipe_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          recipe_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_recipes_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_recipes_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       grocery_items: {
         Row: {
           category: string | null
@@ -105,6 +171,7 @@ export type Database = {
           source_url: string | null
           title: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           categories?: string[] | null
@@ -130,6 +197,7 @@ export type Database = {
           source_url?: string | null
           title: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           categories?: string[] | null
@@ -155,6 +223,7 @@ export type Database = {
           source_url?: string | null
           title?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -7,12 +7,10 @@ export function useAuthSession() {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST!
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
     });
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsChecking(false);
@@ -23,5 +21,9 @@ export function useAuthSession() {
     };
   }, []);
 
-  return { session, isChecking };
+  return {
+    session,
+    isChecking,
+    userId: session?.user?.id ?? null
+  };
 }

@@ -1,33 +1,32 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Collection } from "@/types/collection";
 import { toast } from "sonner";
 
-export const fetchCollections = async (): Promise<Collection[]> => {
+export const fetchCollections = async (userId?: string): Promise<Collection[]> => {
   try {
-    // Use a specific cast for the query and response
-    const { data, error } = await (supabase
+    let query = supabase
       .from('collections' as any)
       .select(`
         *,
         collection_recipes:collection_recipes(count)
       `)
-      .order('name')) as unknown as { 
-        data: Array<{
-          id: string;
-          name: string;
-          description: string | null;
-          cover_image_url: string | null;
-          created_at: string;
-          updated_at: string;
-          collection_recipes: Array<{ count: number }> | null;
-        }>, 
-        error: any 
-      };
+      .order('name');
+    if (userId) query = query.eq('user_id', userId);
+
+    const { data, error } = await query as unknown as { 
+      data: Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        cover_image_url: string | null;
+        created_at: string;
+        updated_at: string;
+        collection_recipes: Array<{ count: number }> | null;
+      }>, 
+      error: any 
+    };
 
     if (error) throw error;
-
-    // Format the data to extract recipe count
     return data.map((collection) => ({
       id: collection.id,
       name: collection.name,
@@ -38,7 +37,6 @@ export const fetchCollections = async (): Promise<Collection[]> => {
       recipe_count: collection.collection_recipes?.[0]?.count || 0
     }));
   } catch (error) {
-    console.error("Error fetching collections:", error);
     toast.error("Failed to fetch collections");
     return [];
   }
@@ -46,7 +44,6 @@ export const fetchCollections = async (): Promise<Collection[]> => {
 
 export const fetchCollectionById = async (id: string): Promise<Collection | null> => {
   try {
-    // Using specific cast for the query and response
     const { data, error } = await (supabase
       .from('collections' as any)
       .select(`
@@ -87,7 +84,6 @@ export const fetchCollectionById = async (id: string): Promise<Collection | null
 
 export const fetchCollectionRecipes = async (collectionId: string) => {
   try {
-    // Using specific cast for the query and response
     const { data, error } = await (supabase
       .from('collection_recipes' as any)
       .select(`
@@ -112,7 +108,6 @@ export const fetchCollectionRecipes = async (collectionId: string) => {
 
 export const fetchRecipeCollections = async (recipeId: string): Promise<Collection[]> => {
   try {
-    // Using specific cast for the query and response
     const { data, error } = await (supabase
       .from('collection_recipes' as any)
       .select(`

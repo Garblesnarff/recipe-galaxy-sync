@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const Collections = () => {
   const navigate = useNavigate();
@@ -34,6 +34,7 @@ const Collections = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const { userId } = useAuthSession();
 
   useEffect(() => {
     loadCollections();
@@ -47,8 +48,12 @@ const Collections = () => {
   };
 
   const handleCreateCollection = async (data: Partial<Collection>) => {
+    if (!userId) {
+      toast.error("Must be logged in to create a collection");
+      return;
+    }
     setIsSubmitting(true);
-    const newCollectionId = await createCollection(data);
+    const newCollectionId = await createCollection(data, userId);
     setIsSubmitting(false);
     
     if (newCollectionId) {
