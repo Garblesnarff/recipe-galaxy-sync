@@ -1,3 +1,4 @@
+
 import React, { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
@@ -25,10 +26,12 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-const customRender: typeof render = (
-  ui,
-  options
+// Remove the explicit type annotation for customRender to resolve TS2322
+const customRender = (
+  ui: React.ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
 ) => render(ui, { wrapper: AllTheProviders, ...options })
 
 export * from '@testing-library/react'
 export { customRender as render }
+
