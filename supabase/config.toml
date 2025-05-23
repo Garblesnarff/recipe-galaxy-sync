@@ -2,6 +2,8 @@
 project_id = "pnbkvdjmngbpqhcnykuk"
 [functions.scrape-recipe]
 verify_jwt = true
+[functions.scrape-recipe-enhanced]
+verify_jwt = true
 [functions.extract-youtube-recipe]
 verify_jwt = true
 [functions.scrape-sales]
