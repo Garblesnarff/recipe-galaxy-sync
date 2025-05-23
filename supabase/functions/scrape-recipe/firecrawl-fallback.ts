@@ -2,18 +2,19 @@
 const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
 
 /**
- * Fallback scraping method via Firecrawl API
+ * Fallback scraping method via Firecrawl API v1
  * Returns a normalized recipe object on success, throws on failure
  */
-export async function scrapeWithFirecrawl(url: string) {
+export async function scrapeWithFirecrawl(url: string): Promise<any> {
   if (!FIRECRAWL_API_KEY) {
-    throw new Error("Firecrawl API key not configured");
+    throw new Error('Firecrawl API key not configured in environment');
   }
 
-  console.log("🔥 Attempting Firecrawl fallback...");
-
+  console.log('🔥 Calling Firecrawl API for:', url);
+  console.log('🔑 Using API key (first 10 chars):', FIRECRAWL_API_KEY.substring(0, 10) + '...');
+  
   try {
-    const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
@@ -21,50 +22,61 @@ export async function scrapeWithFirecrawl(url: string) {
       },
       body: JSON.stringify({
         url,
-        extractorOptions: {
-          mode: 'llm-extraction',
-          extractionPrompt: `Extract recipe data and return as JSON:
-{
-  "title": "recipe name",
-  "ingredients": ["ingredient 1", "ingredient 2"],
-  "instructions": "step by step instructions",
-  "prep_time": "preparation time",
-  "cook_time": "cooking time", 
-  "servings": number,
-  "image_url": "main recipe image URL"
-}`
+        formats: ['extract'],
+        extract: {
+          prompt: `Extract recipe information and return as JSON with these exact fields:
+          - title (string): Recipe name
+          - ingredients (array of strings): List of ingredients with quantities  
+          - instructions (string): Step-by-step cooking instructions
+          - prep_time (string): Preparation time
+          - cook_time (string): Cooking time  
+          - servings (number): Number of servings
+          - image_url (string): Main recipe image URL
+          - description (string): Recipe description`,
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              ingredients: { 
+                type: "array", 
+                items: { type: "string" } 
+              },
+              instructions: { type: "string" },
+              prep_time: { type: "string" },
+              cook_time: { type: "string" },
+              servings: { type: "number" },
+              image_url: { type: "string" },
+              description: { type: "string" }
+            }
+          }
         }
       })
     });
 
+    console.log('🌐 Firecrawl API response status:', response.status);
+    
     if (!response.ok) {
-      const errText = await response.text();
-      console.error("Firecrawl API error response:", errText);
-      throw new Error(`Firecrawl API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ Firecrawl API error details:', errorText);
+      throw new Error(`Firecrawl API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("Firecrawl API raw response:", data);
-
-    // Firecrawl provides { success, data: { extract } }
-    if (data.success && data.data?.extract) {
-      // Normalize keys to our recipe structure
-      const extract = data.data.extract;
-      return {
-        title: extract.title || "",
-        ingredients: extract.ingredients || [],
-        instructions: extract.instructions || "",
-        prep_time: extract.prep_time || "",
-        cook_time: extract.cook_time || "",
-        servings: extract.servings || "",
-        image_url: extract.image_url || "",
-        source: "firecrawl"
-      };
+    console.log('✅ Firecrawl response received, data keys:', Object.keys(data));
+    
+    // Handle different response formats
+    let extractedData = data.extract || data.data || data;
+    
+    if (!extractedData || typeof extractedData !== 'object') {
+      console.log('⚠️ Unexpected Firecrawl response format:', data);
+      throw new Error('Firecrawl returned unexpected response format');
     }
-
-    throw new Error("Firecrawl extraction failed or incomplete");
-  } catch (error) {
-    console.error("🔥 Firecrawl fallback failed:", error);
-    throw error;
+    
+    console.log('🎉 Firecrawl extraction successful');
+    return extractedData;
+    
+  } catch (fetchError) {
+    console.error('❌ Firecrawl fetch error:', fetchError);
+    throw new Error(`Firecrawl request failed: ${fetchError.message}`);
   }
 }
