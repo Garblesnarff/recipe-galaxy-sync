@@ -1,6 +1,6 @@
 
 import React, { ReactElement } from 'react'
-import { render, RenderOptions, RenderResult, Queries } from '@testing-library/react'
+import { render, RenderOptions, RenderResult, queries } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
@@ -26,17 +26,14 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-// Explicitly type using the signature from @testing-library/react's render
-function customRender<
-  Q extends Queries = typeof import('@testing-library/dom').queries,
-  Container extends Element | DocumentFragment = HTMLElement,
-  BaseElement extends Element | DocumentFragment = Container
->(
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions<Q, Container>, 'queries'>,
-): RenderResult<Q, Container, BaseElement> {
+// Use @testing-library/react's default query set for generic parameter
+function customRender(
+  ui: ReactElement,
+  options?: Omit<RenderOptions<typeof queries, HTMLElement>, 'queries'>,
+): RenderResult<typeof queries, HTMLElement> {
   return render(ui, { wrapper: AllTheProviders, ...options })
 }
 
 export * from '@testing-library/react'
 export { customRender as render }
+
