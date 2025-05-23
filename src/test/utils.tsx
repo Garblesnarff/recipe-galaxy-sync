@@ -1,5 +1,6 @@
+
 import React, { ReactElement } from 'react'
-import { render, RenderOptions, RenderResult, Queries } from '@testing-library/react'
+import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
@@ -25,11 +26,8 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-// Remove the explicit type annotation for customRender to resolve TS2322
-const customRender: (
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) => RenderResult<Queries, HTMLElement, HTMLElement> = (
+// Use the exact type of `render` from @testing-library/react
+const customRender: typeof render = (
   ui,
   options
 ) => render(ui, { wrapper: AllTheProviders, ...options })
