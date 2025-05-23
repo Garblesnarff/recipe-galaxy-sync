@@ -1,8 +1,8 @@
-
 import { fetchWithRetry } from "./html-utils.ts";
 import { extractIngredients, extractInstructions, getMetaContent } from "./recipe-extractor.ts";
 import { cleanInstructions } from "./instruction-cleaner.ts";
 import { extractMetadata } from "./metadata-extractor.ts";
+import { scrapeWithFirecrawl } from "./firecrawl-fallback.ts";
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
@@ -32,34 +32,32 @@ export async function scrapeRecipe(url: string) {
     'Sec-Fetch-User': '?1',
   };
 
+  // -- Main scraper logic with Firecrawl fallback --
   try {
-    console.log('📥 Fetching webpage content from:', url);
-    
+    // Try current implementation
     const timeoutMs = domain.includes('hellofresh') ? 20000 : 30000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
+
+    console.log('📥 Fetching webpage content from:', url);
     const response = await fetchWithRetry(
-      url, 
-      3, 
-      controller.signal, 
+      url,
+      3,
+      controller.signal,
       fetchHeaders,
       domain.includes('hellofresh')
     );
-    
     clearTimeout(timeoutId);
-    
+
     let html = await response.text();
     console.log('✅ Successfully fetched webpage content, length:', html.length);
 
     if (html.length > 1000000) {
-      console.log('⚠️ HTML content is very large, trimming to avoid memory issues');
+      console.log('⚠️ HTML content is very large, trimming...');
       html = html.substring(0, 1000000);
     }
-    
     if (!html.includes('<html') && !html.includes('<body')) {
-      console.error('❌ Response does not appear to be HTML:', html.substring(0, 200));
-      throw new Error(`Failed to get HTML content from ${domain}. The site may be blocking scrapers.`);
+      throw new Error(`Failed to get HTML content from ${domain}.`);
     }
 
     console.log('🧩 Extracting recipe data...');
@@ -107,38 +105,32 @@ export async function scrapeRecipe(url: string) {
       instructions: processedInstructions
     };
 
-    if (!recipe.title) {
-      console.warn('⚠️ No title extracted from recipe');
-      recipe.title = domain + " Recipe";
+    // Validation: If title and ingredients look good, return!
+    if (recipe.title && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
+      console.log('✅ Main scraper succeeded:', { 
+        title: recipe.title, 
+        ingredientsCount: recipe.ingredients.length,
+        hasInstructions: !!recipe.instructions,
+        hasImage: !!recipe.image_url,
+        imageUrl: typeof recipe.image_url === 'string' ? recipe.image_url?.substring(0, 100) : 'Not a string'
+      });
+      return recipe;
     }
-    
-    if (ingredients.length === 0) {
-      console.warn('⚠️ No ingredients extracted from recipe');
-    }
-    
-    if (!recipe.instructions) {
-      console.warn('⚠️ No instructions extracted from recipe');
-    }
+    console.warn('⚠️ Main scraper incomplete, falling back to Firecrawl...');
+  } catch (primaryError) {
+    console.warn('❌ Main scraper failed, will try Firecrawl fallback:', primaryError);
+  }
 
-    console.log('✅ Successfully extracted recipe data:', {
-      title: recipe.title,
-      ingredientsCount: recipe.ingredients.length,
-      hasInstructions: !!recipe.instructions,
-      hasImage: !!recipe.image_url,
-      imageUrl: typeof recipe.image_url === 'string' ? recipe.image_url?.substring(0, 100) : 'Not a string'
-    });
-
-    return recipe;
-  } catch (fetchError) {
+  // Firecrawl fallback
+  try {
+    const firecrawlRecipe = await scrapeWithFirecrawl(url);
+    console.log('✅ Firecrawl fallback succeeded:', { title: firecrawlRecipe.title });
+    return firecrawlRecipe;
+  } catch (firecrawlError) {
+    console.error('❌ All scraping methods failed:', firecrawlError);
+    
     let statusCode = 502;
-    let errorMessage = 'Failed to fetch or process webpage';
-    
-    if (fetchError.name === 'AbortError') {
-      errorMessage = `Timeout fetching recipe from ${domain} after ${domain.includes('hellofresh') ? 20 : 30} seconds`;
-      console.error(`⏱️ ${errorMessage}`);
-    } else {
-      console.error('❌ Error fetching or processing webpage:', fetchError);
-    }
+    let errorMessage = 'Failed to scrape recipe with all available methods.';
     
     if (domain.includes('hellofresh')) {
       errorMessage = `HelloFresh recipes are currently difficult to import due to their website structure. Please try copying the ingredients and instructions manually.`;
@@ -147,7 +139,7 @@ export async function scrapeRecipe(url: string) {
     
     throw {
       message: errorMessage,
-      details: fetchError.message || 'Unknown fetch error',
+      details: firecrawlError.message || 'Unknown scraping error',
       url,
       domain,
       status: statusCode
