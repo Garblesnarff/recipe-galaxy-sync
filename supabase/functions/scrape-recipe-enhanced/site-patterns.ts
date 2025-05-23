@@ -40,41 +40,131 @@ function extractFoodNetworkRecipe(html: string): any {
   console.log('🍳 Extracting Food Network recipe...');
   
   try {
-    // Food Network specific selectors
+    // Multiple title extraction patterns for Food Network
     const titleMatch = html.match(/<h1[^>]*class="[^"]*recipe-summary-item-title[^"]*"[^>]*>([^<]+)<\/h1>/i) ||
-                       html.match(/<title>([^<]+(?:Recipe|recipe)[^<]*)<\/title>/i);
+                       html.match(/<h1[^>]*>([^<]*recipe[^<]*)<\/h1>/i) ||
+                       html.match(/<title>([^<]+Recipe[^<]*)<\/title>/i) ||
+                       html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
     
-    const title = titleMatch ? titleMatch[1].trim() : 'Food Network Recipe';
+    const title = titleMatch ? titleMatch[1].trim().replace(/\s+/g, ' ') : 'Food Network Recipe';
+    console.log('📝 Extracted title:', title);
 
-    // Extract ingredients from Food Network structure
+    // Multiple ingredient extraction patterns
     const ingredients = [];
-    const ingredientMatches = html.matchAll(/<span[^>]*class="[^"]*o-Ingredients__a-Ingredient[^"]*"[^>]*>([^<]+)<\/span>/g);
+    
+    // Pattern 1: Recipe ingredient spans
+    let ingredientMatches = html.matchAll(/<span[^>]*class="[^"]*o-Ingredients__a-Ingredient[^"]*"[^>]*>([^<]+)<\/span>/g);
     for (const match of ingredientMatches) {
       ingredients.push(match[1].trim());
     }
+    
+    // Pattern 2: Recipe ingredient list items
+    if (ingredients.length === 0) {
+      ingredientMatches = html.matchAll(/<li[^>]*class="[^"]*recipe-ingredient[^"]*"[^>]*>([^<]+)<\/li>/g);
+      for (const match of ingredientMatches) {
+        ingredients.push(match[1].trim());
+      }
+    }
+    
+    // Pattern 3: Generic ingredient list items
+    if (ingredients.length === 0) {
+      const ingredientListMatch = html.match(/<ul[^>]*class="[^"]*ingredient[^"]*"[^>]*>([\s\S]*?)<\/ul>/i);
+      if (ingredientListMatch) {
+        const listItems = ingredientListMatch[1].matchAll(/<li[^>]*>([^<]+)<\/li>/g);
+        for (const item of listItems) {
+          ingredients.push(item[1].trim());
+        }
+      }
+    }
+    
+    // Pattern 4: Any list that might contain ingredients
+    if (ingredients.length === 0) {
+      const allLists = html.matchAll(/<ul[^>]*>([\s\S]*?)<\/ul>/g);
+      for (const list of allLists) {
+        const listContent = list[1];
+        if (listContent.includes('cup') || listContent.includes('tablespoon') || listContent.includes('teaspoon')) {
+          const listItems = listContent.matchAll(/<li[^>]*>([^<]+)<\/li>/g);
+          for (const item of listItems) {
+            const ingredient = item[1].trim();
+            if (ingredient.length > 3 && !ingredients.includes(ingredient)) {
+              ingredients.push(ingredient);
+            }
+          }
+          break; // Found ingredient list, stop looking
+        }
+      }
+    }
+    
+    console.log('🧪 Extracted ingredients count:', ingredients.length);
 
-    // Extract instructions
-    const instructionMatches = html.matchAll(/<li[^>]*class="[^"]*o-Method__m-Step[^"]*"[^>]*>([^<]+)<\/li>/g);
+    // Multiple instruction extraction patterns
     const instructions = [];
+    
+    // Pattern 1: Method steps
+    let instructionMatches = html.matchAll(/<li[^>]*class="[^"]*o-Method__m-Step[^"]*"[^>]*>([^<]+)<\/li>/g);
     for (const match of instructionMatches) {
       instructions.push(match[1].trim());
     }
+    
+    // Pattern 2: Recipe directions
+    if (instructions.length === 0) {
+      instructionMatches = html.matchAll(/<li[^>]*class="[^"]*recipe-direction[^"]*"[^>]*>([^<]+)<\/li>/g);
+      for (const match of instructionMatches) {
+        instructions.push(match[1].trim());
+      }
+    }
+    
+    // Pattern 3: Numbered steps
+    if (instructions.length === 0) {
+      instructionMatches = html.matchAll(/<div[^>]*class="[^"]*recipe-step[^"]*"[^>]*>([\s\S]*?)<\/div>/g);
+      for (const match of instructionMatches) {
+        const cleanText = match[1].replace(/<[^>]*>/g, '').trim();
+        if (cleanText.length > 10) {
+          instructions.push(cleanText);
+        }
+      }
+    }
+    
+    console.log('📋 Extracted instructions count:', instructions.length);
 
-    // Extract image
+    // Multiple image extraction patterns
     const imageMatch = html.match(/<img[^>]*class="[^"]*m-MediaBlock__a-Image[^"]*"[^>]*src="([^"]+)"/i) ||
-                       html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+                       html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ||
+                       html.match(/<img[^>]*src="([^"]*recipe[^"]*)"/i) ||
+                       html.match(/<img[^>]*alt="[^"]*recipe[^"]*"[^>]*src="([^"]+)"/i);
     
     const image_url = imageMatch ? imageMatch[1] : undefined;
+    console.log('📸 Extracted image URL:', !!image_url);
 
-    return {
+    // Extract additional metadata
+    const prepTimeMatch = html.match(/prep[^>]*time[^>]*["']([^"']+)["']/i) ||
+                          html.match(/preparation[^>]*["']([^"']+)["']/i);
+    const cookTimeMatch = html.match(/cook[^>]*time[^>]*["']([^"']+)["']/i) ||
+                          html.match(/bake[^>]*time[^>]*["']([^"']+)["']/i);
+    const servingsMatch = html.match(/serves?[^>]*["']([^"']+)["']/i) ||
+                          html.match(/servings?[^>]*["']([^"']+)["']/i);
+
+    const result = {
       title,
       ingredients,
       instructions: instructions.join('\n'),
+      prep_time: prepTimeMatch ? prepTimeMatch[1] : undefined,
+      cook_time: cookTimeMatch ? cookTimeMatch[1] : undefined,
+      servings: servingsMatch ? parseInt(servingsMatch[1]) : undefined,
       image_url,
       source: 'foodnetwork_pattern'
     };
+    
+    console.log('✅ Food Network extraction result:', {
+      hasTitle: !!result.title && result.title !== 'Food Network Recipe',
+      ingredientCount: result.ingredients.length,
+      hasInstructions: !!result.instructions && result.instructions.length > 0,
+      hasImage: !!result.image_url
+    });
+
+    return result;
   } catch (error) {
-    console.error('Error extracting Food Network recipe:', error);
+    console.error('❌ Error extracting Food Network recipe:', error);
     return null;
   }
 }
