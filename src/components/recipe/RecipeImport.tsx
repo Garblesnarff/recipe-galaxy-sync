@@ -26,6 +26,9 @@ export const RecipeImport = ({
   const [isYouTube, setIsYouTube] = useState(false);
   const [domain, setDomain] = useState<string>("");
 
+  // Define unsupported domains
+  const UNSUPPORTED_DOMAINS = ['hellofresh.com', 'foodnetwork.com'];
+
   useEffect(() => {
     // Determine if URL is a YouTube URL
     if (recipeUrl) {
@@ -62,7 +65,7 @@ export const RecipeImport = ({
   };
 
   // Check if there's a known site with issues
-  const isProblemSite = domain && domain.includes('hellofresh');
+  const isUnsupportedSite = domain && UNSUPPORTED_DOMAINS.some(unsupportedHost => domain.includes(unsupportedHost));
 
   return (
     <div className="mb-6">
@@ -109,17 +112,17 @@ export const RecipeImport = ({
           </Alert>
         )}
         
-        {isProblemSite && !urlError && !isImporting && !importError && (
-          <Alert variant="default" className="mt-2 bg-amber-50 border-amber-200">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <AlertTitle className="text-amber-700">Possible Import Difficulty</AlertTitle>
-            <AlertDescription className="text-amber-600">
-              HelloFresh recipes can be difficult to import automatically. If import fails, you may need to copy the recipe details manually.
+        {isUnsupportedSite && !urlError && !isImporting && !importError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Unsupported Website</AlertTitle>
+            <AlertDescription>
+              We're sorry, but we cannot automatically import recipes from this website. Please try a different recipe source or add the recipe manually.
             </AlertDescription>
           </Alert>
         )}
         
-        {isYouTube && !urlError && !isProblemSite && (
+        {isYouTube && !urlError && !isUnsupportedSite && (
           <span className="text-sm text-blue-500">
             YouTube video detected! We'll extract recipe details from this video.
           </span>
