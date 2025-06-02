@@ -227,6 +227,98 @@ export type Database = {
         }
         Relationships: []
       }
+      sales: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          discount_percentage: number
+          id: string
+          image_url: string | null
+          item_name: string
+          regular_price: string
+          sale_ends_at: string | null
+          sale_price: string
+          store_id: string | null
+          upc_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          discount_percentage: number
+          id?: string
+          image_url?: string | null
+          item_name: string
+          regular_price: string
+          sale_ends_at?: string | null
+          sale_price: string
+          store_id?: string | null
+          upc_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          discount_percentage?: number
+          id?: string
+          image_url?: string | null
+          item_name?: string
+          regular_price?: string
+          sale_ends_at?: string | null
+          sale_price?: string
+          store_id?: string | null
+          upc_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          name: string
+          scrape_config: Json | null
+          scrape_url: string | null
+          store_chain: string | null
+          updated_at: string | null
+          website_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name: string
+          scrape_config?: Json | null
+          scrape_url?: string | null
+          store_chain?: string | null
+          updated_at?: string | null
+          website_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name?: string
+          scrape_config?: Json | null
+          scrape_url?: string | null
+          store_chain?: string | null
+          updated_at?: string | null
+          website_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
