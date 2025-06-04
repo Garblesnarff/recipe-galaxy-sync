@@ -1,9 +1,16 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../scrape-recipe/cors-utils.ts";
 import { scrapeRecipe } from "../scrape-recipe/scraper.ts";
 import { scrapeRecipeEnhanced } from "./enhanced-scraper.ts";
 
 const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+
+// CORS headers - duplicated here to avoid import issues
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
