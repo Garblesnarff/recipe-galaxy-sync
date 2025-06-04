@@ -58,7 +58,7 @@ const Index = () => {
 
       // Apply sorting
       if (sortOption.value === 'rating') {
-        query = query.order('rating', { ascending: sortOption.direction === 'asc', nullsLast: true });
+        query = query.order('rating', { ascending: sortOption.direction === 'asc', nullsFirst: false });
       } else {
         query = query.order(sortOption.value, { ascending: sortOption.direction === 'asc' });
       }
