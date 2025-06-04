@@ -1,28 +1,74 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
-import { RecipeFilters } from "@/components/recipe/RecipeFilters";
+import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
 import { SalesScrapingTest } from "@/components/sales/SalesScrapingTest";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const {
-    recipes,
-    isLoading,
-    searchTerm,
-    setSearchTerm,
-    selectedDifficulty,
-    setSelectedDifficulty,
-    selectedCuisine,
-    setSelectedCuisine,
-    selectedCookingMethod,
-    setSelectedCookingMethod,
-    sortBy,
-    setSortBy,
-    selectedCategories,
-    setSelectedCategories,
-    selectedDietTags,
-    setSelectedDietTags
+    filters,
+    setFilters,
+    sortOption,
+    setSortOption
   } = useRecipeFilters();
+
+  const { data: recipes, isLoading } = useQuery({
+    queryKey: ['recipes', filters, sortOption],
+    queryFn: async () => {
+      let query = supabase
+        .from('recipes')
+        .select('*');
+
+      // Apply search filter
+      if (filters.searchQuery) {
+        query = query.or(`title.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
+      }
+
+      // Apply category filter
+      if (filters.categories.length > 0) {
+        query = query.contains('categories', filters.categories);
+      }
+
+      // Apply cuisine filter
+      if (filters.cuisine_type) {
+        query = query.eq('cuisine_type', filters.cuisine_type);
+      }
+
+      // Apply diet tags filter
+      if (filters.diet_tags.length > 0) {
+        query = query.contains('diet_tags', filters.diet_tags);
+      }
+
+      // Apply cooking method filter
+      if (filters.cooking_method) {
+        query = query.eq('cooking_method', filters.cooking_method);
+      }
+
+      // Apply difficulty filter
+      if (filters.difficulty) {
+        query = query.eq('difficulty', filters.difficulty);
+      }
+
+      // Apply favorites filter
+      if (filters.favorite_only) {
+        query = query.eq('is_favorite', true);
+      }
+
+      // Apply sorting
+      if (sortOption.value === 'rating') {
+        query = query.order('rating', { ascending: sortOption.direction === 'asc', nullsLast: true });
+      } else {
+        query = query.order(sortOption.value, { ascending: sortOption.direction === 'asc' });
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   if (isLoading) {
     return (
@@ -46,27 +92,28 @@ const Index = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Recipes</h1>
         
-        <RecipeFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedDifficulty={selectedDifficulty}
-          setSelectedDifficulty={setSelectedDifficulty}
-          selectedCuisine={selectedCuisine}
-          setSelectedCuisine={setSelectedCuisine}
-          selectedCookingMethod={selectedCookingMethod}
-          setSelectedCookingMethod={setSelectedCookingMethod}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
-          selectedDietTags={selectedDietTags}
-          setSelectedDietTags={setSelectedDietTags}
+        <RecipeFilterBar
+          filters={filters}
+          onFiltersChange={setFilters}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
         />
 
         {recipes && recipes.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              <RecipeCard 
+                key={recipe.id} 
+                id={recipe.id}
+                title={recipe.title}
+                description={recipe.description}
+                image={recipe.image_url}
+                rating={recipe.rating || 0}
+                cookTime={recipe.cook_time}
+                difficulty={recipe.difficulty}
+                isFavorite={recipe.is_favorite}
+                tags={recipe.categories || []}
+              />
             ))}
           </div>
         ) : (
