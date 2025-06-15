@@ -1,15 +1,13 @@
 
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { useState, useEffect } from "react";
-import { fetchSalesForIngredients } from "@/services/sales";
+import { useSalesData } from "@/hooks/useSalesData";
 import { SaleIndicator } from "@/components/SaleIndicator";
-import { supabase } from "@/integrations/supabase/client";
-import { IngredientSale } from "@/services/sales";
 import { RecipeCardImage } from "./recipe/card/RecipeCardImage";
 import { RecipeCardMeta } from "./recipe/card/RecipeCardMeta";
 import { RecipeCardHeader } from "./recipe/card/RecipeCardHeader";
-import { toast } from "sonner";
+import { normalizeImageUrl } from "@/utils/ingredientUtils";
+import { memo } from "react";
 
 interface RecipeCardProps {
   id: string;
@@ -25,7 +23,7 @@ interface RecipeCardProps {
   onDelete?: () => void;
 }
 
-export const RecipeCard = ({
+const RecipeCard = memo(({
   id,
   title,
   description,
@@ -38,71 +36,8 @@ export const RecipeCard = ({
   tags = [],
   onDelete,
 }: RecipeCardProps) => {
-  const [salesData, setSalesData] = useState<IngredientSale[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchSalesData = async () => {
-      if (!id) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('recipes')
-          .select('ingredients')
-          .eq('id', id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching recipe ingredients:", error);
-          return;
-        }
-
-        let ingredientList: string[] = [];
-        if (data && data.ingredients) {
-          if (Array.isArray(data.ingredients)) {
-            ingredientList = data.ingredients.map(ingredient => 
-              typeof ingredient === 'string' ? ingredient : String(ingredient)
-            );
-          } else if (typeof data.ingredients === 'object') {
-            ingredientList = Object.values(data.ingredients).map(ingredient => 
-              typeof ingredient === 'string' ? ingredient : String(ingredient)
-            );
-          }
-        }
-
-        if (ingredientList.length > 0) {
-          const sales = await fetchSalesForIngredients(ingredientList);
-          setSalesData(sales);
-        }
-      } catch (error) {
-        console.error("Error in fetchSalesData:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchSalesData();
-    }
-  }, [id]);
-
-  const handleDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from('recipes')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast.success('Recipe deleted successfully');
-      onDelete?.();
-    } catch (error) {
-      console.error('Error deleting recipe:', error);
-      toast.error('Failed to delete recipe');
-    }
-  };
+  const { salesData } = useSalesData(id);
+  const processedImageUrl = normalizeImageUrl(image);
 
   return (
     <Link to={`/recipe/${id}`} className="block">
@@ -111,7 +46,7 @@ export const RecipeCard = ({
           isFavorite={isFavorite}
           onFavoriteToggle={onFavoriteToggle}
           salesCount={salesData.length}
-          onDeleteClick={handleDelete}
+          onDeleteClick={onDelete}
           title={title}
         />
         
@@ -121,7 +56,7 @@ export const RecipeCard = ({
           </div>
         )}
         
-        <RecipeCardImage image={image} title={title} />
+        <RecipeCardImage image={processedImageUrl} title={title} />
         
         <div className="p-4">
           <div className="flex justify-between items-start">
@@ -145,4 +80,8 @@ export const RecipeCard = ({
       </Card>
     </Link>
   );
-};
+});
+
+RecipeCard.displayName = "RecipeCard";
+
+export { RecipeCard };

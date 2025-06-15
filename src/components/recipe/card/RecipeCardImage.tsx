@@ -1,19 +1,15 @@
 
-import { processImageUrl } from "@/utils/imageUtils";
-
 interface RecipeCardImageProps {
-  image?: string | Record<string, any>;
+  image?: string;
   title: string;
 }
 
 export const RecipeCardImage = ({ image, title }: RecipeCardImageProps) => {
-  const processedImageUrl = processImageUrl(image);
-
   return (
     <div className="recipe-image">
-      {processedImageUrl ? (
+      {image ? (
         <img
-          src={processedImageUrl}
+          src={image}
           alt={title}
           className="object-cover w-full h-full"
         />

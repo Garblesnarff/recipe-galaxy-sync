@@ -52,12 +52,14 @@ export const RecipeCardHeader = ({
           </button>
         )}
         
-        <button
-          onClick={handleDelete}
-          className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-red-50"
-        >
-          <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-500" />
-        </button>
+        {onDeleteClick && (
+          <button
+            onClick={handleDelete}
+            className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-red-50"
+          >
+            <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-500" />
+          </button>
+        )}
       </div>
 
       <DeleteRecipeDialog
