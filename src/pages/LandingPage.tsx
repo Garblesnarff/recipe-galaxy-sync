@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { supabase } from "@/integrations/supabase/client";
+import { PricingCard } from "@/components/subscription/PricingCard";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -99,6 +100,33 @@ export default function LandingPage() {
             <h3 className="font-semibold text-lg mb-2 text-green-700">Streamlined Cooking</h3>
             <p className="text-gray-700">Clear, step-by-step instructions with integrated cooking timers make execution foolproof. Scale recipes up or down with perfect proportions every time.</p>
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="container py-16">
+        <h2 className="text-3xl font-bold text-center mb-8">Simple, Transparent Pricing</h2>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <PricingCard
+            title="Free"
+            price="$0"
+            features={[
+              "5 recipe adaptations/month",
+              "Unlimited recipe imports",
+              "Basic shopping lists",
+            ]}
+          />
+          <PricingCard
+            title="Pro"
+            price="$9.99/month"
+            features={[
+              "Unlimited adaptations",
+              "Grocery sale matching",
+              "Priority support",
+              "Export to PDF",
+            ]}
+            highlighted={true}
+          />
         </div>
       </section>
 

@@ -4,7 +4,6 @@ import { Recipe } from "@/types/recipe";
 import { DietaryRestriction } from "@/types/dietary";
 import { RecipeHeader } from "@/components/recipe/RecipeHeader";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { AdaptRecipeDialog } from "@/components/recipe/AdaptRecipeDialog";
 import { SaleIndicator } from "@/components/SaleIndicator";
 import { RecipeTimer } from "@/components/recipe/RecipeTimer";
 import { RecipeMetadata } from "@/components/recipe/RecipeMetadata";
@@ -35,10 +34,10 @@ export const RecipeContent = ({
   handleAdaptRecipe,
   handleResetAdaptation,
   isFavorite,
-  handleToggleFavorite
+  handleToggleFavorite,
 }: RecipeContentProps) => {
   const processedImageUrl = processImageUrl(recipe.image_url);
-  
+
   return (
     <Card className={cn("p-4", isAdapted && "border-indigo-300")}>
       <div className="space-y-6">
@@ -55,14 +54,7 @@ export const RecipeContent = ({
 
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
-            <AdaptRecipeDialog 
-              recipeId={recipe.id}
-              onAdapt={handleAdaptRecipe}
-            />
-            
-            <SaleIndicator
-              salesCount={2}
-            />
+            <SaleIndicator salesCount={2} />
           </div>
 
           <RecipeTimer
@@ -90,9 +82,7 @@ export const RecipeContent = ({
           currentServings={currentServings}
         />
 
-        <RecipeInstructionsList
-          instructions={recipe.instructions || ""}
-        />
+        <RecipeInstructionsList instructions={recipe.instructions || ""} />
 
         <RecipeTags
           categories={recipe.categories}
@@ -110,6 +100,7 @@ export const RecipeContent = ({
         <RecipeActions
           recipeId={recipe.id}
           ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients : []}
+          onAdapt={() => handleAdaptRecipe(recipe)}
         />
       </div>
     </Card>

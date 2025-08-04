@@ -7,6 +7,7 @@ import { RecipeEditButton } from "@/components/recipe/RecipeEditButton";
 import { useState } from "react";
 import { useRecipeDetail } from "@/hooks/useRecipeDetail";
 import { DietaryRestriction } from "@/types/dietary";
+import { useNavigate } from "react-router-dom";
 
 export const RecipeDetail = () => {
   const {
@@ -19,12 +20,17 @@ export const RecipeDetail = () => {
     setCurrentServings,
     isAdapted,
     handleAdaptRecipe,
-    handleResetAdaptation
+    handleResetAdaptation,
   } = useRecipeDetail();
+  const navigate = useNavigate();
 
   if (isLoading || !recipe) {
     return <RecipeLoadingState isLoading={isLoading} />;
   }
+
+  const handleAdaptClick = () => {
+    navigate(`/adapt-recipe/${recipe.id}`);
+  };
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-6">
@@ -35,9 +41,9 @@ export const RecipeDetail = () => {
           </div>
 
           {isAdapted && (
-            <AdaptedRecipeBanner 
-              adaptedFor={recipe.adaptedFor as DietaryRestriction[]} 
-              onReset={handleResetAdaptation} 
+            <AdaptedRecipeBanner
+              adaptedFor={recipe.adaptedFor as DietaryRestriction[]}
+              onReset={handleResetAdaptation}
             />
           )}
 
@@ -46,7 +52,7 @@ export const RecipeDetail = () => {
             isAdapted={isAdapted}
             currentServings={currentServings}
             setCurrentServings={setCurrentServings}
-            handleAdaptRecipe={handleAdaptRecipe}
+            handleAdaptRecipe={handleAdaptClick}
             handleResetAdaptation={handleResetAdaptation}
             isFavorite={isFavorite}
             handleToggleFavorite={handleToggleFavorite}
