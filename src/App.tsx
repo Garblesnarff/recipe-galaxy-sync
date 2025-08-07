@@ -9,6 +9,7 @@ import Collections from "@/pages/Collections";
 import CollectionDetail from "@/pages/CollectionDetail";
 import EditCollection from "@/pages/EditCollection";
 import LandingPage from "@/pages/LandingPage";
+import Demo from "@/pages/Demo";
 import "./App.css";
 import AuthPage from "@/pages/Auth";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -63,6 +64,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/auth" element={
             <AuthRoute>
               <AuthPage />

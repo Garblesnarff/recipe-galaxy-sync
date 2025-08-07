@@ -1,36 +1,26 @@
-
-import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useSalesData } from "@/hooks/useSalesData";
-import { SaleIndicator } from "@/components/SaleIndicator";
-import { RecipeCardImage } from "./recipe/card/RecipeCardImage";
-import { RecipeCardMeta } from "./recipe/card/RecipeCardMeta";
-import { RecipeCardHeader } from "./recipe/card/RecipeCardHeader";
-import { normalizeImageUrl } from "@/utils/ingredientUtils";
-import { memo, useState } from "react";
-import { Heart, Users, CheckCircle, Clock } from "lucide-react";
+import { memo } from "react";
+import { Heart, Users, CheckCircle, Clock, Star } from "lucide-react";
 
-interface RecipeCardProps {
+interface DemoRecipeCardProps {
   id: string;
   title: string;
   description: string;
-  image?: string | Record<string, any>;
+  image: string;
   rating: number;
   cookTime?: string;
   difficulty?: string;
   isFavorite?: boolean;
-  onFavoriteToggle?: () => void;
   tags?: string[];
-  onDelete?: () => void;
   savesCount?: number;
   recentCooks?: Array<{id: string; name: string; avatar: string}>;
   adaptable?: boolean;
   trending?: boolean;
 }
 
-const RecipeCard = memo(({
+const DemoRecipeCard = memo(({
   id,
   title,
   description,
@@ -39,44 +29,21 @@ const RecipeCard = memo(({
   cookTime,
   difficulty,
   isFavorite = false,
-  onFavoriteToggle,
   tags = [],
-  onDelete,
   savesCount = 0,
   recentCooks = [],
   adaptable = true,
   trending = false,
-}: RecipeCardProps) => {
-  const { salesData } = useSalesData(id);
-  const processedImageUrl = normalizeImageUrl(image);
-  const [showAdaptButton, setShowAdaptButton] = useState(false);
-
+}: DemoRecipeCardProps) => {
   // Transform generic titles into benefit-driven headlines
   const getBenefitTitle = (originalTitle: string) => {
-    const benefitTitles = {
-      'Chicken Alfredo': '15-Minute Chicken Alfredo Your Family Will Beg You To Make Again',
-      'Chocolate Chip Cookies': 'Perfect Chocolate Chip Cookies That Turn Out Every Single Time',
-      'Beef Stew': 'One-Pot Beef Stew That Makes Your House Smell Like Heaven',
-    };
-    return benefitTitles[originalTitle as keyof typeof benefitTitles] || originalTitle;
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setShowAdaptButton(true);
+    // The title is already benefit-driven from our demo data
+    return originalTitle;
   };
 
   return (
     <div className="block">
-      <Card className="recipe-card group relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCardClick}>
-        <RecipeCardHeader
-          isFavorite={isFavorite}
-          onFavoriteToggle={onFavoriteToggle}
-          salesCount={salesData.length}
-          onDeleteClick={onDelete}
-          title={title}
-        />
-        
+      <Card className="recipe-card group relative overflow-hidden hover:shadow-lg transition-shadow">
         {/* Trending indicator */}
         {trending && (
           <div className="absolute top-3 left-3 z-10">
@@ -86,15 +53,24 @@ const RecipeCard = memo(({
           </div>
         )}
         
-        {/* Sales indicator */}
-        {salesData.length > 0 && (
-          <div className="absolute top-3 right-3 z-10">
-            <SaleIndicator salesCount={salesData.length} onlyIcon={true} />
-          </div>
-        )}
+        {/* Favorite heart - demo only */}
+        <div className="absolute top-3 right-3 z-10">
+          <button className="bg-white/80 backdrop-blur rounded-full p-2 hover:bg-white/90 transition-colors">
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          </button>
+        </div>
         
         <div className="relative">
-          <RecipeCardImage image={processedImageUrl} title={title} />
+          <img 
+            src={image}
+            className="w-full h-48 object-cover"
+            alt={title}
+            onError={(e) => {
+              // Fallback to a solid color if image fails
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.classList.add('bg-gradient-to-br', 'from-gray-200', 'to-gray-300');
+            }}
+          />
           
           {/* Social proof overlay */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
@@ -139,6 +115,38 @@ const RecipeCard = memo(({
           
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
           
+          {/* Recipe metadata */}
+          <div className="flex items-center space-x-4 mb-3 text-sm text-gray-600">
+            {cookTime && (
+              <div className="flex items-center">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>{cookTime}</span>
+              </div>
+            )}
+            {difficulty && (
+              <div className="flex items-center">
+                <span>{difficulty}</span>
+              </div>
+            )}
+            {rating && (
+              <div className="flex items-center">
+                <Star className="h-3 w-3 mr-1 text-yellow-500 fill-current" />
+                <span>{rating}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {tags.slice(0, 3).map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+          
           {/* Social proof */}
           {recentCooks.length > 0 && (
             <div className="flex items-center mb-3">
@@ -147,8 +155,12 @@ const RecipeCard = memo(({
                   <img 
                     key={cook.id}
                     className="w-6 h-6 rounded-full border-2 border-white" 
-                    src={cook.avatar || '/placeholder-avatar.jpg'}
+                    src={cook.avatar}
                     alt={cook.name}
+                    onError={(e) => {
+                      // Fallback to colored circle if avatar fails
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 ))}
               </div>
@@ -158,27 +170,22 @@ const RecipeCard = memo(({
             </div>
           )}
           
-          <RecipeCardMeta
-            cookTime={cookTime}
-            difficulty={difficulty}
-            tags={tags}
-          />
-          
-          {/* Conversion-focused CTA */}
-          <div className="mt-4 space-y-2">
-            <Link to={`/recipe/${id}`}>
-              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold">
-                Make This Tonight 🍽️
-              </Button>
-            </Link>
+          {/* Conversion-focused CTAs */}
+          <div className="space-y-2">
+            <Button 
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+              onClick={() => alert(`Demo: Would navigate to recipe ${id}`)}
+            >
+              Make This Tonight 🍽️
+            </Button>
             
-            {showAdaptButton && adaptable && (
+            {adaptable && (
               <Button 
                 variant="outline" 
                 className="w-full border-green-500 text-green-600 hover:bg-green-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle adaptation logic
+                  alert('Demo: Would open recipe adaptation dialog');
                 }}
               >
                 Adapt for MY Diet ✨
@@ -191,6 +198,6 @@ const RecipeCard = memo(({
   );
 });
 
-RecipeCard.displayName = "RecipeCard";
+DemoRecipeCard.displayName = "DemoRecipeCard";
 
-export { RecipeCard };
+export { DemoRecipeCard };
