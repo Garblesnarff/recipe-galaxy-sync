@@ -208,29 +208,28 @@ export default function Demo() {
 
       {/* Demo Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Demo Benefits Banner */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-8">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-blue-800 mb-2">
-              🎉 You're Experiencing KitchenSync!
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              🍽️ Welcome to Your Personal Recipe Collection
             </h2>
-            <p className="text-blue-700 mb-4">
-              These recipes use our conversion-optimized design with benefit-driven headlines, 
-              social proof, and cooking psychology to make you want to cook them immediately.
+            <p className="text-gray-700 mb-4">
+              Discover recipes that adapt to your dietary needs, match grocery sales, and guarantee cooking success every time.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="bg-white p-3 rounded border">
-                <div className="font-medium text-green-800">🎯 Benefit Headlines</div>
-                <div className="text-sm text-gray-600">Not just "Chicken Alfredo" but "15-Minute Chicken Alfredo Your Family Will Beg You To Make Again"</div>
+            <div className="flex items-center justify-center space-x-6 text-sm">
+              <div className="flex items-center text-green-700">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                <span>127 people cooking right now</span>
               </div>
-              <div className="bg-white p-3 rounded border">
-                <div className="font-medium text-blue-800">👥 Social Proof</div>
-                <div className="text-sm text-gray-600">See how many people saved each recipe and recent cooks</div>
+              <div className="flex items-center text-blue-700">
+                <span className="text-blue-500 mr-1">⭐</span>
+                <span>94% recipe success rate</span>
               </div>
-              <div className="bg-white p-3 rounded border">
-                <div className="font-medium text-purple-800">✨ Adaptation Ready</div>
-                <div className="text-sm text-gray-600">Every recipe can be adapted for your dietary needs in 30 seconds</div>
+              <div className="flex items-center text-purple-700">
+                <span className="text-purple-500 mr-1">⚡</span>
+                <span>30-second adaptations</span>
               </div>
             </div>
           </div>
