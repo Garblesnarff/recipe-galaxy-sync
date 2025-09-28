@@ -105,11 +105,11 @@ const DemoRecipeCard = memo(({
             </h3>
           </div>
           
-          {/* Success confidence booster */}
+          {/* Recipe confidence booster */}
           <div className="flex items-center mb-2">
             <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
             <span className="text-xs text-green-600 font-medium">
-              94% success rate - nearly impossible to mess up!
+              Designed for cooking success - clear instructions included
             </span>
           </div>
           
@@ -147,28 +147,13 @@ const DemoRecipeCard = memo(({
             </div>
           )}
           
-          {/* Social proof */}
-          {recentCooks.length > 0 && (
-            <div className="flex items-center mb-3">
-              <div className="flex -space-x-2">
-                {recentCooks.slice(0, 3).map(cook => (
-                  <img 
-                    key={cook.id}
-                    className="w-6 h-6 rounded-full border-2 border-white" 
-                    src={cook.avatar}
-                    alt={cook.name}
-                    onError={(e) => {
-                      // Fallback to colored circle if avatar fails
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-gray-600 ml-2">
-                {recentCooks[0]?.name} and {recentCooks.length - 1}+ others made this recently
-              </span>
+          {/* Recipe features - no fake social proof */}
+          <div className="mb-3">
+            <div className="flex items-center text-xs text-blue-600">
+              <span className="bg-blue-100 px-2 py-1 rounded text-xs mr-2">🍽️ Demo Recipe</span>
+              {adaptable && <span className="text-green-600">✨ Adaptable for your diet</span>}
             </div>
-          )}
+          </div>
           
           {/* Conversion-focused CTAs */}
           <div className="space-y-2">

@@ -44,9 +44,9 @@ export const importRecipeFromUrl = async (url: string): Promise<ImportedRecipeDa
         errorMessage += `: ${error.details}`;
       }
       
-      // Special handling for HelloFresh
+      // Enhanced error handling for specific sites
       if (domain === 'hellofresh.com') {
-        errorMessage = `HelloFresh recipes are currently difficult to import automatically. Please try copying the ingredients and instructions manually.`;
+        errorMessage = `HelloFresh uses advanced website protection. Their recipes can be challenging to import automatically. We recommend copying the ingredients and instructions manually, or trying a different recipe source.`;
       }
       
       throw new Error(errorMessage);

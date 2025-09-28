@@ -17,12 +17,8 @@ const mockRecipes = [
     difficulty: "Easy",
     is_favorite: false,
     categories: ["Quick Meals", "Pasta", "Family Favorites"],
-    savesCount: 2847,
-    recentCooks: [
-      { id: "1", name: "Sarah", avatar: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "2", name: "Mike", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "3", name: "Emma", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: true
   },
@@ -36,11 +32,8 @@ const mockRecipes = [
     difficulty: "Easy",
     is_favorite: true,
     categories: ["Desserts", "Baking", "Kid-Friendly"],
-    savesCount: 1923,
-    recentCooks: [
-      { id: "4", name: "Lisa", avatar: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "5", name: "Dave", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: false
   },
@@ -54,12 +47,8 @@ const mockRecipes = [
     difficulty: "Medium",
     is_favorite: false,
     categories: ["Comfort Food", "One Pot", "Winter Meals"],
-    savesCount: 1456,
-    recentCooks: [
-      { id: "6", name: "John", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "7", name: "Amy", avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "8", name: "Chris", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: false
   },
@@ -73,10 +62,8 @@ const mockRecipes = [
     difficulty: "Medium",
     is_favorite: false,
     categories: ["Gluten-Free", "Bread", "Special Diet"],
-    savesCount: 987,
-    recentCooks: [
-      { id: "9", name: "Rachel", avatar: "https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: false
   },
@@ -90,11 +77,8 @@ const mockRecipes = [
     difficulty: "Easy",
     is_favorite: true,
     categories: ["Seafood", "Quick Meals", "Healthy"],
-    savesCount: 2156,
-    recentCooks: [
-      { id: "10", name: "Alex", avatar: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "11", name: "Maria", avatar: "https://images.unsplash.com/photo-1505033575518-a36ea2ef75ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: true
   },
@@ -108,12 +92,8 @@ const mockRecipes = [
     difficulty: "Easy", 
     is_favorite: false,
     categories: ["Vegetarian", "Healthy", "Bowl Meals"],
-    savesCount: 1745,
-    recentCooks: [
-      { id: "12", name: "Jenny", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "13", name: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" },
-      { id: "14", name: "Kate", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=32&h=32&q=80" }
-    ],
+    savesCount: 0, // Demo mode - no fake save counts
+    recentCooks: [], // Demo mode - no fake social proof
     adaptable: true,
     trending: false
   }
@@ -145,9 +125,9 @@ export default function Demo() {
             difficulty: recipe.difficulty || 'Medium',
             is_favorite: recipe.is_favorite || false,
             categories: recipe.categories || ['General'],
-            // Add conversion optimization data
-            savesCount: Math.floor(Math.random() * 2000) + 500,
-            recentCooks: mockRecipes[index]?.recentCooks || [],
+            // Demo mode - no fake social proof data
+            savesCount: 0,
+            recentCooks: [],
             adaptable: true,
             trending: index < 2 // First two are trending
           }));
@@ -220,38 +200,37 @@ export default function Demo() {
             
             <div className="flex items-center justify-center space-x-6 text-sm">
               <div className="flex items-center text-green-700">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                <span>127 people cooking right now</span>
+                <span className="text-green-500 mr-1">🍽️</span>
+                <span>Adapt any recipe to your diet</span>
               </div>
               <div className="flex items-center text-blue-700">
-                <span className="text-blue-500 mr-1">⭐</span>
-                <span>94% recipe success rate</span>
+                <span className="text-blue-500 mr-1">💰</span>
+                <span>Match ingredients to grocery sales</span>
               </div>
               <div className="flex items-center text-purple-700">
                 <span className="text-purple-500 mr-1">⚡</span>
-                <span>30-second adaptations</span>
+                <span>Quick & easy meal planning</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg border text-center">
-            <div className="text-2xl font-bold text-green-600">10,247</div>
-            <div className="text-sm text-gray-600">Recipes Adapted This Week</div>
+            <div className="text-3xl mb-2">🍽️</div>
+            <div className="font-bold text-gray-800">Dietary Adaptation</div>
+            <div className="text-sm text-gray-600">Transform any recipe for gluten-free, keto, vegan, or other dietary needs</div>
           </div>
           <div className="bg-white p-4 rounded-lg border text-center">
-            <div className="text-2xl font-bold text-blue-600">94%</div>
-            <div className="text-sm text-gray-600">Success Rate</div>
+            <div className="text-3xl mb-2">💰</div>
+            <div className="font-bold text-gray-800">Smart Shopping</div>
+            <div className="text-sm text-gray-600">Match recipe ingredients to local grocery sales and save money</div>
           </div>
           <div className="bg-white p-4 rounded-lg border text-center">
-            <div className="text-2xl font-bold text-purple-600">$147</div>
-            <div className="text-sm text-gray-600">Avg Monthly Savings</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border text-center">
-            <div className="text-2xl font-bold text-orange-600">30 sec</div>
-            <div className="text-sm text-gray-600">Adaptation Time</div>
+            <div className="text-3xl mb-2">📅</div>
+            <div className="font-bold text-gray-800">Meal Planning</div>
+            <div className="text-sm text-gray-600">Plan your week, generate shopping lists, and stay organized</div>
           </div>
         </div>
 
@@ -261,12 +240,11 @@ export default function Demo() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Featured Recipes</h2>
               <p className="text-gray-600">
-                Experience our conversion-optimized recipe cards with benefit-driven headlines
+                Discover recipes designed for easy adaptation and cooking success
               </p>
             </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <User className="h-4 w-4 mr-1" />
-              <span>127 people cooking now</span>
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+              🎥 Demo Mode
             </div>
           </div>
           
@@ -310,15 +288,12 @@ export default function Demo() {
             vegan, or any dietary need. Plus get grocery sale matching and smart shopping lists.
           </p>
           
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-white flex items-center justify-center text-sm">👩</div>
-              <div className="w-8 h-8 rounded-full bg-blue-200 border-2 border-white flex items-center justify-center text-sm">👨</div>
-              <div className="w-8 h-8 rounded-full bg-purple-200 border-2 border-white flex items-center justify-center text-sm">👩</div>
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center">
+              <p className="text-sm font-medium text-yellow-800">
+                🎆 Early Access - Be among the first to experience KitchenSync!
+              </p>
             </div>
-            <span className="text-sm text-gray-600">
-              Join 10,000+ home cooks who adapted recipes this week
-            </span>
           </div>
           
           <Button 

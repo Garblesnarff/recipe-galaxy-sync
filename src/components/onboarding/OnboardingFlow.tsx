@@ -49,6 +49,26 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     );
   };
 
+  // A/B Testing Framework
+  const getABTestVariant = (testName: string, variants: string[]): string => {
+    // Simple client-side A/B testing - in production, use a proper service
+    const userId = localStorage.getItem('userId') || 'anonymous';
+    const hash = btoa(testName + userId).charCodeAt(0);
+    const variantIndex = hash % variants.length;
+    return variants[variantIndex];
+  };
+
+  // Analytics tracking helper
+  const trackEvent = (eventName: string, properties: Record<string, any> = {}) => {
+    // In a real app, this would send to your analytics service (Mixpanel, Google Analytics, etc.)
+    console.log('Analytics Event:', eventName, properties);
+
+    // Example: Send to Google Analytics 4
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', eventName, properties);
+    }
+  };
+
   const handleSignup = async () => {
     if (!email || !password) {
       toast.error("Please enter email and password");
@@ -56,9 +76,19 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     }
 
     setLoading(true);
+
+    // Track signup attempt
+    trackEvent('onboarding_signup_attempt', {
+      cooking_level: cookingLevel,
+      dietary_preferences: selectedDiets,
+      cooking_goal: cookingGoal,
+      demo_preference: demoPreference,
+      step: currentStep
+    });
+
     try {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
+      const { error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           data: {
@@ -69,15 +99,22 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
           }
         }
       });
-      
+
       if (error) {
         toast.error(error.message);
+        trackEvent('onboarding_signup_error', { error: error.message });
       } else {
         toast.success("Account created! Let's continue your setup...");
+        trackEvent('onboarding_signup_success', {
+          cooking_level: cookingLevel,
+          dietary_preferences: selectedDiets,
+          cooking_goal: cookingGoal
+        });
         setCurrentStep('first-recipe');
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
+      trackEvent('onboarding_signup_error', { error: 'Unknown error' });
     } finally {
       setLoading(false);
     }
@@ -101,86 +138,145 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         cta: "Show me foolproof recipes"
       },
       intermediate: {
-        headline: "Expand Your Cooking Confidence", 
+        headline: "Expand Your Cooking Confidence",
         subtext: "Take recipes you love and make them work for your lifestyle",
         cta: "Adapt my favorite recipes"
       },
       advanced: {
         headline: "Unleash Your Kitchen Creativity",
-        subtext: "Transform any recipe to match your vision and dietary goals", 
+        subtext: "Transform any recipe to match your vision and dietary goals",
         cta: "Start experimenting"
       }
     };
     return messages[cookingLevel as keyof typeof messages] || messages.intermediate;
   };
 
-  const renderDemoStep = () => (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl mb-4">
-          See How Easy Recipe Adaptation Is
-        </CardTitle>
-        <p className="text-gray-600">
-          Try our demo - no signup required
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="demo-card bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-6 rounded-lg">
-          <div className="flex items-center mb-4">
-            <img 
-              src="/api/placeholder/80/80" 
-              className="w-16 h-16 rounded-lg mr-4" 
-              alt="Demo recipe"
-            />
-            <div>
-              <h3 className="font-bold">Classic Chicken Alfredo</h3>
-              <p className="text-sm text-gray-600">30 minutes • Serves 4</p>
-              <div className="flex items-center mt-1">
-                <div className="flex text-yellow-500 text-sm">★★★★★</div>
-                <span className="text-xs text-gray-500 ml-1">(2,847 reviews)</span>
+  const getDynamicSocialProof = () => {
+    const proofs = {
+      beginner: {
+        testimonial: "I couldn't even make toast before KitchenSync. Now I cook dinner for my family 5 nights a week!",
+        name: "Jenny M.",
+        level: "Beginner Cook",
+        adaptations: "47 recipes adapted"
+      },
+      intermediate: {
+        testimonial: "Finally! I can make all my favorite restaurant dishes at home, adapted for my gluten-free needs.",
+        name: "Mike R.",
+        level: "Home Cook",
+        adaptations: "132 recipes adapted"
+      },
+      advanced: {
+        testimonial: "KitchenSync's AI understands the chemistry of cooking. My adaptations are restaurant-quality every time.",
+        name: "Sarah L.",
+        level: "Kitchen Pro",
+        adaptations: "289 recipes adapted"
+      }
+    };
+    return proofs[cookingLevel as keyof typeof proofs] || proofs.intermediate;
+  };
+
+  const renderDemoStep = () => {
+    // A/B Test: Different demo headlines
+    const demoHeadlineVariant = getABTestVariant('demo_headline', [
+      'See How Easy Recipe Adaptation Is',
+      'Watch Your Recipe Transform in 30 Seconds',
+      'Experience the Magic of Recipe Adaptation'
+    ]);
+
+    // A/B Test: Different CTA button text
+    const ctaVariant = getABTestVariant('demo_cta', [
+      'Adapt This Recipe for Me ✨',
+      'Transform This Recipe Now →',
+      'See the Magic Happen ✨'
+    ]);
+
+    // A/B Test: Different social proof numbers
+    const socialProofVariant = getABTestVariant('social_proof', [
+      '10,247 adapted this week',
+      '15,832 adapted this week',
+      '8,694 adapted this week'
+    ]);
+
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl mb-4">
+            {demoHeadlineVariant}
+          </CardTitle>
+          <p className="text-gray-600">
+            Try our demo - no signup required
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="demo-card bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-6 rounded-lg">
+            <div className="flex items-center mb-4">
+              <img
+                src="/api/placeholder/80/80"
+                className="w-16 h-16 rounded-lg mr-4"
+                alt="Demo recipe"
+              />
+              <div>
+                <h3 className="font-bold">Classic Chicken Alfredo</h3>
+                <p className="text-sm text-gray-600">30 minutes • Serves 4</p>
+                <div className="flex items-center mt-1">
+                  <div className="flex text-yellow-500 text-sm">★★★★★</div>
+                  <span className="text-xs text-gray-500 ml-1">(2,847 reviews)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm md:text-base font-medium mb-3">I need this recipe to be:</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {['Gluten-free', 'Dairy-free', 'Low-carb', 'Vegetarian'].map(diet => (
+                  <Button
+                    key={diet}
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      setDemoPreference(diet);
+                      trackEvent('demo_diet_selected', {
+                        diet: diet,
+                        variant: demoHeadlineVariant
+                      });
+                    }}
+                    className={`${demoPreference === diet ? 'bg-green-100 border-green-500' : ''} h-auto py-3 px-4 text-sm md:text-base min-h-[48px] touch-manipulation`}
+                  >
+                    {diet}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 mb-4"
+              onClick={() => {
+                setCurrentStep('email');
+                trackEvent('demo_conversion', {
+                  variant: demoHeadlineVariant,
+                  selected_diet: demoPreference
+                });
+              }}
+              disabled={!demoPreference}
+            >
+              {ctaVariant}
+            </Button>
+
+            <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+              <div className="flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                <span>{socialProofVariant}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                <span>30 second adaptation</span>
               </div>
             </div>
           </div>
-          
-          <div className="mb-4">
-            <p className="text-sm font-medium mb-2">I need this recipe to be:</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {['Gluten-free', 'Dairy-free', 'Low-carb', 'Vegetarian'].map(diet => (
-                <Button
-                  key={diet}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDemoPreference(diet)}
-                  className={`${demoPreference === diet ? 'bg-green-100 border-green-500' : ''} text-xs`}
-                >
-                  {diet}
-                </Button>
-              ))}
-            </div>
-          </div>
-          
-          <Button 
-            className="w-full bg-green-600 hover:bg-green-700 mb-4"
-            onClick={() => setCurrentStep('email')}
-            disabled={!demoPreference}
-          >
-            Adapt This Recipe for Me ✨
-          </Button>
-          
-          <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-            <div className="flex items-center">
-              <Users className="h-4 w-4 mr-1" />
-              <span>10,247 adapted this week</span>
-            </div>
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>30 second adaptation</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderEmailStep = () => (
     <Card className="max-w-md mx-auto">
@@ -252,7 +348,13 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                   className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
                     cookingLevel === option.level ? 'border-green-500 bg-green-50' : ''
                   }`}
-                  onClick={() => setCookingLevel(option.level as CookingLevel)}
+                  onClick={() => {
+                    setCookingLevel(option.level as CookingLevel);
+                    trackEvent('onboarding_cooking_level_selected', {
+                      level: option.level,
+                      step: currentStep
+                    });
+                  }}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-2">{option.icon}</div>
@@ -264,6 +366,24 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
             </div>
           </div>
           
+          {/* Dynamic Social Proof - Shows when cooking level is selected */}
+          {cookingLevel && (
+            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <div className="flex -space-x-2 mr-3">
+                  <div className="w-8 h-8 rounded-full bg-green-200 border-2 border-white flex items-center justify-center text-xs">👩</div>
+                </div>
+                <div>
+                  <div className="font-bold text-green-800 text-sm">{getDynamicSocialProof().name}</div>
+                  <div className="text-xs text-green-600">{getDynamicSocialProof().level} • {getDynamicSocialProof().adaptations}</div>
+                </div>
+              </div>
+              <p className="text-sm text-green-700 italic">
+                "{getDynamicSocialProof().testimonial}"
+              </p>
+            </div>
+          )}
+
           {/* Dietary preferences */}
           <div>
             <h3 className="font-bold mb-4">Any dietary preferences?</h3>
@@ -345,7 +465,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
   const renderFirstRecipeStep = () => {
     const message = getPersonalizedMessage();
-    
+
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
@@ -357,9 +477,9 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         <CardContent>
           <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-6">
             <div className="flex items-center mb-4">
-              <img 
-                src="/api/placeholder/80/80" 
-                className="w-20 h-20 rounded-lg mr-4" 
+              <img
+                src="/api/placeholder/80/80"
+                className="w-20 h-20 rounded-lg mr-4"
                 alt="Recommended recipe"
               />
               <div>
@@ -372,7 +492,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Success confidence boosters */}
             <div className="bg-white p-3 rounded border mb-4">
               <div className="flex items-center mb-2">
@@ -382,23 +502,31 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
               <ul className="text-sm text-gray-700 space-y-1">
                 <li>✓ Matches your {selectedDiets.join(' & ') || 'dietary'} needs</li>
                 <li>✓ Perfect for {cookingLevel} skill level</li>
-                <li>✓ Helps you {cookingGoal === 'save_time' ? 'save time on meal planning' : 
+                <li>✓ Helps you {cookingGoal === 'save_time' ? 'save time on meal planning' :
                   cookingGoal === 'eat_healthier' ? 'eat healthier without sacrificing taste' :
                   cookingGoal === 'save_money' ? 'save money on groceries' : 'learn new cooking skills'}</li>
                 <li>✓ 94% success rate - nearly impossible to mess up!</li>
               </ul>
             </div>
-            
-            <Button 
+
+            <Button
               className="w-full bg-green-600 hover:bg-green-700 text-lg py-3 mb-3"
               onClick={() => {
+                trackEvent('onboarding_completed', {
+                  cooking_level: cookingLevel,
+                  dietary_preferences: selectedDiets,
+                  cooking_goal: cookingGoal,
+                  demo_preference: demoPreference,
+                  total_steps: steps.length,
+                  completion_time: Date.now() // You could track actual start time
+                });
                 navigate('/dashboard');
                 onComplete?.();
               }}
             >
               Start Cooking - Get MY Adapted Recipe 🍽️
             </Button>
-            
+
             {/* Social proof */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
@@ -413,23 +541,92 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
               </div>
             </div>
           </div>
+
+          {/* Post-Onboarding Success Momentum */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 p-6 rounded-lg">
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-2">🎉</div>
+              <h3 className="font-bold text-lg text-yellow-800">Welcome to KitchenSync!</h3>
+              <p className="text-sm text-yellow-700">
+                You're now part of a community of {cookingLevel === 'beginner' ? 'successful home cooks' : cookingLevel === 'intermediate' ? 'confident chefs' : 'culinary innovators'}!
+              </p>
+            </div>
+
+            {/* Momentum Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center bg-white/80 p-3 rounded">
+                <div className="text-xl font-bold text-green-600">4</div>
+                <div className="text-xs text-gray-600">Free adaptations left</div>
+              </div>
+              <div className="text-center bg-white/80 p-3 rounded">
+                <div className="text-xl font-bold text-blue-600">$12.50</div>
+                <div className="text-xs text-gray-600">Avg monthly savings</div>
+              </div>
+            </div>
+
+            {/* Next Steps for Habit Formation */}
+            <div className="space-y-2">
+              <h4 className="font-bold text-sm text-yellow-800">What would you like to do next?</h4>
+              <div className="space-y-2">
+                {[
+                  {
+                    action: 'browse_recipes',
+                    title: 'Discover More Recipes',
+                    desc: 'Browse our collection of 10,000+ adaptable recipes',
+                    icon: '📖',
+                    commitment: 'low'
+                  },
+                  {
+                    action: 'build_collection',
+                    title: 'Start a Recipe Collection',
+                    desc: 'Save recipes you want to try and organize by theme',
+                    icon: '📚',
+                    commitment: 'medium'
+                  },
+                  {
+                    action: 'plan_week',
+                    title: 'Plan This Week\'s Meals',
+                    desc: 'Get grocery list + meal plan for the whole week',
+                    icon: '📅',
+                    commitment: 'high'
+                  }
+                ].map(step => (
+                  <div
+                    key={step.action}
+                    className="p-3 border border-yellow-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
+                    onClick={() => {
+                      alert(`🚀 Next: ${step.title}\n\n${step.desc}\n\nThis would navigate to the ${step.action.replace('_', ' ')} section.`);
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-lg mr-3">{step.icon}</span>
+                      <div>
+                        <div className="font-medium text-sm">{step.title}</div>
+                        <div className="text-xs text-gray-600">{step.desc}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-yellow-50 py-4 md:py-8">
       <div className="container max-w-4xl mx-auto px-4">
-        {/* Progress indicator */}
-        <div className="mb-8">
+        {/* Mobile-Optimized Progress indicator */}
+        <div className="mb-6 md:mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Step {currentStepIndex + 1} of {steps.length}</span>
-            <span className="text-sm text-gray-600">{Math.round(progress)}% complete</span>
+            <span className="text-sm md:text-base text-gray-600">Step {currentStepIndex + 1} of {steps.length}</span>
+            <span className="text-sm md:text-base text-gray-600">{Math.round(progress)}% complete</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 md:h-3" />
         </div>
-        
+
         {/* Step content */}
         {currentStep === 'demo' && renderDemoStep()}
         {currentStep === 'email' && renderEmailStep()}
@@ -437,6 +634,62 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         {currentStep === 'goals' && renderGoalsStep()}
         {currentStep === 'first-recipe' && renderFirstRecipeStep()}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Step {currentStepIndex + 1} of {steps.length}
+          </div>
+          <div className="flex space-x-2">
+            {currentStep !== 'demo' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentIndex = steps.indexOf(currentStep);
+                  if (currentIndex > 0) {
+                    setCurrentStep(steps[currentIndex - 1] as OnboardingStep);
+                  }
+                }}
+                className="px-4 py-2 text-sm"
+              >
+                Back
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => {
+                // Handle next step logic based on current step
+                if (currentStep === 'demo' && demoPreference) {
+                  setCurrentStep('email');
+                } else if (currentStep === 'email' && email && password) {
+                  setCurrentStep('profile');
+                } else if (currentStep === 'profile' && cookingLevel) {
+                  setCurrentStep('goals');
+                } else if (currentStep === 'goals' && cookingGoal) {
+                  handleSignup();
+                } else if (currentStep === 'first-recipe') {
+                  navigate('/dashboard');
+                  onComplete?.();
+                }
+              }}
+              disabled={
+                (currentStep === 'demo' && !demoPreference) ||
+                (currentStep === 'email' && (!email || !password)) ||
+                (currentStep === 'profile' && !cookingLevel) ||
+                (currentStep === 'goals' && !cookingGoal)
+              }
+              className="px-6 py-2 text-sm bg-green-600 hover:bg-green-700"
+            >
+              {currentStep === 'first-recipe' ? 'Start Cooking! 🍽️' : 'Continue →'}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Add bottom padding on mobile to account for fixed navigation */}
+      <div className="md:hidden h-20" />
     </div>
   );
 };
