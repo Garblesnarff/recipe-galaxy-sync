@@ -1,3 +1,6 @@
+import { RecipeIngredient } from './recipeIngredient';
+import { RecipeRating } from './recipeData';
+
 export interface RecipeFormData {
   title: string;
   description: string;
@@ -50,7 +53,7 @@ export interface Recipe {
   title: string;
   description: string;
   image_url?: string;
-  ingredients: any[];
+  ingredients: RecipeIngredient[] | string[];  // Support both structured and simple formats
   instructions: string;
   prep_time?: string;
   cook_time?: string;
@@ -64,7 +67,7 @@ export interface Recipe {
   cooking_method?: string;
   season_occasion?: string[];
   rating?: number;
-  ratings?: any[];
+  ratings?: RecipeRating[];  // Properly typed ratings array
   is_favorite?: boolean;
   created_at?: string;
   updated_at?: string;

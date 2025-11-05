@@ -1,13 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { RecipeSaveData, RecipeUpdateData } from "@/types/recipeData";
 
 /**
  * Saves a new recipe to the database
  * Requires user_id
  */
-export const saveRecipe = async (recipeData: any, userId: string) => {
-  const ingredientsArray = Array.isArray(recipeData.ingredients) 
-    ? recipeData.ingredients 
+export const saveRecipe = async (recipeData: RecipeSaveData, userId: string) => {
+  const ingredientsArray = Array.isArray(recipeData.ingredients)
+    ? recipeData.ingredients
     : [];
   const dataToInsert = {
     ...recipeData,
@@ -28,14 +29,14 @@ export const saveRecipe = async (recipeData: any, userId: string) => {
  * Updates an existing recipe in the database
  * Requires user_id to verify RLS, but do not update user_id after creation.
  */
-export const updateRecipe = async (id: string, updates: any) => {
-  const ingredientsArray = updates.ingredients && Array.isArray(updates.ingredients) 
-    ? updates.ingredients 
-    : [];
-  const dataToUpdate = {
-    ...updates,
-    ingredients: ingredientsArray
-  };
+export const updateRecipe = async (id: string, updates: RecipeUpdateData) => {
+  const dataToUpdate: Partial<RecipeUpdateData> = { ...updates };
+
+  // Ensure ingredients is array if provided
+  if (updates.ingredients && Array.isArray(updates.ingredients)) {
+    dataToUpdate.ingredients = updates.ingredients;
+  }
+
   try {
     const { data, error } = await supabase
       .from("recipes")

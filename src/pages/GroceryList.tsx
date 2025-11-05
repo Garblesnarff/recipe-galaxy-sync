@@ -16,6 +16,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { groceryItemSchema } from "@/lib/validation";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const GroceryList = () => {
   const navigate = useNavigate();
@@ -57,19 +60,34 @@ const GroceryList = () => {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItem.trim() || !userId) return;
+    if (!userId) {
+      toast.error("You must be logged in to add items");
+      return;
+    }
 
-    const success = await addToGroceryList(
-      {
+    try {
+      // Validate input using Zod schema
+      const validatedData = groceryItemSchema.parse({
         item_name: newItem.trim(),
         is_purchased: false,
-      },
-      userId
-    );
+      });
 
-    if (success) {
-      setNewItem("");
-      refetch();
+      const success = await addToGroceryList(validatedData, userId);
+
+      if (success) {
+        setNewItem("");
+        refetch();
+        toast.success("Item added to grocery list");
+      } else {
+        toast.error("Failed to add item");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // Display first validation error
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("Failed to add item");
+      }
     }
   };
 

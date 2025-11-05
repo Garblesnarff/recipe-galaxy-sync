@@ -268,55 +268,103 @@ export const RecipeFilterBar = ({
       {/* Filter panel */}
       {showFilters && (
         <div className="border-t pt-3 animate-in fade-in">
-          <div className="flex border-b mb-3">
+          <div className="flex border-b mb-3" role="tablist" aria-label="Filter categories">
             <button
+              role="tab"
+              aria-selected={selectedTab === 'categories'}
+              aria-controls="categories-panel"
+              id="categories-tab"
               className={`px-4 py-2 ${selectedTab === 'categories' ? 'border-b-2 border-primary font-medium' : 'text-gray-500'}`}
               onClick={() => setSelectedTab('categories')}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') {
+                  setSelectedTab('cuisine');
+                  e.preventDefault();
+                }
+              }}
             >
               Categories
             </button>
             <button
+              role="tab"
+              aria-selected={selectedTab === 'cuisine'}
+              aria-controls="cuisine-panel"
+              id="cuisine-tab"
               className={`px-4 py-2 ${selectedTab === 'cuisine' ? 'border-b-2 border-primary font-medium' : 'text-gray-500'}`}
               onClick={() => setSelectedTab('cuisine')}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') {
+                  setSelectedTab('dietary');
+                  e.preventDefault();
+                } else if (e.key === 'ArrowLeft') {
+                  setSelectedTab('categories');
+                  e.preventDefault();
+                }
+              }}
             >
               Cuisine
             </button>
             <button
+              role="tab"
+              aria-selected={selectedTab === 'dietary'}
+              aria-controls="dietary-panel"
+              id="dietary-tab"
               className={`px-4 py-2 ${selectedTab === 'dietary' ? 'border-b-2 border-primary font-medium' : 'text-gray-500'}`}
               onClick={() => setSelectedTab('dietary')}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') {
+                  setSelectedTab('other');
+                  e.preventDefault();
+                } else if (e.key === 'ArrowLeft') {
+                  setSelectedTab('cuisine');
+                  e.preventDefault();
+                }
+              }}
             >
               Dietary
             </button>
             <button
+              role="tab"
+              aria-selected={selectedTab === 'other'}
+              aria-controls="other-panel"
+              id="other-tab"
               className={`px-4 py-2 ${selectedTab === 'other' ? 'border-b-2 border-primary font-medium' : 'text-gray-500'}`}
               onClick={() => setSelectedTab('other')}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowLeft') {
+                  setSelectedTab('dietary');
+                  e.preventDefault();
+                }
+              }}
             >
               Other
             </button>
           </div>
 
           {selectedTab === 'categories' && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {CATEGORY_OPTIONS.map((category) => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`category-${category}`}
-                    checked={filters.categories.includes(category)}
-                    onCheckedChange={() => toggleArrayFilter('categories', category)}
-                  />
-                  <label 
-                    htmlFor={`category-${category}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {category}
-                  </label>
-                </div>
-              ))}
+            <div role="tabpanel" id="categories-panel" aria-labelledby="categories-tab">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {CATEGORY_OPTIONS.map((category) => (
+                  <div key={category} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category}`}
+                      checked={filters.categories.includes(category)}
+                      onCheckedChange={() => toggleArrayFilter('categories', category)}
+                    />
+                    <label
+                      htmlFor={`category-${category}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {category}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {selectedTab === 'cuisine' && (
-            <div className="space-y-4">
+            <div role="tabpanel" id="cuisine-panel" aria-labelledby="cuisine-tab" className="space-y-4">
               <div>
                 <Label htmlFor="cuisine-type">Cuisine Type</Label>
                 <Select
@@ -360,7 +408,7 @@ export const RecipeFilterBar = ({
           )}
 
           {selectedTab === 'dietary' && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div role="tabpanel" id="dietary-panel" aria-labelledby="dietary-tab" className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {DIET_TAG_OPTIONS.map((tag) => (
                 <div key={tag} className="flex items-center space-x-2">
                   <Checkbox 
@@ -380,7 +428,7 @@ export const RecipeFilterBar = ({
           )}
 
           {selectedTab === 'other' && (
-            <div className="space-y-4">
+            <div role="tabpanel" id="other-panel" aria-labelledby="other-tab" className="space-y-4">
               <div>
                 <Label htmlFor="difficulty">Difficulty</Label>
                 <Select

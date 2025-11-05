@@ -64,12 +64,16 @@ export const GroceryItem = ({
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
-            <div 
+            <button
+              type="button"
               className={`checkbox-circle ${item.is_purchased ? 'checked' : ''} cursor-pointer`}
               onClick={handleToggleStatus}
+              role="checkbox"
+              aria-checked={item.is_purchased}
+              aria-label={`Mark ${item.item_name} as ${item.is_purchased ? 'not purchased' : 'purchased'}`}
             >
               <Check className={`h-3 w-3 ${item.is_purchased ? 'opacity-100' : 'opacity-0'}`} />
-            </div>
+            </button>
             
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -141,6 +145,7 @@ export const GroceryItem = ({
             size="icon"
             className="h-8 w-8 text-gray-400 hover:text-red-500"
             onClick={handleDelete}
+            aria-label={`Delete ${item.item_name} from grocery list`}
           >
             <Trash className="h-4 w-4" />
           </Button>
