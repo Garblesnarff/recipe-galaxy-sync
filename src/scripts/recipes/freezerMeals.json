@@ -1,0 +1,73 @@
+[
+  {
+    "title": "Freezer Chicken Enchiladas",
+    "description": "Cheesy chicken enchiladas that freeze beautifully. Just thaw and bake for an easy dinner.",
+    "image_url": "https://images.unsplash.com/photo-1599974789935-3814373f155f?w=800",
+    "ingredients": [
+      "3 lbs chicken breast, cooked and shredded",
+      "16 flour tortillas",
+      "4 cups shredded Mexican cheese blend",
+      "2 cans (10 oz each) red enchilada sauce",
+      "1 can (4 oz) diced green chiles",
+      "1 cup sour cream",
+      "1 tsp cumin",
+      "1 tsp garlic powder",
+      "Salt and pepper to taste"
+    ],
+    "instructions": "Mix shredded chicken with chiles, 2 cups cheese, sour cream, and spices. Pour 1/2 cup sauce in pan. Fill tortillas with mixture, roll, and place in pan. Top with remaining sauce and cheese. To freeze: wrap tightly with foil. To bake from frozen: 375°F for 45-50 minutes covered, then 10-15 minutes uncovered.",
+    "prep_time": "30 minutes",
+    "cook_time": "45 minutes",
+    "servings": 8,
+    "difficulty": "Easy",
+    "cuisine_type": "Mexican",
+    "categories": ["Main Course", "Freezer Meal", "Make-Ahead"],
+    "diet_tags": [],
+    "cooking_method": "Baking"
+  },
+  {
+    "title": "Make-Ahead Lasagna",
+    "description": "Classic Italian lasagna that freezes perfectly for easy weeknight dinners.",
+    "image_url": "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800",
+    "ingredients": [
+      "1 lb ground beef",
+      "1 lb Italian sausage",
+      "1 onion, diced",
+      "2 jars marinara sauce",
+      "15 oz ricotta cheese",
+      "2 eggs",
+      "4 cups mozzarella cheese",
+      "12 lasagna noodles",
+      "2 tsp Italian seasoning"
+    ],
+    "instructions": "Cook noodles. Brown meat with onion, add sauce. Mix ricotta with eggs. Layer: sauce, noodles, ricotta, sauce, mozzarella. Repeat. Top with remaining cheese. Freeze or bake at 375°F for 60 minutes.",
+    "prep_time": "45 minutes",
+    "cook_time": "60 minutes",
+    "servings": 12,
+    "difficulty": "Medium",
+    "cuisine_type": "Italian",
+    "categories": ["Main Course", "Freezer Meal", "Pasta"],
+    "diet_tags": [],
+    "cooking_method": "Baking"
+  },
+  {
+    "title": "Freezer Breakfast Burritos",
+    "description": "Grab-and-go breakfast burritos packed with eggs, sausage, and cheese.",
+    "image_url": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800",
+    "ingredients": [
+      "12 large eggs",
+      "1 lb breakfast sausage",
+      "2 cups cheddar cheese",
+      "1 bell pepper, diced",
+      "12 flour tortillas"
+    ],
+    "instructions": "Cook sausage, sauté peppers, scramble eggs. Fill tortillas with mixture and cheese, roll tightly. Wrap individually and freeze. Reheat from frozen in microwave for 2-3 minutes.",
+    "prep_time": "20 minutes",
+    "cook_time": "15 minutes",
+    "servings": 12,
+    "difficulty": "Easy",
+    "cuisine_type": "Mexican",
+    "categories": ["Breakfast", "Freezer Meal", "Quick & Easy"],
+    "diet_tags": [],
+    "cooking_method": "Pan-frying"
+  }
+]
