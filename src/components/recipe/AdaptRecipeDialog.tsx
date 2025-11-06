@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { adaptRecipeForDietaryRestrictions } from "@/services/recipe";
 import { DietaryRestriction } from "@/types/dietary";
+import { AdaptedRecipe, RecipeSubstitution } from "@/types/adaptedRecipe";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,7 @@ import { toast } from "sonner";
 
 interface AdaptRecipeDialogProps {
   recipeId: string;
-  onAdapt: (adaptedRecipe: any) => void;
+  onAdapt: (adaptedRecipe: AdaptedRecipe) => void;
 }
 
 export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps) => {
@@ -82,7 +83,7 @@ export const AdaptRecipeDialog = ({ recipeId, onAdapt }: AdaptRecipeDialogProps)
       // Show substitution information
       if (adaptedRecipe.substitutions && adaptedRecipe.substitutions.length > 0) {
         const substitutionInfo = adaptedRecipe.substitutions.map(
-          (sub: any) => `• ${sub.original} → ${sub.substitute}`
+          (sub: RecipeSubstitution) => `• ${sub.original} → ${sub.substitute}`
         ).join('\n');
         
         toast.info("Substitutions made", {

@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Recipe } from "@/types/recipe";
 import { DietaryRestriction } from "@/types/dietary";
+import { AdaptedRecipe } from "@/types/adaptedRecipe";
 import { RecipeHeader } from "@/components/recipe/RecipeHeader";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { SaleIndicator } from "@/components/SaleIndicator";
@@ -20,7 +21,7 @@ interface RecipeContentProps {
   isAdapted: boolean;
   currentServings: number;
   setCurrentServings: (servings: number) => void;
-  handleAdaptRecipe: (recipe: any) => void;
+  handleAdaptRecipe: (recipe: AdaptedRecipe) => void;
   handleResetAdaptation: () => void;
   isFavorite: boolean;
   handleToggleFavorite: () => void;

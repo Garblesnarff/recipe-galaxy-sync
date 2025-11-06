@@ -15,8 +15,8 @@ export const addToGroceryList = async (
       user_id: userId
     };
     const { data, error } = await supabase
-      .from("grocery_items" as any)
-      .insert([groceryItem as any])
+      .from("grocery_items")
+      .insert([groceryItem])
       .select();
 
     if (error) {
@@ -55,8 +55,8 @@ export const addIngredientsToGroceryList = async (
     }));
 
     const { data, error } = await supabase
-      .from("grocery_items" as any)
-      .insert(itemsWithUserId as any)
+      .from("grocery_items")
+      .insert(itemsWithUserId)
       .select();
 
     if (error) {

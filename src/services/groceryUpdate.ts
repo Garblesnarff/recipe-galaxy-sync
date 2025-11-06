@@ -7,7 +7,7 @@ import { handleGroceryError } from "./groceryUtils";
 export const toggleItemPurchasedStatus = async (id: string, currentStatus: boolean): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from("grocery_items" as any)
+      .from("grocery_items")
       .update({ is_purchased: !currentStatus })
       .eq("id", id);
 
@@ -27,7 +27,7 @@ export const toggleItemPurchasedStatus = async (id: string, currentStatus: boole
 export const deleteGroceryItem = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from("grocery_items" as any)
+      .from("grocery_items")
       .delete()
       .eq("id", id);
 
@@ -48,7 +48,7 @@ export const deleteGroceryItem = async (id: string): Promise<boolean> => {
 export const clearPurchasedItems = async (): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from("grocery_items" as any)
+      .from("grocery_items")
       .delete()
       .eq("is_purchased", true);
 
@@ -71,7 +71,7 @@ export const clearAllItems = async (): Promise<boolean> => {
     // Using a different approach to delete all items
     // Instead of using a condition that tries to match all items
     const { error } = await supabase
-      .from("grocery_items" as any)
+      .from("grocery_items")
       .delete()
       .not("id", "is", null); // Delete all items where id is not null (all items)
 

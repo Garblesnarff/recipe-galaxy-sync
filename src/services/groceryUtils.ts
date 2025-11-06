@@ -53,7 +53,7 @@ export const parseIngredient = (ingredient: string, recipeId?: string) => {
 };
 
 // Handle and log errors
-export const handleGroceryError = (error: any, message: string): null => {
+export const handleGroceryError = (error: unknown, message: string): null => {
   console.error(`Error in ${message}:`, error);
   toast.error("An unexpected error occurred");
   return null;

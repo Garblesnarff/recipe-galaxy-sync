@@ -1,9 +1,10 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
 import { Button } from "@/components/ui/button";
+import { Recipe } from "@/types/recipe";
 
 interface CollectionRecipeGridProps {
-  recipes: any[];
+  recipes: Recipe[];
   onRemoveRecipe: (recipeId: string) => void;
 }
 

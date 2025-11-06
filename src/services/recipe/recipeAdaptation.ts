@@ -1,10 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { AdaptedRecipe } from "@/types/adaptedRecipe";
 import { toast } from "sonner";
 
 // Define response type to ensure proper type checking
 interface EdgeFunctionResponse {
-  data: any;
+  data: AdaptedRecipe | null;
   error: null | {
     message?: string;
     error?: string;

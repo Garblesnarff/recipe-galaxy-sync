@@ -16,6 +16,8 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdaptRecipe from "@/pages/AdaptRecipe";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NetworkStatusBanner } from "@/hooks/useNetworkStatus";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -59,7 +61,8 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <>
+    <ErrorBoundary>
+      <NetworkStatusBanner />
       <div className="app-container min-h-screen">
         <Routes>
           {/* Public Routes */}
@@ -83,7 +86,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-    </>
+    </ErrorBoundary>
   );
 }
 export default App;

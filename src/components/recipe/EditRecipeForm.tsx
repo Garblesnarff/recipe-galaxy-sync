@@ -8,6 +8,7 @@ import { RecipeCategories } from "@/components/recipe/RecipeCategories";
 import { RecipeFormData } from "@/types/recipe";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DietaryRestriction } from "@/types/dietary";
+import { RecipeSubstitution } from "@/types/adaptedRecipe";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -96,7 +97,7 @@ export const EditRecipeForm = ({
       // Show substitution information
       if (adaptedRecipe.substitutions && adaptedRecipe.substitutions.length > 0) {
         const substitutionInfo = adaptedRecipe.substitutions.map(
-          (sub: any) => `• ${sub.original} → ${sub.substitute}: ${sub.reason}`
+          (sub: RecipeSubstitution) => `• ${sub.original} → ${sub.substitute}: ${sub.reason}`
         ).join('\n');
         
         toast.info("Substitutions made", {

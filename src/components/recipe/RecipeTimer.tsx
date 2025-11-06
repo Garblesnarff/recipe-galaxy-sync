@@ -10,8 +10,8 @@ import { toast } from "sonner";
 export interface RecipeTimerProps {
   minutes?: number;
   label?: string;
-  prepTime?: any;
-  cookTime?: any;
+  prepTime?: string | number;
+  cookTime?: string | number;
   isOpen?: boolean;
   onOpen?: () => void;
   onClose?: () => void;

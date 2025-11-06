@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { IngredientMatch } from "./types";
+import { SupabaseError } from "@/types/adaptedRecipe";
 import { normalizeIngredient } from "./utils";
 
 /**
@@ -13,19 +14,21 @@ export const testIngredientMatching = async (
   try {
     // Clean and normalize the ingredient
     const normalizedIngredient = normalizeIngredient(ingredient);
-    
+
     // Get ingredient mappings
-    const { data: mappingsData, error: mappingsError } = await (supabase
-      .from("ingredient_mappings" as any)
-      .select("canonical_name, variant_names, category")) as unknown as { 
-        data: { canonical_name: string, variant_names: string[], category: string }[], 
-        error: any 
+    const { data: mappingsData, error: mappingsError } = await supabase
+      .from("ingredient_mappings")
+      .select("canonical_name, variant_names, category") as unknown as {
+        data: { canonical_name: string, variant_names: string[], category: string }[] | null,
+        error: SupabaseError | null
       };
 
     if (mappingsError) {
       console.error("Error fetching ingredient mappings:", mappingsError);
       return null;
     }
+
+    if (!mappingsData) return null;
 
     // Find matches
     const matches = mappingsData.filter(mapping => {

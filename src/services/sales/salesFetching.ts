@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { IngredientSale, SaleItem } from "./types";
+import { SupabaseError } from "@/types/adaptedRecipe";
 import { doesIngredientMatch, normalizeIngredient } from "./utils";
 
 /**
@@ -15,25 +16,27 @@ export const fetchSalesForIngredients = async (
 
   try {
     // Get all active sales
-    const { data: salesData, error: salesError } = await (supabase
-      .from("sales" as any)
+    const { data: salesData, error: salesError } = await supabase
+      .from("sales")
       .select(`
-        id, 
-        store_id, 
-        item_name, 
-        sale_price, 
-        regular_price, 
-        discount_percentage, 
-        sale_ends_at, 
+        id,
+        store_id,
+        item_name,
+        sale_price,
+        regular_price,
+        discount_percentage,
+        sale_ends_at,
         stores (
           name
         )
-      `)) as unknown as { data: SaleItem[], error: any };
+      `) as unknown as { data: SaleItem[] | null, error: SupabaseError | null };
 
     if (salesError) {
       console.error("Error fetching sales data:", salesError);
       return [];
     }
+
+    if (!salesData) return [];
 
     // Format the sales data
     const formattedSales = salesData.map((sale) => ({
@@ -48,14 +51,16 @@ export const fetchSalesForIngredients = async (
     }));
 
     // Get ingredient mappings
-    const { data: mappingsData, error: mappingsError } = await (supabase
-      .from("ingredient_mappings" as any)
-      .select("canonical_name, variant_names")) as unknown as { data: { canonical_name: string, variant_names: string[] }[], error: any };
+    const { data: mappingsData, error: mappingsError } = await supabase
+      .from("ingredient_mappings")
+      .select("canonical_name, variant_names") as unknown as { data: { canonical_name: string, variant_names: string[] }[] | null, error: SupabaseError | null };
 
     if (mappingsError) {
       console.error("Error fetching ingredient mappings:", mappingsError);
       return [];
     }
+
+    if (!mappingsData) return [];
 
     // Build a map of ingredient variants to canonical names
     const ingredientVariantMap: Record<string, string> = {};

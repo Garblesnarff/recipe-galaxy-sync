@@ -3,10 +3,11 @@ import { Tag, TagLabel, TagLeftIcon } from "@/components/ui/tag";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TagsIcon } from "lucide-react";
 import { useMemo } from "react";
+import { RecipeIngredient } from "@/types/recipeIngredient";
 
 interface SaleIndicatorProps {
   salesCount?: number;
-  ingredients?: any[];
+  ingredients?: (string | RecipeIngredient)[];
   className?: string;
   onlyIcon?: boolean;
 }

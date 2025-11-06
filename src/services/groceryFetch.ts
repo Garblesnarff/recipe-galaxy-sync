@@ -8,7 +8,7 @@ import { GroceryItem } from "./groceryTypes";
 export const getGroceryList = async (): Promise<GroceryItem[]> => {
   try {
     const { data, error } = await supabase
-      .from("grocery_items" as any)
+      .from("grocery_items")
       .select("*")
       .order("is_purchased", { ascending: true })
       .order("created_at", { ascending: false });

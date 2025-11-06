@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { getUserSubscription, createCheckoutSession } from '@/services/subscriptionService';
+import { Subscription } from '@/types/subscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Billing = () => {
   const { session } = useAuthSession();
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

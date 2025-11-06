@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useSalesData } from "@/hooks/useSalesData";
+import { useSalesDataFromContext } from "@/contexts/SalesDataContext";
 import { SaleIndicator } from "@/components/SaleIndicator";
 import { RecipeCardImage } from "./recipe/card/RecipeCardImage";
 import { RecipeCardMeta } from "./recipe/card/RecipeCardMeta";
@@ -47,7 +47,8 @@ const RecipeCard = memo(({
   adaptable = true,
   trending = false,
 }: RecipeCardProps) => {
-  const { salesData } = useSalesData(id);
+  // Use batched sales data from context (performance optimization)
+  const { salesData } = useSalesDataFromContext(id);
   const processedImageUrl = normalizeImageUrl(image);
   const [showAdaptButton, setShowAdaptButton] = useState(false);
 

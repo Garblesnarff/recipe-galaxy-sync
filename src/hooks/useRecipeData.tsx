@@ -2,6 +2,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RecipeFilters, SortOption } from "@/types/recipe";
+import { parseSupabaseError } from "@/lib/errors";
+import { withTimeout } from "@/lib/queryClient";
 
 export const useRecipeData = (filters: RecipeFilters, sortOption: SortOption) => {
   return useQuery({
@@ -53,10 +55,24 @@ export const useRecipeData = (filters: RecipeFilters, sortOption: SortOption) =>
         query = query.order(sortOption.value, { ascending: sortOption.direction === 'asc' });
       }
 
-      const { data, error } = await query;
-      
-      if (error) throw error;
+      // Execute query with timeout
+      const { data, error } = await withTimeout(
+        query,
+        30000, // 30 second timeout
+        new Error('Recipe fetch timed out. Please try again.')
+      );
+
+      if (error) {
+        // Parse and throw enhanced error
+        throw parseSupabaseError(error);
+      }
+
       return data || [];
-    }
+    },
+    // Retry configuration is handled globally by queryClient
+    // but can be overridden here if needed
+    meta: {
+      errorMessage: 'Failed to load recipes',
+    },
   });
 };

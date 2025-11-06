@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom'
-import { beforeAll, afterEach, afterAll } from 'vitest'
+import { beforeAll, afterEach, afterAll, expect } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@/test/mocks' // Import mocks here to ensure they are loaded first
+import { toHaveNoViolations } from 'jest-axe'
+
+// Extend Vitest's expect with jest-axe matchers
+expect.extend(toHaveNoViolations)
 
 // Mock window.matchMedia (not implemented in jsdom)
 Object.defineProperty(window, 'matchMedia', {

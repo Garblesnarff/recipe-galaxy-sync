@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Collection } from "@/types/collection";
+import { SupabaseError } from "@/types/adaptedRecipe";
 import { toast } from "sonner";
 
 export const createCollection = async (
@@ -8,18 +9,19 @@ export const createCollection = async (
   userId: string
 ): Promise<string | null> => {
   try {
-    const { data, error } = await (supabase
-      .from('collections' as any)
+    const { data, error } = await supabase
+      .from('collections')
       .insert({
         name: collection.name,
         description: collection.description || '',
         cover_image_url: collection.cover_image_url,
         user_id: userId,
-      } as any)
+      })
       .select('id')
-      .single()) as unknown as { data: { id: string }, error: any };
+      .single() as unknown as { data: { id: string } | null, error: SupabaseError | null };
 
     if (error) throw error;
+    if (!data) throw new Error("No data returned from collection creation");
     toast.success("Collection created successfully");
     return data.id;
   } catch (error) {

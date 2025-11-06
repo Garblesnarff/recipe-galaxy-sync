@@ -1,4 +1,5 @@
 import { Recipe } from '@/types/recipe';
+import { RecipeIngredient } from '@/types/recipeIngredient';
 import { DietaryRestriction } from '@/types/dietary';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,8 +21,8 @@ export const adaptRecipeForDiet = async (
     // complex logic to check ingredients against restrictions and find substitutions.
     const adaptedRecipe = { ...recipe };
     adaptedRecipe.title = `${recipe.title} (Adapted)`;
-    adaptedRecipe.ingredients = recipe.ingredients.map((ing: any) => {
-      if (ing.name.toLowerCase().includes('peanut')) {
+    adaptedRecipe.ingredients = (recipe.ingredients as RecipeIngredient[]).map((ing: RecipeIngredient) => {
+      if (typeof ing === 'object' && 'name' in ing && ing.name.toLowerCase().includes('peanut')) {
         return { ...ing, name: 'Sunflower Seed Butter', original: ing.name };
       }
       return ing;

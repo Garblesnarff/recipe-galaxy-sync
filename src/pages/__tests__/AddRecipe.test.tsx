@@ -60,7 +60,7 @@ vi.mock('@/hooks/useAuthSession', () => ({
 
 // Mock saveRecipe (still needed if useRecipeForm calls it internally, but we'll control handleSubmit)
 vi.mock('@/services/recipe/recipeCrud', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = await importOriginal() as Record<string, unknown>;
   return {
     ...actual,
     saveRecipe: vi.fn(),

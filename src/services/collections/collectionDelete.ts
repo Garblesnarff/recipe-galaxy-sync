@@ -1,17 +1,17 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SupabaseError } from "@/types/adaptedRecipe";
 import { toast } from "sonner";
 
 export const deleteCollection = async (id: string): Promise<boolean> => {
   try {
-    // Cast to avoid TypeScript table checking
-    const { error } = await (supabase
-      .from('collections' as any)
+    const { error } = await supabase
+      .from('collections')
       .delete()
-      .eq('id', id)) as unknown as { error: any };
+      .eq('id', id) as unknown as { error: SupabaseError | null };
 
     if (error) throw error;
-    
+
     toast.success("Collection deleted successfully");
     return true;
   } catch (error) {

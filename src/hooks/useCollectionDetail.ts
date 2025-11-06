@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Collection } from "@/types/collection";
+import { Recipe } from "@/types/recipe";
 import { fetchCollectionById, fetchCollectionRecipes, removeRecipeFromCollection } from "@/services/collectionService";
 
 export const useCollectionDetail = (id: string | undefined) => {
   const [collection, setCollection] = useState<Collection | null>(null);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [recipeToRemove, setRecipeToRemove] = useState<string | null>(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);

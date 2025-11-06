@@ -59,13 +59,13 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   };
 
   // Analytics tracking helper
-  const trackEvent = (eventName: string, properties: Record<string, any> = {}) => {
+  const trackEvent = (eventName: string, properties: Record<string, unknown> = {}) => {
     // In a real app, this would send to your analytics service (Mixpanel, Google Analytics, etc.)
     console.log('Analytics Event:', eventName, properties);
 
     // Example: Send to Google Analytics 4
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', eventName, properties);
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', eventName, properties);
     }
   };
 
