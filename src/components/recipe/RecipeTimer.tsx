@@ -17,7 +17,7 @@ export interface RecipeTimerProps {
   onClose?: () => void;
 }
 
-export const RecipeTimer = ({ 
+export const RecipeTimer = ({
   minutes,
   label,
   prepTime,
@@ -27,29 +27,18 @@ export const RecipeTimer = ({
   onClose
 }: RecipeTimerProps) => {
   // Convert cookTime to minutes if provided
-  const calculatedMinutes = minutes || 
+  const calculatedMinutes = minutes ||
     (cookTime ? parseInt(cookTime.toString(), 10) : 0);
-  
-  const calculatedLabel = label || 
+
+  const calculatedLabel = label ||
     (cookTime ? `${cookTime} Cooking Time` : "Timer");
-  
+
   const initialSeconds = calculatedMinutes * 60;
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(100);
-  
-  // If we're in popup mode
-  if (onOpen && onClose) {
-    if (!isOpen) {
-      return (
-        <Button variant="outline" size="sm" onClick={onOpen}>
-          <Clock className="mr-2 h-4 w-4" />
-          {prepTime && cookTime ? `${prepTime} + ${cookTime}` : cookTime || prepTime}
-        </Button>
-      );
-    }
-  }
 
+  // All hooks must be called before any conditional returns
   useInterval(
     () => {
       if (secondsLeft > 0) {
@@ -64,6 +53,19 @@ export const RecipeTimer = ({
     },
     isRunning ? 1000 : null
   );
+
+  // Conditional return AFTER all hooks
+  // If we're in popup mode
+  if (onOpen && onClose) {
+    if (!isOpen) {
+      return (
+        <Button variant="outline" size="sm" onClick={onOpen}>
+          <Clock className="mr-2 h-4 w-4" />
+          {prepTime && cookTime ? `${prepTime} + ${cookTime}` : cookTime || prepTime}
+        </Button>
+      );
+    }
+  }
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);

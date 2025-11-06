@@ -34,11 +34,7 @@ export const RecipeActions = ({
   // Use recipeId if provided, otherwise get it from the recipe object
   const effectiveRecipeId = recipeId || recipe?.id;
 
-  if (!effectiveRecipeId) {
-    console.error("RecipeActions requires either recipe or recipeId prop");
-    return null;
-  }
-
+  // All hooks must be called before any conditional returns
   const [isFavorite, setIsFavorite] = useState(recipe?.is_favorite || false);
   const [recipeIngredients, setRecipeIngredients] = useState<
     RecipeIngredient[] | string[]
@@ -75,6 +71,12 @@ export const RecipeActions = ({
 
     fetchRecipeIngredients();
   }, [effectiveRecipeId, ingredients]);
+
+  // Conditional return AFTER all hooks
+  if (!effectiveRecipeId) {
+    console.error("RecipeActions requires either recipe or recipeId prop");
+    return null;
+  }
 
   const handleFavoriteToggle = async () => {
     try {
