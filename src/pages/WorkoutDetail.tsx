@@ -7,11 +7,27 @@ import { RecipeRecommendations } from "@/components/workout/RecipeRecommendation
 import { LinkedRecipes } from "@/components/workout/LinkedRecipes";
 import { LinkRecipeDialog } from "@/components/workout/LinkRecipeDialog";
 import { ScheduleWorkoutDialog } from "@/components/workout/ScheduleWorkoutDialog";
+import { ShareWorkoutDialog } from "@/components/social/ShareWorkoutDialog";
 import { useWorkoutDetail } from "@/hooks/useWorkoutDetail";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Play, Edit, Trash2, Plus, Calendar } from "lucide-react";
-import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Play, Edit, Trash2, Plus, Calendar, Share2, Heart, MessageCircle, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  getWorkoutLikeCount,
+  hasUserLikedWorkout,
+  likeWorkout,
+  unlikeWorkout,
+  getWorkoutComments,
+  addComment,
+  type WorkoutComment,
+} from "@/services/social/workoutSharing";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,14 +49,93 @@ export const WorkoutDetail = () => {
     handleToggleFavorite,
     handleDelete,
   } = useWorkoutDetail();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [linkRecipeDialogOpen, setLinkRecipeDialogOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [nutritionKey, setNutritionKey] = useState(0);
+
+  // Social features state
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [comments, setComments] = useState<WorkoutComment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
 
   const handleNutritionUpdate = () => {
     // Trigger re-render of nutrition components
     setNutritionKey((prev) => prev + 1);
+  };
+
+  // Load social data
+  useEffect(() => {
+    if (workout?.id) {
+      loadSocialData();
+    }
+  }, [workout?.id, user?.id]);
+
+  const loadSocialData = async () => {
+    if (!workout?.id) return;
+
+    try {
+      // Load like count
+      const count = await getWorkoutLikeCount(workout.id);
+      setLikeCount(count);
+
+      // Load user's like status
+      if (user?.id) {
+        const liked = await hasUserLikedWorkout(workout.id, user.id);
+        setIsLiked(liked);
+      }
+
+      // Load comments
+      setLoadingComments(true);
+      const workoutComments = await getWorkoutComments(workout.id);
+      setComments(workoutComments);
+    } catch (error) {
+      console.error("Error loading social data:", error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleLikeToggle = async () => {
+    if (!user?.id || !workout?.id) {
+      toast.error("Please sign in to like workouts");
+      return;
+    }
+
+    try {
+      if (isLiked) {
+        await unlikeWorkout(workout.id, user.id);
+        setIsLiked(false);
+        setLikeCount((prev) => Math.max(0, prev - 1));
+        toast.success("Unliked workout");
+      } else {
+        await likeWorkout(workout.id, user.id);
+        setIsLiked(true);
+        setLikeCount((prev) => prev + 1);
+        toast.success("Liked workout");
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      toast.error("Failed to update like");
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!user?.id || !workout?.id || !newComment.trim()) return;
+
+    try {
+      const comment = await addComment(workout.id, user.id, newComment.trim());
+      setComments((prev) => [comment, ...prev]);
+      setNewComment("");
+      toast.success("Comment added");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    }
   };
 
   if (isLoading || !workout) {
@@ -64,6 +159,13 @@ export const WorkoutDetail = () => {
                 onClick={() => setScheduleDialogOpen(true)}
               >
                 <Calendar className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShareDialogOpen(true)}
+              >
+                <Share2 className="h-4 w-4" />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -129,6 +231,103 @@ export const WorkoutDetail = () => {
               />
             </div>
           </div>
+
+          {/* Social Engagement Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Social</span>
+                <div className="flex gap-4 text-sm font-normal text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Heart className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                    <span>{likeCount}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>{comments.length}</span>
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Like Button */}
+              <div className="flex gap-2">
+                <Button
+                  variant={isLiked ? "default" : "outline"}
+                  className={isLiked ? "bg-red-500 hover:bg-red-600" : ""}
+                  onClick={handleLikeToggle}
+                >
+                  <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-white" : ""}`} />
+                  {isLiked ? "Liked" : "Like"}
+                </Button>
+                <Button variant="outline" onClick={() => setShareDialogOpen(true)}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+
+              {/* Comments Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Comments ({comments.length})
+                </h3>
+
+                {/* Add Comment */}
+                {user && (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddComment();
+                        }
+                      }}
+                    />
+                    <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                <div className="space-y-3">
+                  {loadingComments ? (
+                    <p className="text-sm text-gray-500">Loading comments...</p>
+                  ) : comments.length > 0 ? (
+                    comments.map((comment: any) => (
+                      <div key={comment.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={comment.user_profile?.avatar_url} />
+                          <AvatarFallback>
+                            {comment.user_profile?.username?.substring(0, 2).toUpperCase() || "??"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-sm">
+                              {comment.user_profile?.display_name || comment.user_profile?.username}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          <p className="text-sm text-gray-700">{comment.comment}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No comments yet. Be the first to comment!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -145,6 +344,16 @@ export const WorkoutDetail = () => {
         open={scheduleDialogOpen}
         onClose={() => setScheduleDialogOpen(false)}
       />
+
+      {user && (
+        <ShareWorkoutDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          workoutId={workout.id}
+          workoutName={workout.title}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };

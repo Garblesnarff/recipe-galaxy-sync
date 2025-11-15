@@ -27,6 +27,9 @@ import WorkoutHistory from "@/pages/WorkoutHistory";
 import WorkoutProgress from "@/pages/WorkoutProgress";
 import WorkoutSchedule from "@/pages/WorkoutSchedule";
 import Achievements from "@/pages/Achievements";
+import Challenges from "@/pages/Challenges";
+import ChallengeDetail from "@/pages/ChallengeDetail";
+import Leaderboards from "@/pages/Leaderboards";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -104,6 +107,11 @@ function App() {
           <Route path="/workouts/:id" element={<PrivateRoute><WorkoutDetail /></PrivateRoute>} />
           <Route path="/workouts/:id/start" element={<PrivateRoute><ActiveWorkout /></PrivateRoute>} />
           <Route path="/workouts/edit/:id" element={<PrivateRoute><EditWorkout /></PrivateRoute>} />
+
+          {/* Challenges & Leaderboards Routes */}
+          <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
+          <Route path="/challenges/:id" element={<PrivateRoute><ChallengeDetail /></PrivateRoute>} />
+          <Route path="/leaderboards" element={<PrivateRoute><Leaderboards /></PrivateRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
