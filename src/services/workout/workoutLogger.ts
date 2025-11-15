@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { WorkoutLog } from "@/types/workout";
+import { autoDetectAndSavePRs } from "./personalRecords";
 
 /**
  * Creates a workout log with exercise performance data
@@ -58,6 +59,16 @@ export const logWorkout = async (workoutLogData: {
       .single();
 
     if (fetchError) throw fetchError;
+
+    // Auto-detect and save personal records
+    if (workoutLogData.exercises && workoutLogData.exercises.length > 0) {
+      await autoDetectAndSavePRs(
+        workoutLogData.log.user_id,
+        log.id,
+        workoutLogData.exercises
+      );
+    }
+
     return completeLog as WorkoutLog;
   } catch (error) {
     console.error("Exception logging workout:", error);

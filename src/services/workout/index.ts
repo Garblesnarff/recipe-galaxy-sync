@@ -38,3 +38,24 @@ export {
   fetchWeeklyActivity,
   fetchPersonalRecords,
 } from "./workoutStats";
+
+// Personal Records operations
+export {
+  detectNewPR,
+  savePersonalRecord,
+  getPersonalRecords,
+  getExercisePRs,
+  deletePersonalRecord,
+  autoDetectAndSavePRs,
+} from "./personalRecords";
+
+// Analytics operations
+export {
+  getWeightProgressionChart,
+  getVolumeProgression,
+  getMuscleGroupBalance,
+  getStrengthScore,
+  getWorkoutFrequencyStats,
+  getConsistencyScore,
+  getDailyWorkoutFrequency,
+} from "./analytics";

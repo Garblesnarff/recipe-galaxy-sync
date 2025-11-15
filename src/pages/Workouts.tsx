@@ -1,6 +1,7 @@
 
 import { WorkoutCard } from "@/components/workout/WorkoutCard";
 import { WorkoutFilterBar } from "@/components/workout/WorkoutFilters";
+import { UpcomingWorkoutsWidget } from "@/components/workout/UpcomingWorkoutsWidget";
 import { useWorkoutFilters } from "@/hooks/useWorkoutFilters";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,8 @@ const Workouts = () => {
           Add Workout
         </Button>
       </div>
+
+      <UpcomingWorkoutsWidget />
 
       <WorkoutFilterBar
         filters={filters}

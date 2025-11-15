@@ -2,14 +2,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, Award, Zap } from "lucide-react";
+import { ArrowLeft, TrendingUp, Award, Zap, BarChart3, Download } from "lucide-react";
 import { useWorkoutProgress } from "@/hooks/useWorkoutProgress";
+import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import { WorkoutActivityChart } from "@/components/workout/WorkoutActivityChart";
 import { ExerciseProgressChart } from "@/components/workout/ExerciseProgressChart";
-import { PersonalRecordsCard } from "@/components/workout/PersonalRecordsCard";
+import { PersonalRecordsTable } from "@/components/workout/PersonalRecordsTable";
 import { WorkoutStatsCards } from "@/components/workout/WorkoutStatsCards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useWorkoutAnalytics, type DateRange } from "@/hooks/useWorkoutAnalytics";
+import { VolumeChart } from "@/components/workout/VolumeChart";
+import { MuscleGroupHeatmap } from "@/components/workout/MuscleGroupHeatmap";
+import { StrengthScoreCard } from "@/components/workout/StrengthScoreCard";
+import { FrequencyChart } from "@/components/workout/FrequencyChart";
+import { ConsistencyWidget } from "@/components/workout/ConsistencyWidget";
 
 const WorkoutProgress = () => {
   const navigate = useNavigate();
@@ -20,6 +28,38 @@ const WorkoutProgress = () => {
     personalRecords,
     isLoading,
   } = useWorkoutProgress();
+
+  // Fetch personal records from the new PR tracking system
+  const { data: prRecords = [], isLoading: prLoading } = usePersonalRecords();
+
+  const {
+    volumeProgression,
+    muscleGroupBalance,
+    strengthScore,
+    frequencyStats,
+    consistencyScore,
+    dailyFrequency,
+    isLoading: analyticsLoading,
+    dateRange,
+    setDateRange,
+  } = useWorkoutAnalytics();
+
+  const handleExportData = () => {
+    // Create CSV data from analytics
+    const csvContent = "data:text/csv;charset=utf-8," +
+      "Date,Total Volume,Workouts\n" +
+      volumeProgression.map(row =>
+        `${row.week},${row.total},${row.workouts || 0}`
+      ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `workout-analytics-${dateRange}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (isLoading) {
     return (
@@ -33,17 +73,43 @@ const WorkoutProgress = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container py-4 flex items-center justify-between">
-          <div className="flex items-center">
+        <div className="container py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mr-2"
+                onClick={() => navigate("/workouts")}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-xl font-semibold">Progress & Statistics</h1>
+            </div>
             <Button
-              variant="ghost"
-              size="icon"
-              className="mr-2"
-              onClick={() => navigate("/workouts")}
+              variant="outline"
+              size="sm"
+              onClick={handleExportData}
+              className="gap-2"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <Download className="h-4 w-4" />
+              Export CSV
             </Button>
-            <h1 className="text-xl font-semibold">Progress & Statistics</h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Date Range:</span>
+            <Select value={dateRange} onValueChange={(value) => setDateRange(value as DateRange)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4weeks">Last 4 Weeks</SelectItem>
+                <SelectItem value="12weeks">Last 12 Weeks</SelectItem>
+                <SelectItem value="year">Last Year</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </header>
@@ -54,10 +120,14 @@ const WorkoutProgress = () => {
 
         {/* Tabs for Different Views */}
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="activity">
               <TrendingUp className="mr-2 h-4 w-4" />
               Activity
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
             </TabsTrigger>
             <TabsTrigger value="exercises">
               <Zap className="mr-2 h-4 w-4" />
@@ -68,6 +138,59 @@ const WorkoutProgress = () => {
               Records
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="space-y-6 mt-6">
+            {analyticsLoading ? (
+              <Skeleton className="h-96 w-full" />
+            ) : (
+              <>
+                {/* Strength Score and Consistency */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <StrengthScoreCard score={strengthScore} />
+                  <ConsistencyWidget data={consistencyScore} />
+                </div>
+
+                {/* Volume and Frequency */}
+                <div className="grid grid-cols-1 gap-6">
+                  <VolumeChart data={volumeProgression} />
+                  <FrequencyChart data={dailyFrequency} />
+                </div>
+
+                {/* Muscle Group Balance */}
+                <MuscleGroupHeatmap data={muscleGroupBalance} />
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white p-4 rounded-lg border text-center">
+                    <p className="text-sm text-gray-500">Avg Workouts/Week</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {frequencyStats?.avgPerWeek || 0}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border text-center">
+                    <p className="text-sm text-gray-500">Total Volume</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {volumeProgression.length > 0
+                        ? (volumeProgression.reduce((sum, d) => sum + d.total, 0) / 1000).toFixed(1) + 'k'
+                        : 0} kg
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border text-center">
+                    <p className="text-sm text-gray-500">Current Streak</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {consistencyScore?.currentStreak || 0} days
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border text-center">
+                    <p className="text-sm text-gray-500">Muscle Groups</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {muscleGroupBalance.filter(m => m.count > 0).length}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </TabsContent>
 
           <TabsContent value="activity" className="space-y-6 mt-6">
             {/* Activity Chart */}
@@ -132,7 +255,7 @@ const WorkoutProgress = () => {
 
           <TabsContent value="records" className="space-y-6 mt-6">
             {/* Personal Records */}
-            <PersonalRecordsCard records={personalRecords} />
+            <PersonalRecordsTable records={prRecords} isLoading={prLoading} />
 
             {/* Achievements */}
             <div className="bg-white p-6 rounded-lg border">

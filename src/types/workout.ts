@@ -108,6 +108,18 @@ export interface WorkoutLog {
   workout?: Workout;
 }
 
+// Personal Record Interface
+export interface PersonalRecord {
+  id: string;
+  user_id: string;
+  exercise_name: string;
+  record_type: 'max_weight' | 'max_reps' | 'max_duration';
+  value: number;
+  workout_log_id?: string;
+  achieved_at: string;
+  created_at: string;
+}
+
 // Workout Filters Interface
 export interface WorkoutFilters {
   workout_types: string[];
@@ -234,4 +246,89 @@ export const WORKOUT_SORT_OPTIONS: WorkoutSortOption[] = [
   { label: "Duration (Long first)", value: "duration_minutes", direction: "desc" },
   { label: "Calories (Low to High)", value: "calories_estimate", direction: "asc" },
   { label: "Calories (High to Low)", value: "calories_estimate", direction: "desc" },
+];
+
+// ==================== NUTRITION INTEGRATION TYPES ====================
+
+// Meal Timing Types
+export type MealTiming = 'pre_workout' | 'post_workout' | 'recovery';
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+// Workout Recipe Interface - Links recipes to workouts
+export interface WorkoutRecipe {
+  id: string;
+  workout_id: string;
+  recipe_id: string;
+  meal_timing: MealTiming;
+  created_at?: string;
+  recipe?: any; // Will be populated when joined with recipes table
+}
+
+// Meal Plan Interface
+export interface MealPlan {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  total_calories?: number;
+  created_at?: string;
+  updated_at?: string;
+  recipes?: MealPlanRecipe[];
+}
+
+// Meal Plan Recipe Interface
+export interface MealPlanRecipe {
+  id: string;
+  meal_plan_id: string;
+  recipe_id: string;
+  day_number: number;
+  meal_type: MealType;
+  order_index: number;
+  created_at?: string;
+  recipe?: any; // Will be populated when joined with recipes table
+}
+
+// Recipe Suggestion Interface - For workout-based recipe recommendations
+export interface RecipeSuggestion {
+  recipe: any;
+  match_score: number;
+  reason: string;
+  recommended_timing: MealTiming;
+}
+
+// Calorie Match Result Interface
+export interface CalorieMatchResult {
+  is_match: boolean;
+  recipe_calories: number;
+  workout_calories: number;
+  percentage_match: number;
+  recommendation: string;
+}
+
+// Constants - Meal Timing Options
+export const MEAL_TIMING_OPTIONS: { value: MealTiming; label: string; description: string }[] = [
+  {
+    value: 'pre_workout',
+    label: 'Pre-Workout',
+    description: 'Fuel up before your workout'
+  },
+  {
+    value: 'post_workout',
+    label: 'Post-Workout',
+    description: 'Recovery and muscle building'
+  },
+  {
+    value: 'recovery',
+    label: 'Recovery',
+    description: 'Long-term recovery meals'
+  }
+];
+
+// Constants - Meal Type Options
+export const MEAL_TYPE_OPTIONS: { value: MealType; label: string }[] = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'snack', label: 'Snack' }
 ];

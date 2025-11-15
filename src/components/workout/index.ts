@@ -24,6 +24,10 @@ export { WorkoutProgressBar } from "./WorkoutProgressBar";
 export { SetLogger } from "./SetLogger";
 export { WorkoutStatsCard } from "./WorkoutStatsCard";
 
+// Personal Records Components
+export { PRBadge, PRToast } from "./PRBadge";
+export { PersonalRecordsTable } from "./PersonalRecordsTable";
+
 // Video Components
 export { YouTubeEmbed } from "./YouTubeEmbed";
 export { VideoPlayer } from "./VideoPlayer";

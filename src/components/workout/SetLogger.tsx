@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Edit2, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Edit2, Trash2, Trophy } from "lucide-react";
+import { useExercisePRs } from "@/hooks/usePersonalRecords";
+import { PRBadge } from "./PRBadge";
 
 interface SetLog {
   setNumber: number;
@@ -32,6 +34,25 @@ export const SetLogger = ({
   const [currentSet, setCurrentSet] = useState(1);
   const [reps, setReps] = useState(targetReps);
   const [weight, setWeight] = useState(targetWeight);
+
+  // Fetch existing PRs for this exercise
+  const { data: existingPRs = [] } = useExercisePRs(exerciseName);
+
+  // Check if current values would beat PRs
+  const prStatus = useMemo(() => {
+    const maxWeightPR = existingPRs.find(pr => pr.record_type === 'max_weight');
+    const maxRepsPR = existingPRs.find(pr => pr.record_type === 'max_reps');
+
+    const isNewWeightPR = !maxWeightPR || weight > maxWeightPR.value;
+    const isNewRepsPR = !maxRepsPR || reps > maxRepsPR.value;
+
+    return {
+      isNewWeightPR,
+      isNewRepsPR,
+      currentMaxWeight: maxWeightPR?.value,
+      currentMaxReps: maxRepsPR?.value,
+    };
+  }, [weight, reps, existingPRs]);
 
   const logSet = () => {
     const newLog: SetLog = {
@@ -150,27 +171,47 @@ export const SetLogger = ({
         {/* Current Set Input */}
         {!allSetsCompleted && (
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-md space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Circle className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">
-                Set {currentSet} of {targetSets}
-              </h4>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Circle className="h-5 w-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-900">
+                  Set {currentSet} of {targetSets}
+                </h4>
+              </div>
+              {(prStatus.isNewWeightPR || prStatus.isNewRepsPR) && (
+                <PRBadge recordType="max_weight" value={0} compact className="ml-auto" />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="reps" className="text-sm">Reps</Label>
+                <Label htmlFor="reps" className="text-sm flex items-center gap-2">
+                  Reps
+                  {prStatus.isNewRepsPR && (
+                    <Trophy className="h-3 w-3 text-yellow-500" />
+                  )}
+                </Label>
                 <Input
                   id="reps"
                   type="number"
                   min="0"
                   value={reps}
                   onChange={(e) => setReps(parseInt(e.target.value) || 0)}
-                  className="mt-1"
+                  className={`mt-1 ${prStatus.isNewRepsPR ? 'border-yellow-500 ring-2 ring-yellow-500/20' : ''}`}
                 />
+                {prStatus.currentMaxReps !== undefined && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current PR: {prStatus.currentMaxReps} reps
+                  </p>
+                )}
               </div>
               <div>
-                <Label htmlFor="weight" className="text-sm">Weight (kg)</Label>
+                <Label htmlFor="weight" className="text-sm flex items-center gap-2">
+                  Weight (kg)
+                  {prStatus.isNewWeightPR && (
+                    <Trophy className="h-3 w-3 text-yellow-500" />
+                  )}
+                </Label>
                 <Input
                   id="weight"
                   type="number"
@@ -178,8 +219,13 @@ export const SetLogger = ({
                   step="0.5"
                   value={weight}
                   onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
-                  className="mt-1"
+                  className={`mt-1 ${prStatus.isNewWeightPR ? 'border-yellow-500 ring-2 ring-yellow-500/20' : ''}`}
                 />
+                {prStatus.currentMaxWeight !== undefined && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current PR: {prStatus.currentMaxWeight} kg
+                  </p>
+                )}
               </div>
             </div>
 
@@ -189,6 +235,9 @@ export const SetLogger = ({
             >
               <Plus className="h-4 w-4 mr-2" />
               Log Set {currentSet}
+              {(prStatus.isNewWeightPR || prStatus.isNewRepsPR) && (
+                <Trophy className="h-4 w-4 ml-2 text-yellow-300" />
+              )}
             </Button>
           </div>
         )}
