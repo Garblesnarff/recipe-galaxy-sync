@@ -4,6 +4,7 @@ import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
 import { useRecipeData } from "@/hooks/useRecipeData";
 import { SalesScrapingTest } from "@/components/sales/SalesScrapingTest";
+import { MainNav } from "@/components/layout/MainNav";
 
 const Index = () => {
   const {
@@ -28,16 +29,18 @@ const Index = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Sales Scraping Test - Remove this in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="flex justify-center">
-          <SalesScrapingTest />
-        </div>
-      )}
-      
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Recipes</h1>
+    <>
+      <MainNav />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Sales Scraping Test - Remove this in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="flex justify-center">
+            <SalesScrapingTest />
+          </div>
+        )}
+
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">My Recipes</h1>
         
         <RecipeFilterBar
           filters={filters}
@@ -70,7 +73,8 @@ const Index = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

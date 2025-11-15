@@ -16,6 +16,15 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdaptRecipe from "@/pages/AdaptRecipe";
+import Workouts from "@/pages/Workouts";
+import WorkoutDetail from "@/pages/WorkoutDetail";
+import AddWorkout from "@/pages/AddWorkout";
+import EditWorkout from "@/pages/EditWorkout";
+import ExerciseLibrary from "@/pages/ExerciseLibrary";
+import WorkoutTemplates from "@/pages/WorkoutTemplates";
+import ActiveWorkout from "@/pages/ActiveWorkout";
+import WorkoutHistory from "@/pages/WorkoutHistory";
+import WorkoutProgress from "@/pages/WorkoutProgress";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -80,6 +89,18 @@ function App() {
           <Route path="/collections/:id" element={<PrivateRoute><CollectionDetail /></PrivateRoute>} />
           <Route path="/collections/edit/:id" element={<PrivateRoute><EditCollection /></PrivateRoute>} />
           <Route path="/adapt-recipe/:id" element={<PrivateRoute><AdaptRecipe /></PrivateRoute>} />
+
+          {/* Workout Routes */}
+          <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />
+          <Route path="/workouts/add" element={<PrivateRoute><AddWorkout /></PrivateRoute>} />
+          <Route path="/workouts/templates" element={<PrivateRoute><WorkoutTemplates /></PrivateRoute>} />
+          <Route path="/workouts/exercises" element={<PrivateRoute><ExerciseLibrary /></PrivateRoute>} />
+          <Route path="/workouts/history" element={<PrivateRoute><WorkoutHistory /></PrivateRoute>} />
+          <Route path="/workouts/progress" element={<PrivateRoute><WorkoutProgress /></PrivateRoute>} />
+          <Route path="/workouts/:id" element={<PrivateRoute><WorkoutDetail /></PrivateRoute>} />
+          <Route path="/workouts/:id/start" element={<PrivateRoute><ActiveWorkout /></PrivateRoute>} />
+          <Route path="/workouts/edit/:id" element={<PrivateRoute><EditWorkout /></PrivateRoute>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
