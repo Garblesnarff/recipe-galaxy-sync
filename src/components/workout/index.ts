@@ -23,3 +23,8 @@ export { WorkoutProgressBar } from "./WorkoutProgressBar";
 // Logging Components
 export { SetLogger } from "./SetLogger";
 export { WorkoutStatsCard } from "./WorkoutStatsCard";
+
+// Video Components
+export { YouTubeEmbed } from "./YouTubeEmbed";
+export { VideoPlayer } from "./VideoPlayer";
+export { ExerciseVideoDialog } from "./ExerciseVideoDialog";

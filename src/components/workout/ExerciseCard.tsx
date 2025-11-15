@@ -2,23 +2,48 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Exercise } from "@/types/workout";
-import { Dumbbell, Target, Video, Plus, Info } from "lucide-react";
-import { memo } from "react";
+import { Dumbbell, Target, Video, Plus, Info, Trash2 } from "lucide-react";
+import { memo, useState } from "react";
+import { ExerciseVideoDialog } from "./ExerciseVideoDialog";
+import { getYouTubeThumbnail, extractYouTubeId } from "@/utils/youtube";
 
 interface ExerciseCardProps {
   exercise: Exercise;
   onSelect?: () => void;
   showAddButton?: boolean;
+  onDeleteClick?: (exercise: Exercise) => void;
 }
 
 const ExerciseCard = memo(({
   exercise,
   onSelect,
   showAddButton = false,
+  onDeleteClick,
 }: ExerciseCardProps) => {
+  const [showVideo, setShowVideo] = useState(false);
+  const videoId = exercise.video_url ? extractYouTubeId(exercise.video_url) : null;
+  const thumbnailUrl = videoId ? getYouTubeThumbnail(videoId, 'hq') : null;
+
   return (
-    <Card className="exercise-card group hover:shadow-md transition-shadow">
-      <div className="p-4">
+    <>
+      <Card className="exercise-card group hover:shadow-md transition-shadow overflow-hidden">
+        {/* Video Thumbnail Background */}
+        {thumbnailUrl && (
+          <div
+            className="h-32 bg-cover bg-center relative"
+            style={{ backgroundImage: `url(${thumbnailUrl})` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-2 right-2">
+              <Badge className="bg-red-600 hover:bg-red-700">
+                <Video className="h-3 w-3 mr-1" />
+                Demo
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        <div className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
             <h3 className="font-semibold text-lg leading-tight mb-1">
@@ -99,9 +124,10 @@ const ExerciseCard = memo(({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(exercise.video_url, '_blank')}
+              onClick={() => setShowVideo(true)}
             >
-              <Video className="h-4 w-4" />
+              <Video className="h-4 w-4 mr-1" />
+              Watch Demo
             </Button>
           )}
           {exercise.instructions && (
@@ -109,9 +135,28 @@ const ExerciseCard = memo(({
               <Info className="h-4 w-4" />
             </Button>
           )}
+          {exercise.is_custom && onDeleteClick && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDeleteClick(exercise)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </Card>
+
+      {/* Video Dialog */}
+      <ExerciseVideoDialog
+        exercise={exercise}
+        open={showVideo}
+        onClose={() => setShowVideo(false)}
+        onAddToWorkout={onSelect}
+      />
+    </>
   );
 });
 

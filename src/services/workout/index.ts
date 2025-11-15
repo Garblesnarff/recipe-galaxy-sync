@@ -11,6 +11,7 @@ export {
 // Exercise Library operations
 export {
   fetchExercises,
+  fetchExerciseByName,
   createCustomExercise,
   updateCustomExercise,
   deleteCustomExercise,

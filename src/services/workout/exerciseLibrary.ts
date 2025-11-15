@@ -46,6 +46,10 @@ export const fetchExercises = async (
       );
     }
 
+    if (filters?.has_video) {
+      query = query.not("video_url", "is", null);
+    }
+
     // Order by name
     query = query.order("name", { ascending: true });
 
@@ -56,6 +60,31 @@ export const fetchExercises = async (
   } catch (error) {
     console.error("Exception fetching exercises:", error);
     throw error;
+  }
+};
+
+/**
+ * Fetches a single exercise by name
+ */
+export const fetchExerciseByName = async (name: string): Promise<Exercise | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("exercise_library")
+      .select("*")
+      .ilike("name", name)
+      .single();
+
+    if (error) {
+      // If not found, return null instead of throwing
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw error;
+    }
+    return data as Exercise;
+  } catch (error) {
+    console.error("Exception fetching exercise by name:", error);
+    return null;
   }
 };
 

@@ -126,6 +126,7 @@ export interface ExerciseFilters {
   equipment: string[];
   difficulty: string | null;
   custom_only: boolean;
+  has_video?: boolean;
   searchQuery: string;
 }
 

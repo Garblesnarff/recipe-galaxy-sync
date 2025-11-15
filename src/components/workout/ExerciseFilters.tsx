@@ -40,7 +40,8 @@ export const ExerciseFilterBar = ({
       muscle_groups: [],
       equipment: [],
       difficulty: null,
-      custom_only: false
+      custom_only: false,
+      has_video: false
     });
   };
 
@@ -51,6 +52,7 @@ export const ExerciseFilterBar = ({
     if (filters.equipment.length > 0) count++;
     if (filters.difficulty) count++;
     if (filters.custom_only) count++;
+    if (filters.has_video) count++;
     return count;
   };
 
@@ -176,6 +178,16 @@ export const ExerciseFilterBar = ({
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => handleCustomToggle(false)}
+              />
+            </Badge>
+          )}
+
+          {filters.has_video && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Has Video Demo
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onFiltersChange({ ...filters, has_video: false })}
               />
             </Badge>
           )}
@@ -310,6 +322,17 @@ export const ExerciseFilterBar = ({
                   onCheckedChange={handleCustomToggle}
                 />
                 <Label htmlFor="custom-only">Custom Exercises Only</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="has-video"
+                  checked={filters.has_video || false}
+                  onCheckedChange={(checked) =>
+                    onFiltersChange({ ...filters, has_video: checked })
+                  }
+                />
+                <Label htmlFor="has-video">Has Video Demo</Label>
               </div>
             </div>
           )}

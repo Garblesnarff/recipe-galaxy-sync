@@ -2,13 +2,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, SkipForward, CheckCircle } from "lucide-react";
+import { ArrowLeft, Play, Pause, SkipForward, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useActiveWorkout } from "@/hooks/useActiveWorkout";
 import { ActiveExerciseCard } from "@/components/workout/ActiveExerciseCard";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer";
 import { WorkoutProgressBar } from "@/components/workout/WorkoutProgressBar";
 import { CompleteWorkoutDialog } from "@/components/workout/CompleteWorkoutDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoPlayer } from "@/components/workout/VideoPlayer";
+import { Exercise } from "@/types/workout";
+import { Card } from "@/components/ui/card";
+import { fetchExerciseByName } from "@/services/workout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +29,8 @@ export const ActiveWorkout = () => {
   const navigate = useNavigate();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [currentExerciseData, setCurrentExerciseData] = useState<Exercise | null>(null);
 
   const {
     workout,
@@ -43,6 +49,22 @@ export const ActiveWorkout = () => {
     progress,
   } = useActiveWorkout(id || '');
 
+  const currentExercise = workout?.exercises?.[currentExerciseIndex];
+
+  // Fetch exercise data when current exercise changes
+  useEffect(() => {
+    const loadExerciseData = async () => {
+      if (currentExercise?.exercise_name) {
+        const exerciseData = await fetchExerciseByName(currentExercise.exercise_name);
+        setCurrentExerciseData(exerciseData);
+        // Reset video player to collapsed state when exercise changes
+        setShowVideoPlayer(false);
+      }
+    };
+
+    loadExerciseData();
+  }, [currentExercise?.exercise_name]);
+
   if (isLoading || !workout) {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-8">
@@ -50,8 +72,6 @@ export const ActiveWorkout = () => {
       </div>
     );
   }
-
-  const currentExercise = workout.exercises?.[currentExerciseIndex];
 
   const handleExit = () => {
     setShowExitDialog(true);
@@ -108,6 +128,33 @@ export const ActiveWorkout = () => {
           isRunning={isTimerRunning}
           isResting={isResting}
         />
+
+        {/* Video Player Section */}
+        {currentExerciseData?.video_url && (
+          <Card className="p-4">
+            <Button
+              variant="ghost"
+              className="w-full flex items-center justify-between mb-2"
+              onClick={() => setShowVideoPlayer(!showVideoPlayer)}
+            >
+              <span className="font-medium">Watch Form Demonstration</span>
+              {showVideoPlayer ? (
+                <ChevronUp className="h-5 w-5" />
+              ) : (
+                <ChevronDown className="h-5 w-5" />
+              )}
+            </Button>
+            {showVideoPlayer && (
+              <div className="mt-2">
+                <VideoPlayer
+                  videoUrl={currentExerciseData.video_url}
+                  title={currentExercise?.exercise_name || "Exercise demonstration"}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Current Exercise */}
         {currentExercise && (

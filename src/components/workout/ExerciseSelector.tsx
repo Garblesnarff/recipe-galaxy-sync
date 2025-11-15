@@ -28,7 +28,8 @@ export const ExerciseSelector = ({
     muscle_groups: [],
     equipment: [],
     difficulty: null,
-    custom_only: false
+    custom_only: false,
+    has_video: false
   });
 
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>(exercises);
@@ -74,6 +75,11 @@ export const ExerciseSelector = ({
     // Custom only
     if (filters.custom_only) {
       filtered = filtered.filter(ex => ex.is_custom);
+    }
+
+    // Has video
+    if (filters.has_video) {
+      filtered = filtered.filter(ex => ex.video_url && ex.video_url.length > 0);
     }
 
     setFilteredExercises(filtered);
