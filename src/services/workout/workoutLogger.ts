@@ -1,9 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { WorkoutLog } from "@/types/workout";
 import { autoDetectAndSavePRs } from "./personalRecords";
+import { updateUserStats, checkAchievements, type Achievement } from "./gamification";
 
 /**
  * Creates a workout log with exercise performance data
+ * Returns the workout log and any newly earned achievements
  */
 export const logWorkout = async (workoutLogData: {
   log: {
@@ -22,7 +24,7 @@ export const logWorkout = async (workoutLogData: {
     duration_seconds?: number;
     notes?: string;
   }>;
-}) => {
+}): Promise<{ log: WorkoutLog; newAchievements: Achievement[] }> => {
   try {
     // Create the workout log
     const { data: log, error: logError } = await supabase
@@ -61,15 +63,30 @@ export const logWorkout = async (workoutLogData: {
     if (fetchError) throw fetchError;
 
     // Auto-detect and save personal records
+    let hasPR = false;
     if (workoutLogData.exercises && workoutLogData.exercises.length > 0) {
-      await autoDetectAndSavePRs(
+      const prs = await autoDetectAndSavePRs(
         workoutLogData.log.user_id,
         log.id,
         workoutLogData.exercises
       );
+      hasPR = prs && prs.length > 0;
     }
 
-    return completeLog as WorkoutLog;
+    // Update gamification stats
+    await updateUserStats(workoutLogData.log.user_id, {
+      duration_minutes: workoutLogData.log.duration_minutes,
+      calories_burned: workoutLogData.log.calories_burned,
+      is_pr: hasPR,
+    });
+
+    // Check for new achievements
+    const newAchievements = await checkAchievements(workoutLogData.log.user_id);
+
+    return {
+      log: completeLog as WorkoutLog,
+      newAchievements,
+    };
   } catch (error) {
     console.error("Exception logging workout:", error);
     throw error;

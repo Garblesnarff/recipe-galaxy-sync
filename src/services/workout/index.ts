@@ -59,3 +59,26 @@ export {
   getConsistencyScore,
   getDailyWorkoutFrequency,
 } from "./analytics";
+
+// Gamification operations
+export {
+  getUserStats,
+  updateUserStats,
+  awardPoints,
+  getAllAchievements,
+  getEarnedAchievements,
+  getAvailableAchievements,
+  checkAchievements,
+  getCurrentStreak,
+  getWorkoutCalendar,
+  calculateLevel,
+  getPointsForNextLevel,
+  getLevelProgress,
+} from "./gamification";
+
+export type {
+  Achievement,
+  UserAchievement,
+  UserStats,
+  AchievementProgress,
+} from "./gamification";

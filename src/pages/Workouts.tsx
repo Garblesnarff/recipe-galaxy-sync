@@ -2,15 +2,34 @@
 import { WorkoutCard } from "@/components/workout/WorkoutCard";
 import { WorkoutFilterBar } from "@/components/workout/WorkoutFilters";
 import { UpcomingWorkoutsWidget } from "@/components/workout/UpcomingWorkoutsWidget";
+import { RecoveryScoreWidget } from "@/components/workout/RecoveryScoreWidget";
+import { RestDaySuggestion } from "@/components/workout/RestDaySuggestion";
+import { CurrentProgramWidget } from "@/components/workout/CurrentProgramWidget";
+import { LevelSystem } from "@/components/workout/LevelSystem";
+import { StreakWidget } from "@/components/workout/StreakWidget";
 import { useWorkoutFilters } from "@/hooks/useWorkoutFilters";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
+import { useRecovery } from "@/hooks/useRecovery";
+import { useGamification } from "@/hooks/useGamification";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Moon, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/layout/MainNav";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RestDayLogger } from "@/components/workout/RestDayLogger";
+import { RestDayData } from "@/services/workout/recovery";
+import { useState } from "react";
 
 const Workouts = () => {
   const navigate = useNavigate();
+  const [showLogDialog, setShowLogDialog] = useState(false);
+
   const {
     filters,
     setFilters,
@@ -19,6 +38,25 @@ const Workouts = () => {
   } = useWorkoutFilters();
 
   const { data: workouts, isLoading } = useWorkoutData(filters, sortOption);
+
+  const {
+    recoveryScore,
+    restSuggestion,
+    isLoading: isLoadingRecovery,
+    isLoggingRest,
+    logRestDay,
+  } = useRecovery(7);
+
+  const { stats, workoutDates } = useGamification();
+
+  const handleLogRestDay = async (data: RestDayData) => {
+    await logRestDay(data);
+    setShowLogDialog(false);
+  };
+
+  const handleScheduleRest = () => {
+    setShowLogDialog(true);
+  };
 
   if (isLoading) {
     return (
@@ -38,13 +76,54 @@ const Workouts = () => {
       <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">My Workouts</h1>
-        <Button onClick={() => navigate("/workouts/add")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Workout
-        </Button>
-      </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => navigate("/achievements")}>
+              <Trophy className="mr-2 h-4 w-4" />
+              Achievements
+            </Button>
+            <Button variant="outline" onClick={() => setShowLogDialog(true)}>
+              <Moon className="mr-2 h-4 w-4" />
+              Log Rest Day
+            </Button>
+            <Button onClick={() => navigate("/workouts/add")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Workout
+            </Button>
+          </div>
+        </div>
 
-      <UpcomingWorkoutsWidget />
+        {/* Current Training Program Widget */}
+        <CurrentProgramWidget />
+
+        {/* Rest Day Suggestion */}
+        {restSuggestion?.shouldRest && (
+          <RestDaySuggestion
+            shouldRest={restSuggestion.shouldRest}
+            reason={restSuggestion.reason}
+            severity={restSuggestion.severity}
+            onScheduleRest={handleScheduleRest}
+          />
+        )}
+
+        {/* Gamification Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <LevelSystem totalPoints={stats?.total_points || 0} />
+          <StreakWidget
+            currentStreak={stats?.current_streak_days || 0}
+            longestStreak={stats?.longest_streak_days || 0}
+            workoutDates={workoutDates}
+          />
+        </div>
+
+        {/* Recovery and Upcoming Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <UpcomingWorkoutsWidget />
+          <RecoveryScoreWidget
+            recoveryScore={recoveryScore}
+            isLoading={isLoadingRecovery}
+            onLogRestDay={() => setShowLogDialog(true)}
+          />
+        </div>
 
       <WorkoutFilterBar
         filters={filters}
@@ -82,6 +161,22 @@ const Workouts = () => {
         </div>
       )}
       </div>
+
+      {/* Log Rest Day Dialog */}
+      <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Log Rest Day</DialogTitle>
+            <DialogDescription>
+              Record your rest day details to help track your recovery
+            </DialogDescription>
+          </DialogHeader>
+          <RestDayLogger
+            onSubmit={handleLogRestDay}
+            isLoading={isLoggingRest}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
