@@ -1,8 +1,9 @@
 
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -60,6 +61,19 @@ export default {
           "green-light": "hsl(120, 61%, 90%)", // Light green for backgrounds
           "green-dark": "hsl(120, 61%, 35%)",  // Darker green for hover states
         },
+        // Feedback colors for high contrast themes
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        error: "hsl(var(--error))",
+        info: "hsl(var(--info))",
+        // Chart colors
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
       },
       keyframes: {
         "fade-in": {
@@ -86,5 +100,35 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // High contrast utilities plugin
+    plugin(function({ addUtilities, addVariant }) {
+      // Add high contrast utility classes
+      addUtilities({
+        '.border-strong': {
+          'border-width': '2px',
+        },
+        '.border-extra-strong': {
+          'border-width': '3px',
+        },
+        '.shadow-strong': {
+          'box-shadow': '0 4px 8px rgba(0, 0, 0, 0.3)',
+        },
+        '.focus-strong': {
+          '&:focus-visible': {
+            'outline-width': '3px',
+            'outline-offset': '3px',
+          },
+        },
+        '.text-emphasis': {
+          'font-weight': '700',
+        },
+      });
+
+      // Add high contrast variant
+      addVariant('high-contrast', '[data-theme*="high-contrast"] &');
+      addVariant('extra-high-contrast', '[data-theme*="high-contrast"] &, [data-theme="yellow-on-black"] &, [data-theme="white-on-black"] &');
+    })
+  ],
 } satisfies Config;

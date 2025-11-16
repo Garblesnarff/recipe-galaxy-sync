@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, SkipForward, CheckCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
+import { ArrowLeft, Play, Pause, SkipForward, CheckCircle, ChevronDown, ChevronUp, Camera, Volume2, VolumeX } from "lucide-react";
 import { useActiveWorkout } from "@/hooks/useActiveWorkout";
 import { ActiveExerciseCard } from "@/components/workout/ActiveExerciseCard";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer";
@@ -17,6 +17,7 @@ import { fetchExerciseByName } from "@/services/workout";
 import { useAuth } from "@/hooks/useAuth";
 import { NowPlayingWidget } from "@/components/music/NowPlayingWidget";
 import { useMusicPlayer } from "@/hooks/useMusicPlayer";
+import { useWorkoutAudio } from "@/hooks/useWorkoutAudio";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ export const ActiveWorkout = () => {
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [showFormRecorder, setShowFormRecorder] = useState(false);
   const [currentExerciseData, setCurrentExerciseData] = useState<Exercise | null>(null);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
 
   const {
     workout,
@@ -67,7 +69,38 @@ export const ActiveWorkout = () => {
     autoPlay: true,
   });
 
+  // Audio integration
+  const {
+    startWorkout: startWorkoutAudio,
+    completeWorkout: completeWorkoutAudio,
+    startExercise: startExerciseAudio,
+    completeSet: completeSetAudio,
+    setEnabled: setAudioEnabled,
+  } = useWorkoutAudio({
+    workout,
+    autoStart: false,
+  });
+
   const currentExercise = workout?.exercises?.[currentExerciseIndex];
+
+  // Start workout audio when workout loads
+  useEffect(() => {
+    if (workout) {
+      startWorkoutAudio(workout);
+    }
+  }, [workout?.id]);
+
+  // Announce exercise changes
+  useEffect(() => {
+    if (currentExercise && workout) {
+      startExerciseAudio(currentExercise, currentExerciseIndex);
+    }
+  }, [currentExerciseIndex]);
+
+  // Sync audio mute state
+  useEffect(() => {
+    setAudioEnabled(!isAudioMuted);
+  }, [isAudioMuted, setAudioEnabled]);
 
   // Fetch exercise data when current exercise changes
   useEffect(() => {
@@ -104,11 +137,17 @@ export const ActiveWorkout = () => {
   };
 
   const handleCompleteAndSave = async (notes: string, caloriesBurned?: number) => {
+    // Announce workout completion
+    completeWorkoutAudio();
     // Stop music when workout completes
     stopPlayback();
     await handleCompleteWorkout(notes, caloriesBurned);
     setShowCompleteDialog(false);
     navigate('/workouts/history');
+  };
+
+  const handleToggleAudio = () => {
+    setIsAudioMuted(!isAudioMuted);
   };
 
   // Pause music when workout is paused
@@ -138,6 +177,18 @@ export const ActiveWorkout = () => {
               </p>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleAudio}
+            title={isAudioMuted ? "Unmute audio" : "Mute audio"}
+          >
+            {isAudioMuted ? (
+              <VolumeX className="h-5 w-5" />
+            ) : (
+              <Volume2 className="h-5 w-5" />
+            )}
+          </Button>
         </div>
       </header>
 

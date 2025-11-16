@@ -1,0 +1,227 @@
+/* High Contrast Mode Utilities and Enhancements */
+
+/* Apply to all high contrast themes */
+[data-theme*="high-contrast"],
+[data-theme="yellow-on-black"],
+[data-theme="white-on-black"] {
+  /* Thicker borders on all interactive elements */
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="link"] {
+    border-width: 2px !important;
+  }
+
+  /* More pronounced focus indicators */
+  *:focus-visible {
+    outline-width: 3px;
+    outline-offset: 2px;
+    outline-style: solid;
+  }
+
+  /* Remove subtle shadows, replace with strong borders */
+  .shadow-sm,
+  .shadow,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+    border: 2px solid hsl(var(--border));
+  }
+
+  /* Ensure all text has sufficient contrast */
+  .text-muted-foreground {
+    color: hsl(var(--foreground));
+    opacity: 0.8;
+  }
+
+  /* Make disabled states more obvious */
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-style: dashed !important;
+  }
+
+  /* Enhanced hover states */
+  button:hover:not(:disabled),
+  [role="button"]:hover {
+    filter: brightness(1.2);
+  }
+
+  /* Stronger borders on cards and containers */
+  .border {
+    border-width: 2px;
+  }
+
+  /* Make link underlines always visible */
+  a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+
+  /* Thicker progress bars */
+  [role="progressbar"] {
+    height: 1.5rem;
+    border: 2px solid hsl(var(--border));
+  }
+
+  /* More visible checkboxes and radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-width: 2px;
+  }
+
+  /* Striped patterns for progress indicators */
+  [role="progressbar"] > * {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.1) 10px,
+      rgba(255, 255, 255, 0.1) 20px
+    );
+  }
+}
+
+/* Color Blind Mode Utilities */
+[data-color-blind-mode="deuteranopia"] {
+  /* Deuteranopia (red-green color blindness) - most common */
+  /* Adjust greens to be more blue-green */
+  --success: 180 100% 35%; /* Cyan instead of green */
+  --primary: 180 61% 50%; /* Blue-green */
+}
+
+[data-color-blind-mode="protanopia"] {
+  /* Protanopia (red color blindness) */
+  /* Use blue/yellow color scheme */
+  --error: 45 100% 45%; /* Orange/yellow instead of red */
+  --destructive: 45 100% 45%;
+  --warning: 210 100% 45%; /* Blue for warnings */
+}
+
+[data-color-blind-mode="tritanopia"] {
+  /* Tritanopia (blue color blindness) */
+  /* Use red/green color scheme */
+  --info: 120 100% 35%; /* Green instead of blue */
+  --primary: 340 61% 50%; /* Red-pink */
+}
+
+[data-color-blind-mode="achromatopsia"] {
+  /* Complete color blindness (grayscale) */
+  /* Convert all colors to grayscale equivalents */
+  --primary: 0 0% 40%;
+  --success: 0 0% 30%;
+  --warning: 0 0% 50%;
+  --error: 0 0% 20%;
+  --info: 0 0% 35%;
+}
+
+/* High contrast utility classes */
+.border-strong {
+  border-width: 2px;
+  border-color: hsl(var(--border));
+}
+
+.border-extra-strong {
+  border-width: 3px;
+  border-color: hsl(var(--foreground));
+}
+
+.shadow-strong {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.focus-strong:focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+/* Text emphasis utilities for high contrast */
+.text-emphasis {
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.text-subtle {
+  opacity: 0.8;
+}
+
+/* Pattern fills for charts (accessible without color) */
+.pattern-dots {
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+.pattern-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    currentColor 5px,
+    currentColor 6px
+  );
+}
+
+.pattern-grid {
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
+    linear-gradient(90deg, currentColor 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+.pattern-crosshatch {
+  background-image:
+    repeating-linear-gradient(45deg, transparent, transparent 5px, currentColor 5px, currentColor 6px),
+    repeating-linear-gradient(-45deg, transparent, transparent 5px, currentColor 5px, currentColor 6px);
+}
+
+/* Animation control for motion sensitivity */
+[data-reduce-motion="true"] * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Underline links option */
+[data-underline-links="true"] a {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* Bold UI text option */
+[data-bold-ui="true"] {
+  button,
+  label,
+  [role="button"],
+  .font-semibold {
+    font-weight: 700 !important;
+  }
+}
+
+/* Large text mode */
+[data-text-size="large"] {
+  font-size: 1.125rem;
+}
+
+[data-text-size="extra-large"] {
+  font-size: 1.25rem;
+}
+
+/* Increased line spacing */
+[data-line-spacing="relaxed"] {
+  line-height: 1.75;
+}
+
+[data-line-spacing="loose"] {
+  line-height: 2;
+}

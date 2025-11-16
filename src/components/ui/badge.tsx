@@ -4,17 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 extra-high-contrast:border-2 extra-high-contrast:font-bold",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80 extra-high-contrast:border-primary-foreground",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 extra-high-contrast:border-secondary-foreground",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 extra-high-contrast:border-destructive-foreground",
+        outline: "text-foreground extra-high-contrast:border-2 extra-high-contrast:border-foreground",
+        success:
+          "border-transparent bg-success text-white hover:bg-success/80 extra-high-contrast:border-white",
+        warning:
+          "border-transparent bg-warning text-white hover:bg-warning/80 extra-high-contrast:border-white",
+        error:
+          "border-transparent bg-error text-white hover:bg-error/80 extra-high-contrast:border-white",
       },
     },
     defaultVariants: {

@@ -1,0 +1,250 @@
+/**
+ * Accessibility-focused CSS
+ * Provides styling for focus indicators, skip links, and motion preferences
+ */
+
+/* Screen Reader Only - Visually hidden but accessible to assistive tech */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip Links - Hidden until focused */
+.skip-links-container {
+  position: relative;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 8px;
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 8px;
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Focus Indicators - Standard */
+:root:not([data-focus-style="enhanced"]) *:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Focus Indicators - Enhanced */
+:root[data-focus-style="enhanced"] *:focus-visible {
+  outline: 4px solid hsl(var(--ring));
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.3);
+}
+
+/* Focus Indicator Classes */
+.focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.focus-enhanced {
+  outline: 4px solid hsl(var(--ring));
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.3);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced Motion - Applied via class */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(0, 0%, 0%);
+  --border: hsl(0, 0%, 20%);
+  --ring: hsl(210, 100%, 50%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .high-contrast {
+    --background: hsl(0, 0%, 0%);
+    --foreground: hsl(0, 0%, 100%);
+    --border: hsl(0, 0%, 80%);
+    --ring: hsl(210, 100%, 70%);
+  }
+}
+
+/* High contrast borders for better visibility */
+.high-contrast * {
+  border-color: var(--border) !important;
+}
+
+/* Text Size Support */
+:root {
+  font-size: 16px;
+}
+
+/* Ensure minimum tap target sizes for mobile (48x48px) */
+@media (pointer: coarse) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Keyboard navigation hints */
+[data-keyboard-navigation="true"] *:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Improve visibility of focus for links */
+a:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+
+/* Live region styling */
+[aria-live] {
+  position: relative;
+}
+
+/* Ensure keyboard focus is visible in dialogs */
+[role="dialog"] *:focus,
+[role="alertdialog"] *:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Skip to content button styling */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 1rem;
+  z-index: 100;
+  text-decoration: none;
+  border: 2px solid hsl(var(--border));
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Ensure proper contrast for disabled elements */
+:disabled,
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Better visibility for required fields */
+[aria-required="true"]::after,
+.required::after {
+  content: " *";
+  color: hsl(var(--destructive));
+}
+
+/* Focus within for composite widgets */
+.focus-within:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Announcement classes for dynamic content */
+.a11y-announcement {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Print accessibility */
+@media print {
+  .skip-link,
+  .skip-links-container {
+    display: none;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+}
+
+/* Ensure tooltips and popovers are accessible */
+[role="tooltip"],
+[role="menu"] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid hsl(var(--border));
+}
+
+/* Loading states for screen readers */
+[aria-busy="true"]::after {
+  content: "Loading";
+  position: absolute;
+  left: -10000px;
+}
+
+/* Error states for screen readers */
+[aria-invalid="true"] {
+  border-color: hsl(var(--destructive)) !important;
+  outline-color: hsl(var(--destructive));
+}
+
+/* Success states */
+[aria-invalid="false"] {
+  border-color: hsl(var(--success, 142 71% 45%));
+}
+
+/* Keyboard shortcut indicators */
+kbd {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 0 hsl(var(--border));
+}

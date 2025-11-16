@@ -1,0 +1,75 @@
+/* High Contrast Light Theme - WCAG AAA Compliant (7:1 contrast ratio) */
+[data-theme="high-contrast-light"] {
+  /* Core colors - Pure white background, pure black text */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+
+  /* Primary colors - Very dark blue for maximum contrast */
+  --primary: 221 83% 25%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary colors */
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* Accent colors */
+  --accent: 221 83% 25%;
+  --accent-foreground: 0 0% 100%;
+
+  /* UI colors */
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 0%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+
+  /* Feedback colors - WCAG AAA (7:1) on white background */
+  --success: 120 100% 20%; /* Very dark green */
+  --warning: 45 100% 25%; /* Very dark gold/yellow */
+  --error: 0 100% 30%; /* Very dark red */
+  --destructive: 0 100% 30%;
+  --destructive-foreground: 0 0% 100%;
+  --info: 221 83% 25%; /* Very dark blue */
+
+  /* Border and input - black for maximum visibility */
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 221 83% 25%;
+
+  /* Chart colors - AAA compliant, highly distinguishable */
+  --chart-1: 221 100% 25%; /* Very dark blue */
+  --chart-2: 120 100% 20%; /* Very dark green */
+  --chart-3: 280 100% 25%; /* Very dark purple */
+  --chart-4: 25 100% 30%; /* Very dark orange */
+  --chart-5: 340 100% 30%; /* Very dark red */
+}
+
+/* Enhanced focus visibility for high contrast */
+[data-theme="high-contrast-light"] *:focus-visible {
+  outline: 3px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
+
+/* Strong borders on interactive elements */
+[data-theme="high-contrast-light"] button,
+[data-theme="high-contrast-light"] input,
+[data-theme="high-contrast-light"] select,
+[data-theme="high-contrast-light"] textarea {
+  border-width: 2px;
+}
+
+/* Remove subtle shadows, use strong borders instead */
+[data-theme="high-contrast-light"] .shadow-sm {
+  box-shadow: none;
+  border: 2px solid hsl(var(--border));
+}
+
+[data-theme="high-contrast-light"] .shadow,
+[data-theme="high-contrast-light"] .shadow-md,
+[data-theme="high-contrast-light"] .shadow-lg {
+  box-shadow: none;
+  border: 2px solid hsl(var(--border));
+}

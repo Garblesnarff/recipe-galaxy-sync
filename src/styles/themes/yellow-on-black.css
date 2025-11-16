@@ -1,0 +1,76 @@
+/* Yellow on Black Theme - Classic terminal-style high contrast */
+[data-theme="yellow-on-black"] {
+  /* Core colors - Classic terminal aesthetic */
+  --background: 0 0% 0%;
+  --foreground: 60 100% 75%;
+
+  /* Primary colors - Bright yellow */
+  --primary: 60 100% 60%;
+  --primary-foreground: 0 0% 0%;
+
+  /* Secondary colors */
+  --secondary: 60 80% 50%;
+  --secondary-foreground: 0 0% 0%;
+
+  /* Accent colors */
+  --accent: 60 100% 60%;
+  --accent-foreground: 0 0% 0%;
+
+  /* UI colors */
+  --muted: 0 0% 15%;
+  --muted-foreground: 60 100% 75%;
+
+  --card: 0 0% 5%;
+  --card-foreground: 60 100% 75%;
+
+  --popover: 0 0% 0%;
+  --popover-foreground: 60 100% 75%;
+
+  /* Feedback colors - Yellow spectrum with red for errors */
+  --success: 80 100% 60%; /* Yellow-green */
+  --warning: 45 100% 60%; /* Orange-yellow */
+  --error: 0 100% 60%; /* Bright red for critical warnings */
+  --destructive: 0 100% 60%;
+  --destructive-foreground: 0 0% 0%;
+  --info: 60 100% 75%; /* Bright yellow */
+
+  /* Border and input - Bright yellow */
+  --border: 60 100% 75%;
+  --input: 60 100% 75%;
+  --ring: 60 100% 60%;
+
+  /* Chart colors - Yellow spectrum */
+  --chart-1: 60 100% 75%; /* Bright yellow */
+  --chart-2: 80 100% 60%; /* Yellow-green */
+  --chart-3: 45 100% 60%; /* Orange-yellow */
+  --chart-4: 90 100% 55%; /* Lime */
+  --chart-5: 40 100% 65%; /* Gold */
+}
+
+/* Enhanced focus visibility */
+[data-theme="yellow-on-black"] *:focus-visible {
+  outline: 3px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
+
+/* Strong borders on interactive elements */
+[data-theme="yellow-on-black"] button,
+[data-theme="yellow-on-black"] input,
+[data-theme="yellow-on-black"] select,
+[data-theme="yellow-on-black"] textarea {
+  border-width: 2px;
+}
+
+/* Terminal-style text */
+[data-theme="yellow-on-black"] {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Remove shadows for flat terminal aesthetic */
+[data-theme="yellow-on-black"] .shadow-sm,
+[data-theme="yellow-on-black"] .shadow,
+[data-theme="yellow-on-black"] .shadow-md,
+[data-theme="yellow-on-black"] .shadow-lg {
+  box-shadow: none;
+  border: 2px solid hsl(var(--border));
+}

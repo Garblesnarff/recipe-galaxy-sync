@@ -3,6 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import high contrast theme styles */
+@import './styles/themes/high-contrast-light.css';
+@import './styles/themes/high-contrast-dark.css';
+@import './styles/themes/yellow-on-black.css';
+
+/* Import high contrast utilities */
+@import './styles/high-contrast.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

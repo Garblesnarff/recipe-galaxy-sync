@@ -11,11 +11,15 @@ import EditCollection from "@/pages/EditCollection";
 import LandingPage from "@/pages/LandingPage";
 import Demo from "@/pages/Demo";
 import "./App.css";
+import "@/styles/a11y.css";
 import AuthPage from "@/pages/Auth";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdaptRecipe from "@/pages/AdaptRecipe";
+import AccessibilityStatement from "@/pages/AccessibilityStatement";
+import Settings from "@/pages/Settings";
+import { A11yProvider } from "@/hooks/useA11y";
 import Workouts from "@/pages/Workouts";
 import WorkoutDetail from "@/pages/WorkoutDetail";
 import AddWorkout from "@/pages/AddWorkout";
@@ -108,7 +112,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <A11yProvider>
       <OfflineIndicator />
       <div className="app-container min-h-screen">
         <Routes>
@@ -160,14 +164,18 @@ function App() {
           <Route path="/form-checker/video/:videoId" element={<PrivateRoute><VideoDetail /></PrivateRoute>} />
 
           {/* Settings & Integrations Routes */}
+          <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           <Route path="/settings/wearables" element={<PrivateRoute><WearableIntegrations /></PrivateRoute>} />
           <Route path="/settings/offline" element={<PrivateRoute><OfflineSettings /></PrivateRoute>} />
           <Route path="/settings/music" element={<PrivateRoute><MusicSettings /></PrivateRoute>} />
 
+          {/* Accessibility Routes */}
+          <Route path="/accessibility" element={<AccessibilityStatement />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-    </>
+    </A11yProvider>
   );
 }
 export default App;
