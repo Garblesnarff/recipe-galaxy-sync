@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Pause, SkipForward, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Play, Pause, SkipForward, CheckCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import { useActiveWorkout } from "@/hooks/useActiveWorkout";
 import { ActiveExerciseCard } from "@/components/workout/ActiveExerciseCard";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer";
@@ -10,9 +10,11 @@ import { WorkoutProgressBar } from "@/components/workout/WorkoutProgressBar";
 import { CompleteWorkoutDialog } from "@/components/workout/CompleteWorkoutDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayer } from "@/components/workout/VideoPlayer";
+import { VideoRecorder } from "@/components/video/VideoRecorder";
 import { Exercise } from "@/types/workout";
 import { Card } from "@/components/ui/card";
 import { fetchExerciseByName } from "@/services/workout";
+import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +25,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const ActiveWorkout = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [showFormRecorder, setShowFormRecorder] = useState(false);
   const [currentExerciseData, setCurrentExerciseData] = useState<Exercise | null>(null);
 
   const {
@@ -158,12 +168,24 @@ export const ActiveWorkout = () => {
 
         {/* Current Exercise */}
         {currentExercise && (
-          <ActiveExerciseCard
-            exercise={currentExercise}
-            exerciseLog={exerciseLogs[currentExercise.id]}
-            onLogSet={handleLogSet}
-            isResting={isResting}
-          />
+          <>
+            <ActiveExerciseCard
+              exercise={currentExercise}
+              exerciseLog={exerciseLogs[currentExercise.id]}
+              onLogSet={handleLogSet}
+              isResting={isResting}
+            />
+
+            {/* Record Form Button */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowFormRecorder(true)}
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              Record Form Check
+            </Button>
+          </>
         )}
 
         {/* Controls */}
@@ -265,6 +287,28 @@ export const ActiveWorkout = () => {
         duration={Math.floor(totalElapsedSeconds / 60)}
         estimatedCalories={workout.calories_estimate}
       />
+
+      {/* Form Recorder Dialog */}
+      {currentExercise && (
+        <Dialog open={showFormRecorder} onOpenChange={setShowFormRecorder}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Record Form Check - {currentExercise.exercise_name}</DialogTitle>
+            </DialogHeader>
+            <VideoRecorder
+              exerciseName={currentExercise.exercise_name}
+              userId={userId}
+              workoutLogId={null}
+              onVideoRecorded={(videoId) => {
+                setShowFormRecorder(false);
+                // Optionally navigate to video detail
+                // navigate(`/form-checker/video/${videoId}`);
+              }}
+              onClose={() => setShowFormRecorder(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

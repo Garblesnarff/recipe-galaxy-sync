@@ -7,6 +7,7 @@ import { RestDaySuggestion } from "@/components/workout/RestDaySuggestion";
 import { CurrentProgramWidget } from "@/components/workout/CurrentProgramWidget";
 import { LevelSystem } from "@/components/workout/LevelSystem";
 import { StreakWidget } from "@/components/workout/StreakWidget";
+import { QuickGenerateButton } from "@/components/ai/QuickGenerateButton";
 import { useWorkoutFilters } from "@/hooks/useWorkoutFilters";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
 import { useRecovery } from "@/hooks/useRecovery";
@@ -85,6 +86,7 @@ const Workouts = () => {
               <Moon className="mr-2 h-4 w-4" />
               Log Rest Day
             </Button>
+            <QuickGenerateButton variant="default" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" />
             <Button onClick={() => navigate("/workouts/add")}>
               <Plus className="mr-2 h-4 w-4" />
               Add Workout

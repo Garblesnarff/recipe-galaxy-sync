@@ -30,6 +30,10 @@ import Achievements from "@/pages/Achievements";
 import Challenges from "@/pages/Challenges";
 import ChallengeDetail from "@/pages/ChallengeDetail";
 import Leaderboards from "@/pages/Leaderboards";
+import AIWorkoutGenerator from "@/pages/AIWorkoutGenerator";
+import WearableIntegrations from "@/pages/WearableIntegrations";
+import FormChecker from "@/pages/FormChecker";
+import VideoDetail from "@/pages/VideoDetail";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -98,6 +102,7 @@ function App() {
           {/* Workout Routes */}
           <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />
           <Route path="/workouts/add" element={<PrivateRoute><AddWorkout /></PrivateRoute>} />
+          <Route path="/workouts/ai-generate" element={<PrivateRoute><AIWorkoutGenerator /></PrivateRoute>} />
           <Route path="/workouts/templates" element={<PrivateRoute><WorkoutTemplates /></PrivateRoute>} />
           <Route path="/workouts/exercises" element={<PrivateRoute><ExerciseLibrary /></PrivateRoute>} />
           <Route path="/workouts/history" element={<PrivateRoute><WorkoutHistory /></PrivateRoute>} />
@@ -112,6 +117,13 @@ function App() {
           <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
           <Route path="/challenges/:id" element={<PrivateRoute><ChallengeDetail /></PrivateRoute>} />
           <Route path="/leaderboards" element={<PrivateRoute><Leaderboards /></PrivateRoute>} />
+
+          {/* Form Checker Routes */}
+          <Route path="/form-checker" element={<PrivateRoute><FormChecker /></PrivateRoute>} />
+          <Route path="/form-checker/video/:videoId" element={<PrivateRoute><VideoDetail /></PrivateRoute>} />
+
+          {/* Settings & Integrations Routes */}
+          <Route path="/settings/wearables" element={<PrivateRoute><WearableIntegrations /></PrivateRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

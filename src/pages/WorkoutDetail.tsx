@@ -8,15 +8,17 @@ import { LinkedRecipes } from "@/components/workout/LinkedRecipes";
 import { LinkRecipeDialog } from "@/components/workout/LinkRecipeDialog";
 import { ScheduleWorkoutDialog } from "@/components/workout/ScheduleWorkoutDialog";
 import { ShareWorkoutDialog } from "@/components/social/ShareWorkoutDialog";
+import { HeartRateZoneChart } from "@/components/wearables/HeartRateZoneChart";
 import { useWorkoutDetail } from "@/hooks/useWorkoutDetail";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, Edit, Trash2, Plus, Calendar, Share2, Heart, MessageCircle, Send } from "lucide-react";
+import { Play, Edit, Trash2, Plus, Calendar, Share2, Heart, MessageCircle, Send, Watch } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { getWorkoutHeartRateData } from "@/services/wearables/syncService";
 import {
   getWorkoutLikeCount,
   hasUserLikedWorkout,
@@ -63,6 +65,9 @@ export const WorkoutDetail = () => {
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
 
+  // Heart rate data from wearable
+  const [heartRateData, setHeartRateData] = useState<number[] | null>(null);
+
   const handleNutritionUpdate = () => {
     // Trigger re-render of nutrition components
     setNutritionKey((prev) => prev + 1);
@@ -72,6 +77,7 @@ export const WorkoutDetail = () => {
   useEffect(() => {
     if (workout?.id) {
       loadSocialData();
+      loadHeartRateData();
     }
   }, [workout?.id, user?.id]);
 
@@ -97,6 +103,20 @@ export const WorkoutDetail = () => {
       console.error("Error loading social data:", error);
     } finally {
       setLoadingComments(false);
+    }
+  };
+
+  const loadHeartRateData = async () => {
+    if (!workout?.id || !user?.id) return;
+
+    try {
+      // Try to get heart rate data from imported wearable data
+      const hrData = await getWorkoutHeartRateData(user.id, workout.id);
+      if (hrData && hrData.length > 0) {
+        setHeartRateData(hrData);
+      }
+    } catch (error) {
+      console.error("Error loading heart rate data:", error);
     }
   };
 
@@ -204,6 +224,36 @@ export const WorkoutDetail = () => {
           <WorkoutContent
             workout={workout}
           />
+
+          {/* Heart Rate Data - From Wearable Integration */}
+          {heartRateData && heartRateData.length > 0 && (
+            <HeartRateZoneChart heartRateData={heartRateData} />
+          )}
+
+          {/* Link to Wearables */}
+          {!heartRateData && (
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Watch className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold">Connect Your Wearable</h3>
+                      <p className="text-sm text-gray-600">
+                        Sync your heart rate and health data for detailed insights
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/settings/wearables')}
+                  >
+                    Connect Device
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Nutrition Section - UNIQUE DIFFERENTIATOR! */}
           <div className="space-y-4">
