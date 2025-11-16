@@ -15,6 +15,8 @@ import { Exercise } from "@/types/workout";
 import { Card } from "@/components/ui/card";
 import { fetchExerciseByName } from "@/services/workout";
 import { useAuth } from "@/hooks/useAuth";
+import { NowPlayingWidget } from "@/components/music/NowPlayingWidget";
+import { useMusicPlayer } from "@/hooks/useMusicPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +61,12 @@ export const ActiveWorkout = () => {
     progress,
   } = useActiveWorkout(id || '');
 
+  // Music integration
+  const { pausePlayback, stopPlayback } = useMusicPlayer({
+    workoutId: id,
+    autoPlay: true,
+  });
+
   const currentExercise = workout?.exercises?.[currentExerciseIndex];
 
   // Fetch exercise data when current exercise changes
@@ -96,10 +104,19 @@ export const ActiveWorkout = () => {
   };
 
   const handleCompleteAndSave = async (notes: string, caloriesBurned?: number) => {
+    // Stop music when workout completes
+    stopPlayback();
     await handleCompleteWorkout(notes, caloriesBurned);
     setShowCompleteDialog(false);
     navigate('/workouts/history');
   };
+
+  // Pause music when workout is paused
+  useEffect(() => {
+    if (!isTimerRunning && timerSeconds > 0) {
+      pausePlayback();
+    }
+  }, [isTimerRunning]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,6 +142,9 @@ export const ActiveWorkout = () => {
       </header>
 
       <main className="container max-w-2xl py-6 space-y-6">
+        {/* Music Player Widget */}
+        <NowPlayingWidget />
+
         {/* Progress Bar */}
         <WorkoutProgressBar
           current={currentExerciseIndex + 1}

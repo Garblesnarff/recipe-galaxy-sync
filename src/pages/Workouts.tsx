@@ -13,7 +13,7 @@ import { useWorkoutData } from "@/hooks/useWorkoutData";
 import { useRecovery } from "@/hooks/useRecovery";
 import { useGamification } from "@/hooks/useGamification";
 import { Button } from "@/components/ui/button";
-import { Plus, Moon, Trophy } from "lucide-react";
+import { Plus, Moon, Trophy, Music, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/layout/MainNav";
 import {
@@ -78,6 +78,10 @@ const Workouts = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">My Workouts</h1>
           <div className="flex gap-3">
+            <Button variant="outline" onClick={() => navigate("/settings/music")}>
+              <Music className="mr-2 h-4 w-4" />
+              Music
+            </Button>
             <Button variant="outline" onClick={() => navigate("/achievements")}>
               <Trophy className="mr-2 h-4 w-4" />
               Achievements
@@ -85,6 +89,10 @@ const Workouts = () => {
             <Button variant="outline" onClick={() => setShowLogDialog(true)}>
               <Moon className="mr-2 h-4 w-4" />
               Log Rest Day
+            </Button>
+            <Button variant="default" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700" onClick={() => navigate("/workouts/gps")}>
+              <MapPin className="mr-2 h-4 w-4" />
+              GPS Workout
             </Button>
             <QuickGenerateButton variant="default" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" />
             <Button onClick={() => navigate("/workouts/add")}>

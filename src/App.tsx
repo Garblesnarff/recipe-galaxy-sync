@@ -34,6 +34,14 @@ import AIWorkoutGenerator from "@/pages/AIWorkoutGenerator";
 import WearableIntegrations from "@/pages/WearableIntegrations";
 import FormChecker from "@/pages/FormChecker";
 import VideoDetail from "@/pages/VideoDetail";
+import OfflineSettings from "@/pages/OfflineSettings";
+import MusicSettings from "@/pages/MusicSettings";
+import GPSWorkout from "@/pages/GPSWorkout";
+import RouteLibrary from "@/pages/RouteLibrary";
+import RouteDetail from "@/pages/RouteDetail";
+import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
+import { register as registerServiceWorker } from "@/lib/serviceWorkerRegistration";
+import { initDB } from "@/lib/indexedDB";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -76,8 +84,32 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  // Initialize service worker and IndexedDB
+  useEffect(() => {
+    // Initialize IndexedDB
+    initDB().then(() => {
+      console.log('[App] IndexedDB initialized');
+    }).catch((error) => {
+      console.error('[App] Failed to initialize IndexedDB:', error);
+    });
+
+    // Register service worker
+    registerServiceWorker({
+      onSuccess: () => {
+        console.log('[App] Service worker registered successfully');
+      },
+      onUpdate: () => {
+        console.log('[App] Service worker update available');
+      },
+      onError: (error) => {
+        console.error('[App] Service worker registration failed:', error);
+      },
+    });
+  }, []);
+
   return (
     <>
+      <OfflineIndicator />
       <div className="app-container min-h-screen">
         <Routes>
           {/* Public Routes */}
@@ -113,6 +145,11 @@ function App() {
           <Route path="/workouts/:id/start" element={<PrivateRoute><ActiveWorkout /></PrivateRoute>} />
           <Route path="/workouts/edit/:id" element={<PrivateRoute><EditWorkout /></PrivateRoute>} />
 
+          {/* GPS Tracking Routes */}
+          <Route path="/workouts/gps" element={<PrivateRoute><GPSWorkout /></PrivateRoute>} />
+          <Route path="/routes" element={<PrivateRoute><RouteLibrary /></PrivateRoute>} />
+          <Route path="/routes/:id" element={<PrivateRoute><RouteDetail /></PrivateRoute>} />
+
           {/* Challenges & Leaderboards Routes */}
           <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
           <Route path="/challenges/:id" element={<PrivateRoute><ChallengeDetail /></PrivateRoute>} />
@@ -124,6 +161,8 @@ function App() {
 
           {/* Settings & Integrations Routes */}
           <Route path="/settings/wearables" element={<PrivateRoute><WearableIntegrations /></PrivateRoute>} />
+          <Route path="/settings/offline" element={<PrivateRoute><OfflineSettings /></PrivateRoute>} />
+          <Route path="/settings/music" element={<PrivateRoute><MusicSettings /></PrivateRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

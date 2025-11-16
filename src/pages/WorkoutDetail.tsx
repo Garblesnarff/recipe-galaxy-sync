@@ -15,9 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, Edit, Trash2, Plus, Calendar, Share2, Heart, MessageCircle, Send, Watch } from "lucide-react";
+import { Play, Edit, Trash2, Plus, Calendar, Share2, Heart, MessageCircle, Send, Watch, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { GPSMap } from "@/components/gps/GPSMap";
+import { RouteStatsCard } from "@/components/gps/RouteStatsCard";
+import { ElevationChart } from "@/components/gps/ElevationChart";
+import { SplitsTable } from "@/components/gps/SplitsTable";
+import { getGPSWorkoutWithWaypoints } from "@/services/gps/gpsWorkouts";
+import { analyzeRoute } from "@/services/gps/routeAnalysis";
+import { decodePolyline } from "@/lib/polyline";
 import { getWorkoutHeartRateData } from "@/services/wearables/syncService";
 import {
   getWorkoutLikeCount,
@@ -68,6 +75,10 @@ export const WorkoutDetail = () => {
   // Heart rate data from wearable
   const [heartRateData, setHeartRateData] = useState<number[] | null>(null);
 
+  // GPS workout data
+  const [gpsData, setGpsData] = useState<any>(null);
+  const [loadingGpsData, setLoadingGpsData] = useState(false);
+
   const handleNutritionUpdate = () => {
     // Trigger re-render of nutrition components
     setNutritionKey((prev) => prev + 1);
@@ -78,6 +89,7 @@ export const WorkoutDetail = () => {
     if (workout?.id) {
       loadSocialData();
       loadHeartRateData();
+      loadGpsData();
     }
   }, [workout?.id, user?.id]);
 
@@ -117,6 +129,43 @@ export const WorkoutDetail = () => {
       }
     } catch (error) {
       console.error("Error loading heart rate data:", error);
+    }
+  };
+
+  const loadGpsData = async () => {
+    if (!workout?.id) return;
+
+    setLoadingGpsData(true);
+    try {
+      const data = await getGPSWorkoutWithWaypoints(workout.id);
+      if (data) {
+        // Analyze the route
+        const coordinates = data.waypoints.map((wp: any) => ({
+          latitude: wp.latitude,
+          longitude: wp.longitude,
+          altitude: wp.altitude,
+          accuracy: wp.accuracy,
+          timestamp: new Date(wp.timestamp).getTime(),
+          speed: wp.speed,
+        }));
+
+        const stats = analyzeRoute(
+          coordinates,
+          new Date(workout.created_at),
+          new Date(workout.completed_at || workout.created_at)
+        );
+
+        setGpsData({
+          workout: data.workout,
+          waypoints: data.waypoints,
+          coordinates,
+          stats,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading GPS data:", error);
+    } finally {
+      setLoadingGpsData(false);
     }
   };
 
@@ -224,6 +273,42 @@ export const WorkoutDetail = () => {
           <WorkoutContent
             workout={workout}
           />
+
+          {/* GPS Workout Data */}
+          {gpsData && gpsData.stats && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-lg font-semibold">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                <span>GPS Route Data</span>
+              </div>
+
+              <RouteStatsCard stats={gpsData.stats} />
+
+              <GPSMap
+                coordinates={gpsData.coordinates.map((c: any) => ({
+                  lat: c.latitude,
+                  lng: c.longitude,
+                }))}
+                interactive={true}
+                height="400px"
+              />
+
+              {gpsData.coordinates.some((c: any) => c.altitude) && (
+                <ElevationChart
+                  data={gpsData.coordinates
+                    .filter((c: any) => c.altitude)
+                    .map((c: any, idx: number) => ({
+                      distance: (idx / gpsData.coordinates.length) * gpsData.stats.totalDistance,
+                      elevation: c.altitude,
+                    }))}
+                />
+              )}
+
+              {gpsData.stats.splits && gpsData.stats.splits.length > 0 && (
+                <SplitsTable splits={gpsData.stats.splits} />
+              )}
+            </div>
+          )}
 
           {/* Heart Rate Data - From Wearable Integration */}
           {heartRateData && heartRateData.length > 0 && (
