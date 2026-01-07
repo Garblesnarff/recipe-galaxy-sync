@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Clock, TrendingDown, Users, MapPin } from "lucide-react";
-import { addIngredientsToGroceryList } from "@/services/groceryService";
+import { ShoppingCart, Clock, TrendingDown, Users, MapPin, Calculator } from "lucide-react";
+import { addRecipeToGroceryListWithScaling, addIngredientsToGroceryList } from "@/services/groceryService";
+import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
 import { RecipeIngredient } from "@/types/recipeIngredient";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Dialog, 
   DialogContent, 
@@ -25,8 +27,8 @@ export interface AddToGroceryListButtonProps {
   recentBuyers?: Array<{id: string; name: string; avatar: string}>;
 }
 
-export const AddToGroceryListButton = ({ 
-  recipeId, 
+export const AddToGroceryListButton = ({
+  recipeId,
   ingredients,
   estimatedSavings = 0,
   estimatedCost = 0,
@@ -36,6 +38,8 @@ export const AddToGroceryListButton = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [processedIngredients, setProcessedIngredients] = useState<string[]>([]);
+  const [scaleFactor, setScaleFactor] = useState<number>(1);
+  const { userId } = useAuthSession();
   
   // Process ingredients whenever they change
   useEffect(() => {
@@ -85,10 +89,20 @@ export const AddToGroceryListButton = ({
 
     setIsAdding(true);
     try {
-      console.log("Adding ingredients to grocery list:", selectedIngredients);
-      const success = await addIngredientsToGroceryList(selectedIngredients, recipeId);
+      console.log("Adding ingredients to grocery list:", selectedIngredients, "with scale factor:", scaleFactor);
+
+      let success = false;
+      if (scaleFactor !== 1) {
+        // Use the scaling service for recipes that need scaling
+        success = await addRecipeToGroceryListWithScaling(selectedIngredients, userId!, recipeId, scaleFactor);
+      } else {
+        // Use the regular non-scaling service for 1x recipes
+        success = await addIngredientsToGroceryList(selectedIngredients, userId!, recipeId);
+      }
+
       if (success) {
-        toast.success(`Added ${selectedIngredients.length} items to grocery list`);
+        const scaleText = scaleFactor !== 1 ? `${scaleFactor}x ` : '';
+        toast.success(`Added ${selectedIngredients.length} ${scaleText}items to grocery list`);
         setIsDialogOpen(false);
       }
     } catch (error) {
@@ -148,10 +162,31 @@ export const AddToGroceryListButton = ({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Smart Shopping List Builder</DialogTitle>
-            <DialogDescription>
-              We've found the best prices and highlighted items on sale
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>Smart Shopping List Builder</DialogTitle>
+                <DialogDescription>
+                  We've found the best prices and highlighted items on sale
+                </DialogDescription>
+              </div>
+              {/* Recipe Scaling Selector */}
+              <div className="flex items-center space-x-2 ml-4">
+                <Calculator className="h-4 w-4 text-gray-500" />
+                <Select value={scaleFactor.toString()} onValueChange={(value) => setScaleFactor(parseFloat(value))}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.5">½ Recipe</SelectItem>
+                    <SelectItem value="1">1x Recipe</SelectItem>
+                    <SelectItem value="1.5">1½ Recipe</SelectItem>
+                    <SelectItem value="2">2x Recipe</SelectItem>
+                    <SelectItem value="3">3x Recipe</SelectItem>
+                    <SelectItem value="4">4x Recipe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </DialogHeader>
           
           {/* Shopping summary */}
@@ -200,14 +235,14 @@ export const AddToGroceryListButton = ({
               {processedIngredients.length > 0 ? (
                 processedIngredients.map((ingredient, index) => {
                   // Mock price data for demonstration
-                  const mockPrices = {
+                  const mockPrices: Record<string, { price: number; salePrice?: number; store: string; onSale: boolean }> = {
                     'chicken breast': { price: 5.99, salePrice: 4.49, store: 'Kroger', onSale: true },
                     'heavy cream': { price: 3.29, salePrice: 2.49, store: 'Safeway', onSale: true },
                     'garlic': { price: 0.89, store: 'Whole Foods', onSale: false },
                     'pasta': { price: 1.99, salePrice: 1.29, store: 'Target', onSale: true },
                   };
-                  
-                  const priceInfo = mockPrices[ingredient.toLowerCase() as keyof typeof mockPrices] || 
+
+                  const priceInfo = mockPrices[ingredient.toLowerCase()] ||
                     { price: 2.99, store: 'Local Store', onSale: false };
                   
                   return (

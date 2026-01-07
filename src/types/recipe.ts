@@ -105,5 +105,6 @@ export const SORT_OPTIONS: SortOption[] = [
   { label: "Alphabetical (A-Z)", value: "title", direction: "asc" },
   { label: "Alphabetical (Z-A)", value: "title", direction: "desc" },
   { label: "Highest Rated", value: "rating", direction: "desc" },
+  { label: "Most Cooked", value: "cook_count", direction: "desc" },
   { label: "Prep Time (Quick first)", value: "prep_time", direction: "asc" },
 ];

@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useAdaptedRecipe } from "./useAdaptedRecipe";
+import { useRecentlyViewed } from "./useRecentlyViewed";
 
 interface Rating {
   rating: number;
@@ -19,18 +20,19 @@ export const useRecipeDetail = () => {
   const [userRating, setUserRating] = useState(0);
   const [currentServings, setCurrentServings] = useState<number>(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { 
-    adaptedRecipe, 
-    isAdapted, 
-    handleAdaptRecipe, 
-    resetAdaptation 
+  const {
+    adaptedRecipe,
+    isAdapted,
+    handleAdaptRecipe,
+    resetAdaptation
   } = useAdaptedRecipe();
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
     queryFn: async () => {
       if (!id) throw new Error("Recipe ID is required");
-      
+
       const { data, error } = await supabase
         .from("recipes")
         .select("*")
@@ -38,13 +40,15 @@ export const useRecipeDetail = () => {
         .single();
 
       if (error) throw error;
-      
+
       // Set initial state based on recipe data
       if (data) {
         setCurrentServings(data.servings || 4);
         setIsFavorite(data.is_favorite || false);
+        // Track recently viewed
+        addToRecentlyViewed(data.id, data.title, data.image_url);
       }
-      
+
       return data;
     },
     enabled: !!id,

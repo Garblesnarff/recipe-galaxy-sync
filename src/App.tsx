@@ -16,6 +16,7 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdaptRecipe from "@/pages/AdaptRecipe";
+import MealPlanning from "@/pages/MealPlanning";
 
 // Helper component to restrict access for authenticated users only
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -80,6 +81,7 @@ function App() {
           <Route path="/collections/:id" element={<PrivateRoute><CollectionDetail /></PrivateRoute>} />
           <Route path="/collections/edit/:id" element={<PrivateRoute><EditCollection /></PrivateRoute>} />
           <Route path="/adapt-recipe/:id" element={<PrivateRoute><AdaptRecipe /></PrivateRoute>} />
+          <Route path="/meal-planning" element={<PrivateRoute><MealPlanning /></PrivateRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

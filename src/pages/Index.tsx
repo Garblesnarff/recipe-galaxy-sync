@@ -1,6 +1,7 @@
 
 import { RecipeCard } from "@/components/RecipeCard";
 import { RecipeFilterBar } from "@/components/recipe/RecipeFilters";
+import { RecentlyViewedRecipes } from "@/components/recipe/RecentlyViewedRecipes";
 import { useRecipeFilters } from "@/hooks/useRecipeFilters";
 import { useRecipeData } from "@/hooks/useRecipeData";
 import { SalesScrapingTest } from "@/components/sales/SalesScrapingTest";
@@ -38,7 +39,9 @@ const Index = () => {
       
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Recipes</h1>
-        
+
+        <RecentlyViewedRecipes />
+
         <RecipeFilterBar
           filters={filters}
           onFiltersChange={setFilters}
